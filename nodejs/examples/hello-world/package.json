@@ -1,0 +1,11 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "",
+  "author": "aloma.io",
+  "license": "Apache-2.0",
+  "scripts": {},
+  "dependencies": {
+    "@aloma-io/integration-sdk": "^2"
+  }
+}
