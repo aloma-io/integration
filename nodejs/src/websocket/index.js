@@ -2,12 +2,6 @@
 const WebSocket = require('ws');
 const {Connection}  = require('./connection')
 const {Transport}   = require('./transport')
-const url       = require('url');
-const noop      = () => {};
-const heartbeat = (ws) => 
-{
-  ws.isAlive = true;
-};
 
 class WebsocketConnector
 {
@@ -42,14 +36,14 @@ class WebsocketConnector
   {
     var local = this;
     
-    if (local.ws) await local.ws.close();
-
+    if (local.transport) await local.transport.close();
   }
   
   async leaving()
   {
     var local = this;
     
+    if (local.transport) await local.transport.leaving();
     if (local.connection) await local.connection.close();
   }
 }
