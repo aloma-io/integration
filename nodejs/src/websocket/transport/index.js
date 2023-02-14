@@ -62,6 +62,8 @@ class Transport
     var local  = this,
         config = local.config;
     
+    if (local._leaving) return;
+    
     local.close();
     
     this.running = true;
@@ -180,6 +182,12 @@ class Transport
         delete(local.callbacks[key]);
       }
     });
+  }
+  
+  leaving()
+  {
+    this._leaving = true;
+    this.running  = false;
   }
   
   close()
