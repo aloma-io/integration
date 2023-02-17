@@ -60,7 +60,7 @@ class Fetcher
     if (!force && oauth.accessToken()) return oauth.accessToken();
     
     const refreshToken = oauth.refreshToken();
-    if (!refreshToken) throw new Error('have no access_token and not refresh_token');
+    if (!refreshToken) throw new Error('have no access_token and no refresh_token');
     
     const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
     
@@ -129,9 +129,10 @@ class OAuth
 {
   constructor(data, saveOAuthResult, getRefreshToken)
   {
+    var local = this;
     this._data = data || {};
     this.saveOAuthResult = saveOAuthResult;
-    this.obtainViaRefreshToken = getRefreshToken;
+    this.obtainViaRefreshToken = () => getRefreshToken(local.refreshToken());
   }
   
   data()
@@ -421,7 +422,7 @@ ${text}
           {
             return JSON.parse(text);
           } else {
-            throw new Error('could not get refresh token ' + status);
+            throw new Error('could not get refresh token ' + status + ' ' + text);
           }
         }
         
