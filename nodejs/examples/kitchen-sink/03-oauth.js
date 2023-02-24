@@ -1,8 +1,6 @@
 const {Connector}  = require('@aloma-io/integration-sdk');
-const {Controller} = require('./controller');
 
 const connector    = new Connector({id: 'TODO your connector id', version: '1.0.0'});
-const controller   = new Controller();
 
 connector.configure()
   // these require a private and a public key which the connector will generate on start
@@ -24,7 +22,7 @@ connector.configure()
   ({
     hello: async (args) => 
     {
-      return controller.hello(args);
+      return "world";
     },
   })
   .main(({newTask, config, oauth}) =>
