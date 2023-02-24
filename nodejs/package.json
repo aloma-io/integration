@@ -9,7 +9,6 @@
     "@paralleldrive/cuid2": "^2",
     "dotenv": "*",
     "express": "^4",
-    "isolated-vm": "^4",
     "jose": "^4",
     "node-fetch": "^2",
     "prom-client": "^14",
