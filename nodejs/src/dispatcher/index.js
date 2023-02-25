@@ -127,7 +127,7 @@ class Dispatcher
     {
       if (!_resolvers[query] && !_resolvers.__default) throw new Error(`${query} not found`);
       
-      return _resolvers[query]?_resolvers[query](variables):_resolvers.__default(variables):
+      return _resolvers[query]?_resolvers[query](variables):_resolvers.__default(variables?{...variables, __method: query}:variables):
     };
     
     const introspect    = () => local._types;
