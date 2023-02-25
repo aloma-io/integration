@@ -125,9 +125,9 @@ class Dispatcher
     
     const execute       = async ({query, variables}) => 
     {
-      if (!_resolvers[query]) throw new Error(`${query} not found`);
+      if (!_resolvers[query] && !_resolvers.__default) throw new Error(`${query} not found`);
       
-      return _resolvers[query](variables)
+      return _resolvers[query]?_resolvers[query](variables):_resolvers.__default(variables):
     };
     
     const introspect    = () => local._types;
