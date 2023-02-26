@@ -110,7 +110,7 @@ class Dispatcher
   
   build()
   {
-    if (!this._types || !this._resolvers) throw new Error('missing schema or resolvers');
+    if (!this._types || !this._resolvers) throw new Error('missing types or resolvers');
     var local = this;
     
     const _resolvers = {...this._resolvers};
