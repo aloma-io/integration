@@ -123,11 +123,28 @@ class Dispatcher
       await main(transport);
     };
     
+    const resolveMethod = (query) =>
+    {
+      let current = _resolvers;
+      
+      while(query.length && current)
+      {
+        current = current[query.shift()];
+      }
+      
+      return current;
+    }
+    
     const execute       = async ({query, variables}) => 
     {
-      if (!_resolvers[query] && !_resolvers.__default) throw new Error(`${query} not found`);
+      if (!Array.isArray(query)) query = [query];
       
-      return _resolvers[query]?_resolvers[query](variables):_resolvers.__default(variables?{...variables, __method: query}:variables);
+      query = query.filter((what) => (!!what?.trim() && !['constructor', '__proto__', 'toString', 'toSource', 'prototype'].includes(what))).slice(0, 20);
+      
+      const method = resolveMethod(query);
+      if (!method && !_resolvers.__default) throw new Error(`${query} not found`);
+      
+      return method?method(variables):_resolvers.__default(variables?{...variables, __method: query}:variables);
     };
     
     const introspect    = () => local._types;

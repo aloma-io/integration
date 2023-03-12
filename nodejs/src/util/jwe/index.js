@@ -45,7 +45,7 @@ class JWE
   
   async importBase64Pair({publicKey, privateKey, algorithm})
   {
-    this.importPair({publicKey: new Buffer(publicKey, 'base64').toString(), privateKey: new Buffer(privateKey, 'base64').toString(), algorithm});
+    this.importPair({publicKey: Buffer.from(publicKey, 'base64').toString(), privateKey: Buffer.from(privateKey, 'base64').toString(), algorithm});
   }
   
   async encrypt(what, expiration = '7d', audience, algorithm = 'RSA-OAEP-256')
