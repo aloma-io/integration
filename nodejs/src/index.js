@@ -293,9 +293,10 @@ ${text}
           const clientId = this._oauth.clientId || process.env.OAUTH_CLIENT_ID || decrypted.clientId;
           if (!clientId) throw new Error('clientId not configured');
           
-          const scopes   = this._oauth.scope || process.env.OAUTH_SCOPE || decrypted.scope || '';
+          const scopes           = this._oauth.scope || process.env.OAUTH_SCOPE || decrypted.scope || '';
+          const useCodeChallenge = !!that._oauth.useCodeChallenge;
           
-          return {url: this._oauth.authorizationURL.replace(/\{\{clientId\}\}/gi, encodeURIComponent(clientId)).replace(/\{\{scope\}\}/gi, encodeURIComponent(scopes))};
+          return {url: this._oauth.authorizationURL.replace(/\{\{clientId\}\}/gi, encodeURIComponent(clientId)).replace(/\{\{scope\}\}/gi, encodeURIComponent(scopes)), useCodeChallenge};
         }
         
         this.finishOAuth = async function(arg)
@@ -318,13 +319,19 @@ ${text}
             if (!clientSecret) throw new Error('clientSecret not configured');
             
             const additionalTokenArgs = that._oauth.additionalTokenArgs || {};
-            const useAuthHeader = that._oauth.useAuthHeader || false;
+            const useAuthHeader       = !!that._oauth.useAuthHeader;
+            const useCodeChallenge    = !!that._oauth.useCodeChallenge;
 
             let body = {
               ...additionalTokenArgs,
               code:           arg.code,
               redirect_uri:   arg.redirectURI
             };
+            
+            if (useCodeChallenge)
+            {
+              body.code_verifier = arg.codeVerifier;
+            }
 
             let headers = { 
              'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
