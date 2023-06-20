@@ -406,6 +406,14 @@ ${text}
           const clientSecret = that._oauth.clientSecret || process.env.OAUTH_CLIENT_SECRET || decrypted.clientSecret;
           if (!clientSecret) throw new Error('clientSecret not configured');
           
+          const useAuthHeader       = !!that._oauth.useAuthHeader;
+          
+          let headers = {};
+          
+          if (useAuthHeader) {
+            headers = {...headers, Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`}
+          }
+          
           const response = await fetch
           (
             that._oauth.tokenURL, 
@@ -418,7 +426,7 @@ ${text}
                 client_id:      clientId,
                 client_secret:  clientSecret
               }),
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', Accept: 'application/json'},
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8', Accept: 'application/json', ...headers},
             }
           );
           
