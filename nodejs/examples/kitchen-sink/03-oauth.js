@@ -16,7 +16,7 @@ connector.configure()
   })
   .types
   (`
-    hello(arg: {}): any;
+    declare function hello(arg: {}): any;
   `)
   .resolvers
   ({

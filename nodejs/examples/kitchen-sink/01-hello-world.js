@@ -6,7 +6,7 @@ connector.configure()
   // types are the calls available in the step, these are typescript definitions
   .types
   (`
-    hello(arg: {}): any;
+    declare function hello(arg: {}): any;
   `)
   // resolvers hold the calls
   .resolvers
