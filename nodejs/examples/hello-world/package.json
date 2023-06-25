@@ -5,7 +5,6 @@
   "author": "aloma.io",
   "connectorId": "TODO",
   "license": "Apache-2.0",
-  "scripts": {},
   "type": "module",
   "scripts": {
     "start": "node build/index.mjs",
