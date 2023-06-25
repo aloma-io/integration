@@ -3,9 +3,24 @@
   "version": "1.0.0",
   "description": "",
   "author": "aloma.io",
+  "connectorId": "TODO",
   "license": "Apache-2.0",
   "scripts": {},
+  "type": "module",
+  "scripts": {
+    "start": "node build/index.mjs",
+    "dev": "./node_modules/typescript/bin/tsc --watch",
+    "build": "rm -rf build; mkdir -p build/controller; cp ./src/controller/index.mts ./build/controller/.controller-for-types.mts; ./node_modules/typescript/bin/tsc",
+    "test": "./node_modules/mocha/bin/_mocha --recursive",
+    "format": "yarn prettier --write src/"
+  },
   "dependencies": {
-    "@aloma-io/integration-sdk": "^2"
+    "@aloma.io/integration-sdk": "3.0.0-12"
+  },
+  "devDependencies": {
+    "@types/node": "^18",
+    "mocha": "^10",
+    "prettier": "^2",
+    "typescript": "^5"
   }
 }

@@ -1,12 +1,29 @@
 {
-  "name": "@aloma-io/integration-sdk",
-  "version": "2.9.2",
+  "name": "@aloma.io/integration-sdk",
+  "version": "3.0.0",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
-  "scripts": {},
+  "type": "module",
+  "scripts": {
+    "dev": "./node_modules/typescript/bin/tsc --watch",
+    "build": "./node_modules/typescript/bin/tsc",
+    "test": "./node_modules/mocha/bin/_mocha --recursive",
+    "format": "yarn prettier --write src/"
+  },
+  "main": "./build/index.js",
+  "exports": {
+    ".": {
+      "import": "./build/index.mjs",
+      "require": "./build/index.js"
+    },
+    "./build/*": "./build/*",
+    "./package": "./package.json",
+    "./package.json": "./package.json"
+  },
   "dependencies": {
     "@paralleldrive/cuid2": "^2",
+    "@ts-ast-parser/core": "^0",
     "dotenv": "*",
     "express": "^4",
     "jose": "^4",
@@ -17,5 +34,11 @@
   "optionalDependencies": {
     "bufferutil": "^4",
     "utf-8-validate": "^6"
+  },
+  "devDependencies": {
+    "@types/node": "^18",
+    "mocha": "^10",
+    "prettier": "^2",
+    "typescript": "^5"
   }
 }
