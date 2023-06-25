@@ -1,6 +1,6 @@
 {
   "name": "@aloma.io/integration-sdk",
-  "version": "3.0.0-14",
+  "version": "3.0.0-15",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2",
+    "@ts-ast-parser/core": "^0",
     "dotenv": "*",
     "express": "^4",
     "jose": "^4",
@@ -35,7 +36,6 @@
     "utf-8-validate": "^6"
   },
   "devDependencies": {
-    "@ts-ast-parser/core": "^0",
     "@types/node": "^18",
     "mocha": "^10",
     "prettier": "^2",
