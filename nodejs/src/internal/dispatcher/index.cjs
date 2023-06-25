@@ -139,7 +139,6 @@ class Dispatcher {
         .slice(0, 20);
 
       const method = resolveMethod(query);
-      console.log('found method', query, method);
       if (!method && !_resolvers.__default) throw new Error(`${query} not found`);
 
       return method ? method(variables) : _resolvers.__default(variables ? {...variables, __method: query} : variables);
