@@ -10,7 +10,7 @@ COPY ./src ./src
 
 RUN set -e; adduser -S -u 1111 connector
 
-RUN set -e; apk add --no-cache git; yarn config set --home enableTelemetry 0; chmod 755 /connector/entrypoint.sh; cd /connector/; yarn install; rm -rf package.json; rm -rf yarn.lock; 
+RUN set -e; apk add --no-cache git; yarn config set --home enableTelemetry 0; chmod 755 /connector/entrypoint.sh; cd /connector/; yarn install;
 
 USER connector
 
