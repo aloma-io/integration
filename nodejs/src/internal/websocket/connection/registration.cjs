@@ -1,5 +1,5 @@
-const fetch = require('node-fetch');
-const C = require('./constants.cjs');
+const fetch = require("node-fetch");
+const C = require("./constants.cjs");
 
 class Registration {
   constructor(config) {
@@ -13,19 +13,19 @@ class Registration {
     const intro = await config.introspect();
 
     const response = await fetch(
-      config.url() + 'register',
+      config.url() + "register",
       C.augmentRegistration(
         {
-          method: 'POST',
+          method: "POST",
           body: JSON.stringify({
-            deployment: process.env.DEPLOYMENT || '',
+            deployment: process.env.DEPLOYMENT || "",
             name: config.name(),
             version: config.version(),
             id: config.id(),
             publicKey: config.publicKey(),
-            schema: {configSchema, introspect: intro},
+            schema: { configSchema, introspect: intro },
           }),
-          headers: {'Content-Type': 'application/json'},
+          headers: { "Content-Type": "application/json" },
         },
         config
       )
@@ -33,8 +33,8 @@ class Registration {
 
     if (response.status === 200) return (await response.json()).key;
 
-    throw new Error('authentication failed');
+    throw new Error("authentication failed");
   }
 }
 
-module.exports = {Registration};
+module.exports = { Registration };

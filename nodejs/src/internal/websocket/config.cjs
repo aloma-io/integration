@@ -1,5 +1,5 @@
-const C = require('./connection/constants.cjs');
-const JWE = require('../util/jwe/index.cjs');
+const C = require("./connection/constants.cjs");
+const JWE = require("../util/jwe/index.cjs");
 
 class Config {
   constructor({
@@ -28,15 +28,19 @@ class Config {
     this._introspect = introspect;
     this._configSchema = configSchema;
 
-    if (!registrationToken) throw new Error('empty registration token (set env.REGISTRATION_TOKEN)');
-    if (!endpoint) throw new Error('empty endpoint (set env.DEVICE_ENDPOINT)');
-    if (!wsEndpoint) throw new Error('empty registration token (set env.WEBSOCKET_ENDPOINT)');
+    if (!registrationToken)
+      throw new Error("empty registration token (set env.REGISTRATION_TOKEN)");
+    if (!endpoint) throw new Error("empty endpoint (set env.DEVICE_ENDPOINT)");
+    if (!wsEndpoint)
+      throw new Error("empty registration token (set env.WEBSOCKET_ENDPOINT)");
 
-    if (!this._id || !this._version) throw new Error('need connector id and version');
+    if (!this._id || !this._version)
+      throw new Error("need connector id and version");
   }
 
   async validateKeys(algorithm) {
-    if (!this._privateKey || !this._publicKey) throw new Error('need private and public key');
+    if (!this._privateKey || !this._publicKey)
+      throw new Error("need private and public key");
 
     await this._jwe.importBase64Pair({
       publicKey: this._publicKey,
@@ -100,4 +104,4 @@ class Config {
   }
 }
 
-module.exports = {Config};
+module.exports = { Config };

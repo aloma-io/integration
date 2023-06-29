@@ -1,8 +1,8 @@
-const jose = require('jose');
+const jose = require("jose");
 
 class JWE {
-  constructor({algorithm = 'PS256'}) {
-    this.issuer = 'home.aloma.io';
+  constructor({ algorithm = "PS256" }) {
+    this.issuer = "home.aloma.io";
     this.algorithm = algorithm;
   }
 
@@ -20,47 +20,51 @@ class JWE {
   async exportPrivateAsBase64() {
     const pair = await this.exportPair();
 
-    return Buffer.from(pair.privateKey).toString('base64');
+    return Buffer.from(pair.privateKey).toString("base64");
   }
 
   async exportPublicAsBase64() {
     const pair = await this.exportPair();
 
-    return Buffer.from(pair.publicKey).toString('base64');
+    return Buffer.from(pair.publicKey).toString("base64");
   }
 
-  async importPair({publicKey, privateKey, algorithm}) {
+  async importPair({ publicKey, privateKey, algorithm }) {
     this.pair = {
       publicKey: await jose.importSPKI(publicKey, algorithm),
       privateKey: await jose.importPKCS8(privateKey, algorithm),
     };
   }
 
-  async importBase64Pair({publicKey, privateKey, algorithm}) {
+  async importBase64Pair({ publicKey, privateKey, algorithm }) {
     this.importPair({
-      publicKey: Buffer.from(publicKey, 'base64').toString(),
-      privateKey: Buffer.from(privateKey, 'base64').toString(),
+      publicKey: Buffer.from(publicKey, "base64").toString(),
+      privateKey: Buffer.from(privateKey, "base64").toString(),
       algorithm,
     });
   }
 
-  async encrypt(what, expiration = '7d', audience, algorithm = 'RSA-OAEP-256') {
-    const item = new jose.EncryptJWT({_data: {...what}})
-      .setProtectedHeader({alg: algorithm, enc: 'A256GCM'})
+  async encrypt(what, expiration = "7d", audience, algorithm = "RSA-OAEP-256") {
+    const item = new jose.EncryptJWT({ _data: { ...what } })
+      .setProtectedHeader({ alg: algorithm, enc: "A256GCM" })
       .setIssuedAt()
       .setIssuer(this.issuer)
       .setAudience(audience);
 
-    if (expiration && expiration !== 'none') item.setExpirationTime(expiration);
+    if (expiration && expiration !== "none") item.setExpirationTime(expiration);
 
     return await item.encrypt(this.pair.publicKey);
   }
 
   async decrypt(what, audience) {
-    const {payload, protectedHeader} = await jose.jwtDecrypt(what, this.pair.privateKey, {
-      issuer: this.issuer,
-      audience,
-    });
+    const { payload, protectedHeader } = await jose.jwtDecrypt(
+      what,
+      this.pair.privateKey,
+      {
+        issuer: this.issuer,
+        audience,
+      }
+    );
 
     return payload._data;
   }

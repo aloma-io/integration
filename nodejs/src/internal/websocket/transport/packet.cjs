@@ -1,5 +1,5 @@
-const fetch = require('node-fetch');
-const cuid = require('@paralleldrive/cuid2').init({length: 32});
+const fetch = require("node-fetch");
+const cuid = require("@paralleldrive/cuid2").init({ length: 32 });
 
 class Packet {
   constructor(data = {}) {
@@ -45,10 +45,10 @@ class Packet {
 }
 
 class Callback {
-  constructor({cb}) {
+  constructor({ cb }) {
     this.cb = cb;
     this.created = Date.now();
   }
 }
 
-module.exports = {Callback, Packet};
+module.exports = { Callback, Packet };

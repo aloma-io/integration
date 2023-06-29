@@ -1,12 +1,12 @@
-const WebSocket = require('ws');
-const {Connection} = require('./connection/index.cjs');
-const {Transport} = require('./transport/index.cjs');
+const WebSocket = require("ws");
+const { Connection } = require("./connection/index.cjs");
+const { Transport } = require("./transport/index.cjs");
 
 class WebsocketConnector {
-  constructor({config, onMessage, onConnect}) {
+  constructor({ config, onMessage, onConnect }) {
     var local = this;
     this.config = config;
-    this.transport = new Transport({config, onMessage, onConnect});
+    this.transport = new Transport({ config, onMessage, onConnect });
   }
 
   async start() {
@@ -43,4 +43,4 @@ class WebsocketConnector {
   }
 }
 
-module.exports = {WebsocketConnector};
+module.exports = { WebsocketConnector };

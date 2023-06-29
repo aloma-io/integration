@@ -1,15 +1,16 @@
-import {AbstractController} from '../controller/index.mjs';
-import {Connector} from '../internal/index.cjs';
+import { AbstractController } from "../controller/index.mjs";
+import { Connector } from "../internal/index.cjs";
 
 export default class RuntimeContext {
   constructor(private controller: AbstractController, private data: any) {}
 
   async start(): Promise<void> {
     const controller = this.controller;
-    
-    if (!(controller instanceof AbstractController)) throw new Error('the controller needs to extend AbstractController');
-    const data:any = this.data;
-    
+
+    if (!(controller instanceof AbstractController))
+      throw new Error("the controller needs to extend AbstractController");
+    const data: any = this.data;
+
     const connector = new Connector({
       id: data.id,
       version: data.version,
@@ -19,7 +20,12 @@ export default class RuntimeContext {
     const configuration = connector.configure().config(data.config || {});
 
     const resolvers: any = {};
-    const methods: string[] = [...data.methods, '__endpoint', '__configQuery', '__default'];
+    const methods: string[] = [
+      ...data.methods,
+      "__endpoint",
+      "__configQuery",
+      "__default",
+    ];
 
     methods.forEach((method) => {
       resolvers[method] = async (args) => {
@@ -28,29 +34,33 @@ export default class RuntimeContext {
         return controller[method](args);
       };
     });
-    
-    configuration
-      .types(data.types)
-      .resolvers(resolvers);
-    
-    if (data.options?.endpoint?.enabled)
-    {
+
+    configuration.types(data.types).resolvers(resolvers);
+
+    if (data.options?.endpoint?.enabled) {
       configuration.endpoint((arg) => controller.__endpoint(arg));
     }
-    
-    if (data.auth?.oauth)
-    {
+
+    if (data.auth?.oauth) {
       configuration.oauth(data.auth?.oauth);
     }
-      
-      configuration.main(async ({newTask, updateTask, config, oauth, getClient}) => {
+
+    configuration.main(
+      async ({ newTask, updateTask, config, oauth, getClient }) => {
         try {
           await controller._doStop();
-          await controller._doStart(config, oauth, newTask, updateTask, getClient);
+          await controller._doStart(
+            config,
+            oauth,
+            newTask,
+            updateTask,
+            getClient
+          );
         } catch (e) {
           console.log(e);
         }
-      });
+      }
+    );
 
     connector.run();
   }
