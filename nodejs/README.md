@@ -1,9 +1,5 @@
 # nodejs - Aloma Integration SDK
 
-## Prerequisites
+## Creating a new Connector
 
-* You can find the `REGISTRATION_TOKEN` in your aloma workspace in the integration section when adding a connector.
-
-## Integration Examples
-
-See `examples` directory.
+With the aloma integration SDK cli you can simply create a new connector via `npx @aloma.io/integration-sdk create connectorName --connector-id 1234`.
