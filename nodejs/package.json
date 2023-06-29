@@ -1,12 +1,12 @@
 {
   "name": "@aloma.io/integration-sdk",
-  "version": "3.0.1-8",
+  "version": "3.0.1-9",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "main": "./build/cli.mjs"
+    "aloma": "./build/cli.mjs"
   },
   "scripts": {
     "dev": "./node_modules/typescript/bin/tsc --watch",
