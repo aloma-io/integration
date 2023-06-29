@@ -1,0 +1,25 @@
+{
+  "name": "TODO",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "connectorId": "TODO",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "start": "node build/index.mjs",
+    "dev": "./node_modules/typescript/bin/tsc --watch",
+    "build": "./node_modules/@aloma.io/integration-sdk/build/cli.mjs build; ./node_modules/typescript/bin/tsc",
+    "test": "./node_modules/mocha/bin/_mocha --recursive",
+    "format": "yarn prettier --write src/"
+  },
+  "dependencies": {
+    "@aloma.io/integration-sdk": "^3"
+  },
+  "devDependencies": {
+    "@types/node": "^18",
+    "mocha": "^10",
+    "prettier": "^2",
+    "typescript": "^5"
+  }
+}

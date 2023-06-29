@@ -1,7 +1,7 @@
-const {Packet, Callback} = require('./packet.cjs');
+const { Packet, Callback } = require("./packet.cjs");
 
 class Processor {
-  constructor({transport, processPacket}) {
+  constructor({ transport, processPacket }) {
     var local = this;
 
     this.transport = transport;
@@ -26,7 +26,10 @@ class Processor {
     var local = this;
 
     if (packet.args().packet) {
-      await local.processPacket0(local.transport.newPacket(packet.args().packet), packet);
+      await local.processPacket0(
+        local.transport.newPacket(packet.args().packet),
+        packet
+      );
     } else {
       await local.processPacket0(packet, packet);
     }
@@ -40,27 +43,27 @@ class Processor {
       try {
         callbacks[packet.cb()](packet.args());
       } catch (e) {
-        console.log('error in callback', callbacks[packet.cb()], packet);
+        console.log("error in callback", callbacks[packet.cb()], packet);
       }
 
       delete local.transport.callbacks[packet.cb()];
     } else if (packet.event()) {
-      console.log('handle event packet', packet);
+      console.log("handle event packet", packet);
     } else {
       try {
         const result = await local._processPacket(packet);
         const reply = local.transport.newPacket({});
 
-        reply.method('connector.reply');
+        reply.method("connector.reply");
         reply.cb(original.cb());
-        reply.args({...result});
+        reply.args({ ...result });
 
         local.transport.send(reply);
       } catch (e) {
-        console.log('error processing packet', e, packet);
+        console.log("error processing packet", e, packet);
       }
     }
   }
 }
 
-module.exports = {Processor};
+module.exports = { Processor };

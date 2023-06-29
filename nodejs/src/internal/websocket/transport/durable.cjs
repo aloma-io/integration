@@ -1,7 +1,7 @@
-const WebSocket = require('ws');
+const WebSocket = require("ws");
 
 class DurableWebsocket {
-  constructor({endpoint, secret, onConnect, onMessage}) {
+  constructor({ endpoint, secret, onConnect, onMessage }) {
     this.endpoint = endpoint;
     this.secret = secret;
     this.onConnect = onConnect;
@@ -27,10 +27,10 @@ class DurableWebsocket {
 
     const ws = (local.ws = new WebSocket(local.endpoint, [], {
       rejectUnauthorized: false,
-      headers: {Authorization: `Bearer ${local.secret}`},
+      headers: { Authorization: `Bearer ${local.secret}` },
     }));
 
-    ws.on('open', () => {
+    ws.on("open", () => {
       local.connecting = false;
       local.fails = 0;
 
@@ -43,17 +43,17 @@ class DurableWebsocket {
       local.onConnect(local);
     });
 
-    ws.on('message', (message) => {
+    ws.on("message", (message) => {
       setImmediate(() => local.onMessage(JSON.parse(message)));
     });
 
-    ws.on('error', (message) => {
-      if (local.fails > 50) console.log('error:', message.message);
+    ws.on("error", (message) => {
+      if (local.fails > 50) console.log("error:", message.message);
 
       ++local.fails;
     });
 
-    ws.on('close', (message) => {
+    ws.on("close", (message) => {
       local.connecting = false;
 
       if (!local.closed) setTimeout(() => local.start(), 5000);
@@ -68,4 +68,4 @@ class DurableWebsocket {
   }
 }
 
-module.exports = {DurableWebsocket};
+module.exports = { DurableWebsocket };

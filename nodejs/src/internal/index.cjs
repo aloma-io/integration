@@ -1,44 +1,47 @@
 // @ts-nocheck
-require('dotenv').config();
-const fs = require('fs');
-const {Config} = require('./websocket/config.cjs');
-const {Connection} = require('./websocket/connection/index.cjs');
-const {Transport} = require('./websocket/transport/index.cjs');
-const {Dispatcher} = require('./dispatcher/index.cjs');
-const {WebsocketConnector} = require('./websocket/index.cjs');
-const JWE = require('./util/jwe/index.cjs');
-const fetch = require('node-fetch');
-const cuid = require('@paralleldrive/cuid2').init({length: 32});
+require("dotenv").config();
+const fs = require("fs");
+const { Config } = require("./websocket/config.cjs");
+const { Connection } = require("./websocket/connection/index.cjs");
+const { Transport } = require("./websocket/transport/index.cjs");
+const { Dispatcher } = require("./dispatcher/index.cjs");
+const { WebsocketConnector } = require("./websocket/index.cjs");
+const JWE = require("./util/jwe/index.cjs");
+const fetch = require("node-fetch");
+const cuid = require("@paralleldrive/cuid2").init({ length: 32 });
 
 // TODO fetch with retry
 
 const handlePacketError = (packet, e, transport) => {
   if (!packet.cb()) {
-    console.dir({msg: 'packet error', e, packet}, {depth: null});
+    console.dir({ msg: "packet error", e, packet }, { depth: null });
     return;
   }
 
-  transport.send(transport.newPacket({c: packet.cb(), a: {error: '' + e}}));
+  transport.send(transport.newPacket({ c: packet.cb(), a: { error: "" + e } }));
 };
 
 const reply = (arg, packet, transport) => {
   if (!packet.cb()) {
-    console.dir({msg: 'cannot reply to packet without cb', arg, packet}, {depth: null});
+    console.dir(
+      { msg: "cannot reply to packet without cb", arg, packet },
+      { depth: null }
+    );
     return;
   }
 
-  transport.send(transport.newPacket({c: packet.cb(), a: {...arg}}));
+  transport.send(transport.newPacket({ c: packet.cb(), a: { ...arg } }));
 };
 
 const unwrap = async (ret, options) => {
   if (options?.text) return await ret.text();
-  if (options?.base64) return (await ret.buffer()).toString('base64');
+  if (options?.base64) return (await ret.buffer()).toString("base64");
 
   return await ret.json();
 };
 
 class Fetcher {
-  constructor({retry = 5, baseUrl}) {
+  constructor({ retry = 5, baseUrl }) {
     this.retry = retry;
     this.baseUrl = baseUrl;
   }
@@ -66,7 +69,9 @@ class Fetcher {
     if (retries == null) retries = local.retry;
 
     try {
-      const theURL = `${baseUrl?.endsWith('/') ? baseUrl : baseUrl + '/'}${url}`.replace(/\/\/+/gi, '/');
+      const theURL = `${
+        baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
+      }${url}`.replace(/\/\/+/gi, "/");
 
       await local.customize(options, args);
 
@@ -75,7 +80,7 @@ class Fetcher {
 
       if (status > 399) {
         const text = await ret.text();
-        const e = new Error(status + ' ' + text);
+        const e = new Error(status + " " + text);
 
         e.status = status;
         throw e;
@@ -95,8 +100,8 @@ class Fetcher {
 }
 
 class OAuthFetcher extends Fetcher {
-  constructor({oauth, retry = 5, getToken, baseUrl}) {
-    super({retry, baseUrl});
+  constructor({ oauth, retry = 5, getToken, baseUrl }) {
+    super({ retry, baseUrl });
 
     this.oauth = oauth;
     this._getToken = getToken;
@@ -111,7 +116,8 @@ class OAuthFetcher extends Fetcher {
     if (!force && oauth.accessToken()) return oauth.accessToken();
 
     const refreshToken = oauth.refreshToken();
-    if (!refreshToken) throw new Error('have no access_token and no refresh_token');
+    if (!refreshToken)
+      throw new Error("have no access_token and no refresh_token");
 
     const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
 
@@ -120,7 +126,7 @@ class OAuthFetcher extends Fetcher {
 
       return ret.access_token;
     } else {
-      throw new Error('could not obtain access token via refresh token');
+      throw new Error("could not obtain access token via refresh token");
     }
   }
 
@@ -130,7 +136,11 @@ class OAuthFetcher extends Fetcher {
     return new Promise((resolve, reject) => {
       setTimeout(async () => {
         try {
-          resolve(await local.fetch(url, options, retries, {forceTokenRefresh: e.status === 401}));
+          resolve(
+            await local.fetch(url, options, retries, {
+              forceTokenRefresh: e.status === 401,
+            })
+          );
         } catch (e) {
           reject(e);
         }
@@ -141,7 +151,7 @@ class OAuthFetcher extends Fetcher {
   async customize(options, args = {}) {
     const token = await local.getToken(args.forceTokenRefresh);
 
-    options = {...options};
+    options = { ...options };
     options.headers = {
       ...options.headers,
       Authorization: `Bearer ${token}`,
@@ -180,12 +190,12 @@ class OAuth {
   }
 
   getClient(arg = {}) {
-    return new OAuthFetcher({...arg, oauth: this});
+    return new OAuthFetcher({ ...arg, oauth: this });
   }
 }
 
 class Connector {
-  constructor({version, id, name}) {
+  constructor({ version, id, name }) {
     this.id = id;
     this.version = version;
     this.name = name;
@@ -199,13 +209,13 @@ class Connector {
     var local = this;
 
     const makeMetrics = () => {
-      const metrics = require('prom-client');
+      const metrics = require("prom-client");
 
       const defaultLabels = {
         service: local.name,
         connectorId: local.id,
         connectorVersion: local.version,
-        node: process.env.HOSTNAME || 'test',
+        node: process.env.HOSTNAME || "test",
       };
       metrics.register.setDefaultLabels(defaultLabels);
       metrics.collectDefaultMetrics();
@@ -214,11 +224,11 @@ class Connector {
     };
 
     const makeMetricsServer = (metrics) => {
-      const app = require('express')();
+      const app = require("express")();
 
-      app.get('/metrics', async (request, response, next) => {
+      app.get("/metrics", async (request, response, next) => {
         response.status(200);
-        response.set('Content-type', metrics.contentType);
+        response.set("Content-type", metrics.contentType);
         response.send(await metrics.register.metrics());
         response.end();
       });
@@ -226,17 +236,19 @@ class Connector {
       return app;
     };
 
-    makeMetricsServer(makeMetrics()).listen(4050, '0.0.0.0');
+    makeMetricsServer(makeMetrics()).listen(4050, "0.0.0.0");
 
-    const {processPacket, start, introspect, configSchema} = this.dispatcher.build();
+    const { processPacket, start, introspect, configSchema } =
+      this.dispatcher.build();
 
     const config = new Config({
       id: this.id,
       version: this.version,
       name: process.env.HOSTNAME || this.name,
       registrationToken: process.env.REGISTRATION_TOKEN,
-      endpoint: process.env.DEVICE_ENDPOINT || 'https://connect.aloma.io/',
-      wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://transport.aloma.io/transport/',
+      endpoint: process.env.DEVICE_ENDPOINT || "https://connect.aloma.io/",
+      wsEndpoint:
+        process.env.WEBSOCKET_ENDPOINT || "wss://transport.aloma.io/transport/",
       privateKey: process.env.PRIVATE_KEY,
       publicKey: process.env.PUBLIC_KEY,
       introspect,
@@ -249,16 +261,16 @@ class Connector {
       } catch (e) {
         const haveKey = !!process.env.PRIVATE_KEY;
         const jwe = new JWE({});
-        var text = 'Please double check the env variables';
+        var text = "Please double check the env variables";
 
         if (!haveKey) {
           await jwe.newPair();
           text =
-            'fresh keys generated, set environment variables: \n\nPRIVATE_KEY: ' +
+            "fresh keys generated, set environment variables: \n\nPRIVATE_KEY: " +
             (await jwe.exportPrivateAsBase64()) +
-            '\n\nPUBLIC_KEY: ' +
+            "\n\nPUBLIC_KEY: " +
             (await jwe.exportPublicAsBase64()) +
-            '\n';
+            "\n";
         }
 
         console.log(`
@@ -281,7 +293,7 @@ ${text}
           const fields = configSchema().fields;
 
           const keys = Object.keys(secrets);
-          const jwe = await config.validateKeys('RSA-OAEP-256');
+          const jwe = await config.validateKeys("RSA-OAEP-256");
 
           for (var i = 0; i < keys.length; ++i) {
             const key = keys[i];
@@ -294,18 +306,25 @@ ${text}
               try {
                 decrypted[key] = await jwe.decrypt(value, config.id());
               } catch (e) {
-                console.log('failed to decrypt key', key, config.id(), e);
+                console.log("failed to decrypt key", key, config.id(), e);
               }
             }
           }
 
           this.startOAuth = async function (args) {
-            if (!this._oauth) throw new Error('oauth not configured');
+            if (!this._oauth) throw new Error("oauth not configured");
 
-            const clientId = this._oauth.clientId || process.env.OAUTH_CLIENT_ID || decrypted.clientId;
-            if (!clientId) throw new Error('clientId not configured');
+            const clientId =
+              this._oauth.clientId ||
+              process.env.OAUTH_CLIENT_ID ||
+              decrypted.clientId;
+            if (!clientId) throw new Error("clientId not configured");
 
-            const scopes = this._oauth.scope || process.env.OAUTH_SCOPE || decrypted.scope || '';
+            const scopes =
+              this._oauth.scope ||
+              process.env.OAUTH_SCOPE ||
+              decrypted.scope ||
+              "";
             const useCodeChallenge = !!that._oauth.useCodeChallenge;
 
             return {
@@ -319,20 +338,27 @@ ${text}
           this.finishOAuth = async function (arg) {
             var that = this;
 
-            if (!this._oauth) throw new Error('oauth not configured');
-            if (!this._oauth.tokenURL && !this._oauth.finishOAuth) throw new Error('need tokenURL or finishOAuth(arg)');
+            if (!this._oauth) throw new Error("oauth not configured");
+            if (!this._oauth.tokenURL && !this._oauth.finishOAuth)
+              throw new Error("need tokenURL or finishOAuth(arg)");
 
             var data = null;
 
             const doFinish = async () => {
-              if (!arg.code || !arg.redirectURI) throw new Error('need code and redirectUri');
+              if (!arg.code || !arg.redirectURI)
+                throw new Error("need code and redirectUri");
 
-              const clientId = that._oauth.clientId || process.env.OAUTH_CLIENT_ID || decrypted.clientId;
-              if (!clientId) throw new Error('clientId not configured');
+              const clientId =
+                that._oauth.clientId ||
+                process.env.OAUTH_CLIENT_ID ||
+                decrypted.clientId;
+              if (!clientId) throw new Error("clientId not configured");
 
               const clientSecret =
-                that._oauth.clientSecret || process.env.OAUTH_CLIENT_SECRET || decrypted.clientSecret;
-              if (!clientSecret) throw new Error('clientSecret not configured');
+                that._oauth.clientSecret ||
+                process.env.OAUTH_CLIENT_SECRET ||
+                decrypted.clientSecret;
+              if (!clientSecret) throw new Error("clientSecret not configured");
 
               const additionalTokenArgs = that._oauth.additionalTokenArgs || {};
               const useAuthHeader = !!that._oauth.useAuthHeader;
@@ -349,8 +375,9 @@ ${text}
               }
 
               let headers = {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                Accept: 'application/json',
+                "Content-Type":
+                  "application/x-www-form-urlencoded;charset=UTF-8",
+                Accept: "application/json",
               };
 
               if (useAuthHeader) {
@@ -367,7 +394,7 @@ ${text}
               }
 
               const response = await fetch(that._oauth.tokenURL, {
-                method: 'POST',
+                method: "POST",
                 body: new URLSearchParams(body),
                 headers,
               });
@@ -378,14 +405,18 @@ ${text}
               if (status === 200) {
                 const ret = JSON.parse(text);
                 if (ret.error) {
-                  throw new Error(`${status} ${ret.error} ${ret.error_description || ''}`);
+                  throw new Error(
+                    `${status} ${ret.error} ${ret.error_description || ""}`
+                  );
                 } else if (ret.access_token) {
-                  return {...ret};
+                  return { ...ret };
                 } else {
-                  throw new Error(status + ' response has no access_token - ' + text);
+                  throw new Error(
+                    status + " response has no access_token - " + text
+                  );
                 }
               } else {
-                throw new Error(status + ' ' + text);
+                throw new Error(status + " " + text);
               }
             };
 
@@ -399,18 +430,18 @@ ${text}
               data = await doFinish();
             }
 
-            const jwe = await config.validateKeys('RSA-OAEP-256');
+            const jwe = await config.validateKeys("RSA-OAEP-256");
 
-            return {value: await jwe.encrypt(data, 'none', config.id())};
+            return { value: await jwe.encrypt(data, "none", config.id()) };
           };
 
           const saveOAuthResult = async (what) => {
-            const jwe = await config.validateKeys('RSA-OAEP-256');
+            const jwe = await config.validateKeys("RSA-OAEP-256");
             const packet = transport.newPacket({});
 
-            packet.method('connector.config-update');
+            packet.method("connector.config-update");
             packet.args({
-              value: await jwe.encrypt(what, 'none', config.id()),
+              value: await jwe.encrypt(what, "none", config.id()),
             });
 
             transport.send(packet);
@@ -419,11 +450,17 @@ ${text}
           const that = this;
 
           const getRefreshToken = async (refreshToken) => {
-            const clientId = that._oauth.clientId || process.env.OAUTH_CLIENT_ID || decrypted.clientId;
-            if (!clientId) throw new Error('clientId not configured');
+            const clientId =
+              that._oauth.clientId ||
+              process.env.OAUTH_CLIENT_ID ||
+              decrypted.clientId;
+            if (!clientId) throw new Error("clientId not configured");
 
-            const clientSecret = that._oauth.clientSecret || process.env.OAUTH_CLIENT_SECRET || decrypted.clientSecret;
-            if (!clientSecret) throw new Error('clientSecret not configured');
+            const clientSecret =
+              that._oauth.clientSecret ||
+              process.env.OAUTH_CLIENT_SECRET ||
+              decrypted.clientSecret;
+            if (!clientSecret) throw new Error("clientSecret not configured");
 
             const useAuthHeader = !!that._oauth.useAuthHeader;
 
@@ -437,16 +474,17 @@ ${text}
             }
 
             const response = await fetch(that._oauth.tokenURL, {
-              method: 'POST',
+              method: "POST",
               body: new URLSearchParams({
-                grant_type: 'refresh_token',
+                grant_type: "refresh_token",
                 refresh_token: refreshToken,
                 client_id: clientId,
                 client_secret: clientSecret,
               }),
               headers: {
-                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-                Accept: 'application/json',
+                "Content-Type":
+                  "application/x-www-form-urlencoded;charset=UTF-8",
+                Accept: "application/json",
                 ...headers,
               },
             });
@@ -457,7 +495,9 @@ ${text}
             if (status === 200) {
               return JSON.parse(text);
             } else {
-              throw new Error('could not get refresh token ' + status + ' ' + text);
+              throw new Error(
+                "could not get refresh token " + status + " " + text
+              );
             }
           };
 
@@ -467,7 +507,8 @@ ${text}
           start({
             config: decrypted,
             oauth: theOAuth,
-            getClient: (arg) => (theOAuth ? theOAuth.getClient(arg) : new Fetcher({...arg})),
+            getClient: (arg) =>
+              theOAuth ? theOAuth.getClient(arg) : new Fetcher({ ...arg }),
             newTask: (name, data) => {
               return new Promise((resolve, reject) => {
                 const packet = transport.newPacket(
@@ -476,7 +517,7 @@ ${text}
                   `_req-${cuid()}`
                 );
 
-                packet.method('connector.task.new');
+                packet.method("connector.task.new");
                 packet.args({
                   name,
                   a: data,
@@ -493,7 +534,7 @@ ${text}
                   `_req-${cuid()}`
                 );
 
-                packet.method('connector.task.update');
+                packet.method("connector.task.update");
                 packet.args({
                   id,
                   a: data,
@@ -529,19 +570,19 @@ ${text}
       process.exit(0);
     };
 
-    process.on('uncaughtException', (e) => {
+    process.on("uncaughtException", (e) => {
       console.log(e);
     });
 
-    process.on('unhandledRejection', (e) => {
+    process.on("unhandledRejection", (e) => {
       console.log(e);
     });
 
-    process.on('SIGTERM', term);
-    process.on('SIGINT', term);
+    process.on("SIGTERM", term);
+    process.on("SIGINT", term);
 
     await server.start();
   }
 }
 
-module.exports = {Connector};
+module.exports = { Connector };

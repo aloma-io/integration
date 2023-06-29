@@ -1,11 +1,11 @@
-import {parseFromFiles} from '@ts-ast-parser/core';
+import { parseFromFiles } from "@ts-ast-parser/core";
 
 const transform = (meta: any) => {
-  if (!meta?.length) throw new Error('metadata is empty');
+  if (!meta?.length) throw new Error("metadata is empty");
   meta = meta[0];
 
   if (meta.getDeclarations()?.length !== 1) {
-    throw new Error('connector file needs to export default class');
+    throw new Error("connector file needs to export default class");
   }
 
   const methods = {};
@@ -15,9 +15,9 @@ const transform = (meta: any) => {
     return !(
       member.isStatic() ||
       member.isInherited() ||
-      member.getKind() !== 'Method' ||
-      member.getModifier() !== 'public' ||
-      member.getName().startsWith('_')
+      member.getKind() !== "Method" ||
+      member.getModifier() !== "public" ||
+      member.getName().startsWith("_")
     );
   });
 
@@ -29,15 +29,19 @@ const transform = (meta: any) => {
         .getSignatures()
         .map((sig: any) => {
           const docs = sig.getJSDoc().serialize() || [];
-          const desc = docs.find((what: any) => what.kind === 'description')?.value;
+          const desc = docs.find(
+            (what: any) => what.kind === "description"
+          )?.value;
 
           const paramDocs =
             docs
-              .filter((what: any) => what.kind === 'param')
+              .filter((what: any) => what.kind === "param")
               .map((what: any) => {
-                return ` * @param {${what.value.type}} ${what.value.name} - ${what.value.description || ''}`;
+                return ` * @param {${what.value.type}} ${what.value.name} - ${
+                  what.value.description || ""
+                }`;
               })
-              .join('\n') || ' *';
+              .join("\n") || " *";
 
           const params = sig
             .getParameters()
@@ -49,37 +53,38 @@ const transform = (meta: any) => {
                   const tmp = param
                     .getNamedElements()
                     .map((p) => {
-                      const defaultVal = p.default != null ? ' = ' + p.default : '';
+                      const defaultVal =
+                        p.default != null ? " = " + p.default : "";
 
                       return `${p.name}${defaultVal}`;
                     })
-                    .join('; ');
+                    .join("; ");
                   return `{${tmp}}: ${param.getType().text}`;
                 case false:
                   return `${param.getName()}: ${param.getType().text}`;
               }
             })
-            .join(', ');
+            .join(", ");
 
           const retVal = sig
             .getReturnType()
-            .type.text.replace(/^Promise</, '')
-            .replace(/>$/, '');
+            .type.text.replace(/^Promise</, "")
+            .replace(/>$/, "");
 
           return `
 /**
- * ${desc || ''}
+ * ${desc || ""}
  *
 ${paramDocs}
  **/    
 declare function ${member.getName()}(${params}): ${retVal};
       `;
         })
-        .join('\n');
+        .join("\n");
     })
-    .join('');
+    .join("");
 
-  return {text, methods: Object.keys(methods)};
+  return { text, methods: Object.keys(methods) };
 };
 
 export default (path: string) => {

@@ -1,9 +1,9 @@
-const fetch = require('node-fetch');
-const {Registration} = require('./registration.cjs');
-const C = require('./constants.cjs');
+const fetch = require("node-fetch");
+const { Registration } = require("./registration.cjs");
+const C = require("./constants.cjs");
 
 class Connection {
-  constructor({config, onStart}) {
+  constructor({ config, onStart }) {
     this.config = config;
     this.onStart = onStart;
   }
@@ -14,12 +14,12 @@ class Connection {
 
     try {
       const response = await fetch(
-        config.url() + 'connect',
+        config.url() + "connect",
         C.augmentRequest(
           {
-            method: 'POST',
+            method: "POST",
             body: JSON.stringify({}),
-            headers: {'Content-Type': 'application/json'},
+            headers: { "Content-Type": "application/json" },
           },
           config
         )
@@ -51,12 +51,12 @@ class Connection {
   async close() {
     try {
       await fetch(
-        this.config.url() + 'disconnect',
+        this.config.url() + "disconnect",
         C.augmentRequest(
           {
-            method: 'POST',
+            method: "POST",
             body: JSON.stringify({}),
-            headers: {'Content-Type': 'application/json'},
+            headers: { "Content-Type": "application/json" },
           },
           this.config
         )
@@ -67,4 +67,4 @@ class Connection {
   }
 }
 
-module.exports = {Connection};
+module.exports = { Connection };
