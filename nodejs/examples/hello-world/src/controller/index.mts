@@ -7,6 +7,6 @@ export default class Controller extends AbstractController {
    */
   async hello(args: any)
   {
-    return "hello world";
+    return {hi: 'world'};
   }
 }
