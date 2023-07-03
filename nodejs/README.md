@@ -2,4 +2,4 @@
 
 ## Creating a new Connector
 
-With the aloma integration SDK cli you can simply create a new connector via `npx @aloma.io/integration-sdk create connectorName --connector-id 1234`.
+With the aloma integration SDK cli you can simply create a new connector via `npx @aloma.io/integration-sdk@latest create connectorName --connector-id 1234`.

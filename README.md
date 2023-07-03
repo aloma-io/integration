@@ -8,7 +8,7 @@ This repository contains the aloma integration SDKs.
 
 ## NodeJS
 
-You can simply create a new connector via `npx @aloma.io/integration-sdk create connectorName --connector-id 1234`.
+You can simply create a new connector via `npx @aloma.io/integration-sdk@latest create connectorName --connector-id 1234`.
 
 ## License
 
