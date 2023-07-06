@@ -248,7 +248,7 @@ class Connector {
       registrationToken: process.env.REGISTRATION_TOKEN,
       endpoint: process.env.DEVICE_ENDPOINT || "https://connect.aloma.io/",
       wsEndpoint:
-        process.env.WEBSOCKET_ENDPOINT || "wss://transport.aloma.io/transport/",
+        process.env.WEBSOCKET_ENDPOINT || "wss://connect.aloma.io/transport/",
       privateKey: process.env.PRIVATE_KEY,
       publicKey: process.env.PUBLIC_KEY,
       introspect,
