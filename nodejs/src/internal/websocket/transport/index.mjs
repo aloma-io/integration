@@ -1,9 +1,10 @@
-const fetch = require("node-fetch");
-const C = require("../connection/constants.cjs");
-const cuid = require("@paralleldrive/cuid2").init({ length: 32 });
-const { DurableWebsocket } = require("./durable.cjs");
-const WebSocket = require("ws");
-const { Packet, Callback } = require("./packet.cjs");
+import C from "../connection/constants.mjs";
+import cuid from "@paralleldrive/cuid2"
+cuid.init({ length: 32 });
+
+import { DurableWebsocket } from "./durable.mjs";
+import WebSocket from "ws";
+import { Packet, Callback } from "./packet.mjs";
 
 const cleanInterval = 45 * 1000;
 const pingInterval = 30 * 1000;
@@ -184,4 +185,4 @@ class Transport {
   }
 }
 
-module.exports = { Transport };
+export { Transport };

@@ -1,5 +1,5 @@
-const fetch = require("node-fetch");
-const C = require("./constants.cjs");
+import fetch from "node-fetch";
+import C from "./constants.mjs";
 
 class Registration {
   constructor(config) {
@@ -37,4 +37,4 @@ class Registration {
   }
 }
 
-module.exports = { Registration };
+export { Registration };

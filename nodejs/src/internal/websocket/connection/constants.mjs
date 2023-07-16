@@ -1,6 +1,6 @@
 const AUTHORIZATION = "Authorization";
 
-module.exports = {
+export default {
   augmentRequest: (what, config) => {
     what.headers = {
       ...what.headers,

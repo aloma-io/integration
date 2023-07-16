@@ -1,5 +1,5 @@
-const C = require("./connection/constants.cjs");
-const JWE = require("../util/jwe/index.cjs");
+import C from "./connection/constants.mjs";
+import JWE from "../util/jwe/index.mjs";
 
 class Config {
   constructor({
@@ -104,4 +104,4 @@ class Config {
   }
 }
 
-module.exports = { Config };
+export { Config };

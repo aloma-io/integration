@@ -11,7 +11,8 @@
     "dev": "./node_modules/typescript/bin/tsc --watch",
     "build": "./node_modules/@aloma.io/integration-sdk/build/cli.mjs build; ./node_modules/typescript/bin/tsc",
     "test": "./node_modules/mocha/bin/_mocha --recursive",
-    "format": "yarn prettier --write src/"
+    "format": "yarn prettier --write src/",
+    "generate-keys": "node node_modules/@aloma.io/integration-sdk/build/internal/util/jwe/cli.mjs"
   },
   "dependencies": {
     "@aloma.io/integration-sdk": "^3"

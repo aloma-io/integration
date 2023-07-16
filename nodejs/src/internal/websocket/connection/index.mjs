@@ -1,6 +1,6 @@
-const fetch = require("node-fetch");
-const { Registration } = require("./registration.cjs");
-const C = require("./constants.cjs");
+import fetch from "node-fetch";
+import { Registration } from "./registration.mjs";
+import C from "./constants.mjs";
 
 class Connection {
   constructor({ config, onStart }) {
@@ -67,4 +67,4 @@ class Connection {
   }
 }
 
-module.exports = { Connection };
+export { Connection };

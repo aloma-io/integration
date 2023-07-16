@@ -4,7 +4,7 @@ import { Command } from "commander";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import JWE from './internal/util/jwe/index.cjs'
+import JWE from './internal/util/jwe/index.mjs'
 import util from 'node:util';
 import ChildProcess from 'node:child_process';
 

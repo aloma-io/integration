@@ -1,4 +1,4 @@
-const jose = require("jose");
+import * as jose from "jose";
 
 class JWE {
   constructor({ algorithm = "PS256" }) {
@@ -70,4 +70,4 @@ class JWE {
   }
 }
 
-module.exports = JWE;
+export default JWE;

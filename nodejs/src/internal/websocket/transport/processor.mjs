@@ -1,4 +1,4 @@
-const { Packet, Callback } = require("./packet.cjs");
+import { Packet, Callback } from "./packet.mjs";
 
 class Processor {
   constructor({ transport, processPacket }) {
@@ -66,4 +66,4 @@ class Processor {
   }
 }
 
-module.exports = { Processor };
+export { Processor };

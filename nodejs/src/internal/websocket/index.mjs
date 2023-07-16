@@ -1,6 +1,6 @@
-const WebSocket = require("ws");
-const { Connection } = require("./connection/index.cjs");
-const { Transport } = require("./transport/index.cjs");
+import WebSocket from "ws";
+import { Connection } from "./connection/index.mjs";
+import { Transport } from "./transport/index.mjs";
 
 class WebsocketConnector {
   constructor({ config, onMessage, onConnect }) {
@@ -43,4 +43,4 @@ class WebsocketConnector {
   }
 }
 
-module.exports = { WebsocketConnector };
+export { WebsocketConnector };

@@ -1,5 +1,5 @@
 import { AbstractController } from "../controller/index.mjs";
-import { Connector } from "../internal/index.cjs";
+import { Connector } from "../internal/index.mjs";
 
 export default class RuntimeContext {
   constructor(private controller: AbstractController, private data: any) {}

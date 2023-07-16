@@ -1,14 +1,19 @@
 // @ts-nocheck
-require("dotenv").config();
-const fs = require("fs");
-const { Config } = require("./websocket/config.cjs");
-const { Connection } = require("./websocket/connection/index.cjs");
-const { Transport } = require("./websocket/transport/index.cjs");
-const { Dispatcher } = require("./dispatcher/index.cjs");
-const { WebsocketConnector } = require("./websocket/index.cjs");
-const JWE = require("./util/jwe/index.cjs");
-const fetch = require("node-fetch");
-const cuid = require("@paralleldrive/cuid2").init({ length: 32 });
+import dotenv from 'dotenv';
+dotenv.config();
+import fs from "node:fs";
+import { Config } from "./websocket/config.mjs";
+import { Connection } from "./websocket/connection/index.mjs";
+import { Transport } from "./websocket/transport/index.mjs";
+import { Dispatcher } from "./dispatcher/index.mjs";
+import { WebsocketConnector } from "./websocket/index.mjs";
+import JWE from "./util/jwe/index.mjs";
+import fetch from "node-fetch";
+import cuid from "@paralleldrive/cuid2"
+import express from 'express';
+import PromClient from 'prom-client'
+
+cuid.init({ length: 32 });
 
 // TODO fetch with retry
 
@@ -209,7 +214,7 @@ class Connector {
     var local = this;
 
     const makeMetrics = () => {
-      const metrics = require("prom-client");
+      const metrics = PromClient;
 
       const defaultLabels = {
         service: local.name,
@@ -224,7 +229,7 @@ class Connector {
     };
 
     const makeMetricsServer = (metrics) => {
-      const app = require("express")();
+      const app = express();
 
       app.get("/metrics", async (request, response, next) => {
         response.status(200);
@@ -585,4 +590,4 @@ ${text}
   }
 }
 
-module.exports = { Connector };
+export {Connector};
