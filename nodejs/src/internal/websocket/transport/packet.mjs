@@ -1,5 +1,5 @@
-import cuid from "@paralleldrive/cuid2";
-cuid.init({ length: 32 });
+import { init } from "@paralleldrive/cuid2";
+const cuid = init({ length: 32 });
 
 class Packet {
   constructor(data = {}) {

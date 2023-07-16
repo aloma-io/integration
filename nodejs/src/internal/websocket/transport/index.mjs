@@ -1,6 +1,6 @@
 import C from "../connection/constants.mjs";
-import cuid from "@paralleldrive/cuid2"
-cuid.init({ length: 32 });
+import { init } from "@paralleldrive/cuid2";
+const cuid = init({ length: 32 });
 
 import { DurableWebsocket } from "./durable.mjs";
 import WebSocket from "ws";

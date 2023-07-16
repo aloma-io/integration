@@ -9,11 +9,10 @@ import { Dispatcher } from "./dispatcher/index.mjs";
 import { WebsocketConnector } from "./websocket/index.mjs";
 import JWE from "./util/jwe/index.mjs";
 import fetch from "node-fetch";
-import cuid from "@paralleldrive/cuid2"
+import { init } from "@paralleldrive/cuid2";
+const cuid = init({ length: 32 });
 import express from 'express';
 import PromClient from 'prom-client'
-
-cuid.init({ length: 32 });
 
 // TODO fetch with retry
 
