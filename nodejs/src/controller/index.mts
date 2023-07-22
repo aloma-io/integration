@@ -14,7 +14,7 @@ export abstract class AbstractController {
     throw new Error("method not found");
   }
 
-  protected endpoint(arg: any): Promise<any> {
+  protected async endpoint(arg: any): Promise<any> {
     throw new Error("method not found");
   }
 

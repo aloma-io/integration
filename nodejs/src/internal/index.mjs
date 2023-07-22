@@ -72,12 +72,33 @@ class Fetcher {
 
     if (retries == null) retries = local.retry;
 
-    try {
-      const theURL = `${
-        baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
-      }${url}`.replace(/\/\/+/gi, "/");
+    const theURL = `${
+      baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
+    }${url}`.replace(/\/\/+/gi, "/");
 
+    try {
       await local.customize(options, args);
+
+      if (!options?.headers || !options?.headers?.Accept)
+      {
+        options.headers = {
+          ...options.headers,
+          Accept: 'application/json'
+        }
+      }
+      
+      if (!options?.headers || !options?.headers?.['Content-type'])
+      {
+        options.headers = {
+          ...options.headers,
+          'Content-type': 'application/json'
+        }
+      }
+      
+      if (!(options?.method === 'GET' || options?.method === 'HEAD') && options?.body && !(typeof(options.body) === 'string') && options?.headers?.['Content-type'] === 'application/json')
+      {
+        options.body = JSON.stringify(options.body)
+      }
 
       const ret = await fetch(theURL, options);
       const status = await ret.status;
@@ -94,7 +115,7 @@ class Fetcher {
     } catch (e) {
       --retries;
 
-      console.log(e);
+      console.log(theURL, e);
 
       if (retries <= 0) throw e;
 
@@ -153,9 +174,9 @@ class OAuthFetcher extends Fetcher {
   }
 
   async customize(options, args = {}) {
+    const local = this;
     const token = await local.getToken(args.forceTokenRefresh);
 
-    options = { ...options };
     options.headers = {
       ...options.headers,
       Authorization: `Bearer ${token}`,
@@ -512,7 +533,7 @@ ${text}
             config: decrypted,
             oauth: theOAuth,
             getClient: (arg) =>
-              theOAuth ? theOAuth.getClient(arg) : new Fetcher({ ...arg }),
+              theOAuth ? theOAuth.getClient(arg) : new Fetcher(arg),
             newTask: (name, data) => {
               return new Promise((resolve, reject) => {
                 const packet = transport.newPacket(
