@@ -144,7 +144,7 @@ class Dispatcher {
               "toString",
               "toSource",
               "prototype",
-            ].includes(what)
+            ].includes(what),
         )
         .slice(0, 20);
 
@@ -155,7 +155,7 @@ class Dispatcher {
       return method
         ? method(variables)
         : _resolvers.__default(
-            variables ? { ...variables, __method: query } : variables
+            variables ? { ...variables, __method: query } : variables,
           );
     };
 
@@ -202,4 +202,4 @@ class Dispatcher {
   }
 }
 
-export {Dispatcher};
+export { Dispatcher };

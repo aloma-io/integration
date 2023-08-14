@@ -63,7 +63,7 @@ class JWE {
       {
         issuer: this.issuer,
         audience,
-      }
+      },
     );
 
     return payload._data;

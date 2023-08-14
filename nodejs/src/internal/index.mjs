@@ -1,5 +1,5 @@
 // @ts-nocheck
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 dotenv.config();
 import fs from "node:fs";
 import { Config } from "./websocket/config.mjs";
@@ -11,8 +11,8 @@ import JWE from "./util/jwe/index.mjs";
 import fetch from "node-fetch";
 import { init } from "@paralleldrive/cuid2";
 const cuid = init({ length: 32 });
-import express from 'express';
-import PromClient from 'prom-client'
+import express from "express";
+import PromClient from "prom-client";
 
 // TODO fetch with retry
 
@@ -29,7 +29,7 @@ const reply = (arg, packet, transport) => {
   if (!packet.cb()) {
     console.dir(
       { msg: "cannot reply to packet without cb", arg, packet },
-      { depth: null }
+      { depth: null },
     );
     return;
   }
@@ -79,25 +79,27 @@ class Fetcher {
     try {
       await local.customize(options, args);
 
-      if (!options?.headers || !options?.headers?.Accept)
-      {
+      if (!options?.headers || !options?.headers?.Accept) {
         options.headers = {
           ...options.headers,
-          Accept: 'application/json'
-        }
+          Accept: "application/json",
+        };
       }
-      
-      if (!options?.headers || !options?.headers?.['Content-type'])
-      {
+
+      if (!options?.headers || !options?.headers?.["Content-type"]) {
         options.headers = {
           ...options.headers,
-          'Content-type': 'application/json'
-        }
+          "Content-type": "application/json",
+        };
       }
-      
-      if (!(options?.method === 'GET' || options?.method === 'HEAD') && options?.body && !(typeof(options.body) === 'string') && options?.headers?.['Content-type'] === 'application/json')
-      {
-        options.body = JSON.stringify(options.body)
+
+      if (
+        !(options?.method === "GET" || options?.method === "HEAD") &&
+        options?.body &&
+        !(typeof options.body === "string") &&
+        options?.headers?.["Content-type"] === "application/json"
+      ) {
+        options.body = JSON.stringify(options.body);
       }
 
       const ret = await fetch(theURL, options);
@@ -164,7 +166,7 @@ class OAuthFetcher extends Fetcher {
           resolve(
             await local.fetch(url, options, retries, {
               forceTokenRefresh: e.status === 401,
-            })
+            }),
           );
         } catch (e) {
           reject(e);
@@ -431,13 +433,13 @@ ${text}
                 const ret = JSON.parse(text);
                 if (ret.error) {
                   throw new Error(
-                    `${status} ${ret.error} ${ret.error_description || ""}`
+                    `${status} ${ret.error} ${ret.error_description || ""}`,
                   );
                 } else if (ret.access_token) {
                   return { ...ret };
                 } else {
                   throw new Error(
-                    status + " response has no access_token - " + text
+                    status + " response has no access_token - " + text,
                   );
                 }
               } else {
@@ -521,7 +523,7 @@ ${text}
               return JSON.parse(text);
             } else {
               throw new Error(
-                "could not get refresh token " + status + " " + text
+                "could not get refresh token " + status + " " + text,
               );
             }
           };
@@ -539,7 +541,7 @@ ${text}
                 const packet = transport.newPacket(
                   {},
                   (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
-                  `_req-${cuid()}`
+                  `_req-${cuid()}`,
                 );
 
                 packet.method("connector.task.new");
@@ -556,7 +558,7 @@ ${text}
                 const packet = transport.newPacket(
                   {},
                   (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
-                  `_req-${cuid()}`
+                  `_req-${cuid()}`,
                 );
 
                 packet.method("connector.task.update");
@@ -610,4 +612,4 @@ ${text}
   }
 }
 
-export {Connector};
+export { Connector };

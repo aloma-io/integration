@@ -47,7 +47,7 @@ export abstract class AbstractController {
     client: any,
     newTask: any,
     updateTask: any,
-    getClient: any
+    getClient: any,
   ): Promise<void> {
     this.config = config;
     this.client = client;

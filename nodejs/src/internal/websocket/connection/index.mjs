@@ -21,8 +21,8 @@ class Connection {
             body: JSON.stringify({}),
             headers: { "Content-Type": "application/json" },
           },
-          config
-        )
+          config,
+        ),
       );
 
       if (response.status === 401) {
@@ -58,8 +58,8 @@ class Connection {
             body: JSON.stringify({}),
             headers: { "Content-Type": "application/json" },
           },
-          this.config
-        )
+          this.config,
+        ),
       );
     } catch (e) {
       // blank

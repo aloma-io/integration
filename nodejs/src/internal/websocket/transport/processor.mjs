@@ -28,7 +28,7 @@ class Processor {
     if (packet.args().packet) {
       await local.processPacket0(
         local.transport.newPacket(packet.args().packet),
-        packet
+        packet,
       );
     } else {
       await local.processPacket0(packet, packet);

@@ -29,9 +29,8 @@ const transform = (meta: any) => {
         .getSignatures()
         .map((sig: any) => {
           const docs = sig.getJSDoc().serialize() || [];
-          const desc = docs.find(
-            (what: any) => what.kind === "description"
-          )?.value;
+          const desc = docs.find((what: any) => what.kind === "description")
+            ?.value;
 
           const paramDocs =
             docs

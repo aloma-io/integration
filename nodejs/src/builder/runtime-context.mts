@@ -2,7 +2,10 @@ import { AbstractController } from "../controller/index.mjs";
 import { Connector } from "../internal/index.mjs";
 
 export default class RuntimeContext {
-  constructor(private controller: AbstractController, private data: any) {}
+  constructor(
+    private controller: AbstractController,
+    private data: any,
+  ) {}
 
   async start(): Promise<void> {
     const controller = this.controller;
@@ -54,12 +57,12 @@ export default class RuntimeContext {
             oauth,
             newTask,
             updateTask,
-            getClient
+            getClient,
           );
         } catch (e) {
           console.log(e);
         }
-      }
+      },
     );
 
     connector.run();

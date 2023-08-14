@@ -4,9 +4,9 @@ import { Command } from "commander";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-import JWE from './internal/util/jwe/index.mjs'
-import util from 'node:util';
-import ChildProcess from 'node:child_process';
+import JWE from "./internal/util/jwe/index.mjs";
+import util from "node:util";
+import ChildProcess from "node:child_process";
 
 const exec = util.promisify(ChildProcess.exec);
 
@@ -30,7 +30,7 @@ const extract = ({ target, name, connectorId }) => {
 
   files.forEach(({ name, dir }) => {
     if (dir) {
-      fs.mkdirSync(`${target}/${dir}`, {recursive: true});
+      fs.mkdirSync(`${target}/${dir}`, { recursive: true });
     }
 
     const content = fs.readFileSync(`${source}/${dir}/${name}`, {
@@ -40,26 +40,28 @@ const extract = ({ target, name, connectorId }) => {
   });
 
   const content = JSON.parse(
-    fs.readFileSync(`${target}/package.json`, { encoding: "utf-8" })
+    fs.readFileSync(`${target}/package.json`, { encoding: "utf-8" }),
   );
 
   content.name = name;
   content.connectorId = connectorId;
 
   fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 2));
-  fs.writeFileSync(`${target}/.gitignore`, `.DS_Store
+  fs.writeFileSync(
+    `${target}/.gitignore`,
+    `.DS_Store
 node_modules
 build
-.env`);
+.env`,
+  );
 };
 
-const generateKeys = async ({target}) => 
-{
+const generateKeys = async ({ target }) => {
   const jwe = new JWE({});
   await jwe.newPair();
 
   const priv = await jwe.exportPrivateAsBase64();
-  const pub  = await jwe.exportPublicAsBase64();
+  const pub = await jwe.exportPublicAsBase64();
 
   const content = `REGISTRATION_TOKEN=
 PRIVATE_KEY=${priv}
@@ -90,32 +92,34 @@ program
 
     fs.mkdirSync(target);
 
-    console.log('Creating connector ...');
+    console.log("Creating connector ...");
     extract({ ...options, target, name });
-    
-    console.log('Generating keys ...');
-    await generateKeys({target});
-    
-    console.log('Installing dependencies ...');
+
+    console.log("Generating keys ...");
+    await generateKeys({ target });
+
+    console.log("Installing dependencies ...");
     await exec(`cd ${target}; yarn`);
-    
-    console.log('Building ...');
+
+    console.log("Building ...");
     await exec(`cd ${target}; yarn build`);
-    
+
     console.log(`
 Success!
       
 1.) Add the connector to a workspace
 2.) Edit ./${name}/.env and insert the registration token
-3.) Start the connector with cd ./${name}/; yarn start`)
+3.) Start the connector with cd ./${name}/; yarn start`);
   });
 
 program
   .command("build")
   .description("Build the current connector project")
   .action(async (str, options) => {
-    const {stdout, stderr} = await exec(`rm -rf build; mkdir -p build/controller; cp ./src/controller/index.mts ./build/controller/.controller-for-types.mts;`);
-    
+    const { stdout, stderr } = await exec(
+      `rm -rf build; mkdir -p build/controller; cp ./src/controller/index.mts ./build/controller/.controller-for-types.mts;`,
+    );
+
     if (stdout) console.log(stdout);
   });
 

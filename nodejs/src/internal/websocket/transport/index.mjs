@@ -65,7 +65,7 @@ class Transport {
     const ws = (local.ws = new WebSocket(
       config.wsUrl(),
       ["connector"],
-      C.augmentRequest({ headers: {} }, config)
+      C.augmentRequest({ headers: {} }, config),
     ));
 
     ws.on("open", () => {

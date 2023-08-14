@@ -27,8 +27,8 @@ class Registration {
           }),
           headers: { "Content-Type": "application/json" },
         },
-        config
-      )
+        config,
+      ),
     );
 
     if (response.status === 200) return (await response.json()).key;

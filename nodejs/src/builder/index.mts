@@ -52,7 +52,7 @@ export class Builder {
     const packageJson = JSON.parse(
       fs.readFileSync(__dirname + "/../../../../../package.json", {
         encoding: "utf-8",
-      })
+      }),
     );
 
     notEmpty((data.id = packageJson.connectorId), "id");
