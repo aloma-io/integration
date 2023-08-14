@@ -27,7 +27,7 @@
   "dependencies": {
     "@paralleldrive/cuid2": "^2",
     "@ts-ast-parser/core": "^0",
-    "@types/node": "^18",
+    "@types/node": "^16",
     "commander": "^11",
     "dotenv": "*",
     "express": "^4",
