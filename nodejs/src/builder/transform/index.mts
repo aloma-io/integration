@@ -67,8 +67,8 @@ const transform = (meta: any) => {
             .join(", ");
 
           const retVal = sig
-            .getReturnType()
-            .type.text.replace(/^Promise</, "")
+            .serialize()
+            .return.type.text.replace(/^Promise</, "")
             .replace(/>$/, "");
 
           return `
@@ -87,6 +87,7 @@ declare function ${member.getName()}(${params}): ${retVal};
   return { text, methods: Object.keys(methods) };
 };
 
-export default (path: string) => {
-  return transform(parseFromFiles([path]));
+export default async (path: string) => {
+  const parsed = await parseFromFiles([path]);
+  return transform(parsed?.result || []);
 };

@@ -63,7 +63,7 @@ export class Builder {
     notEmpty(this.data.controller, "controller");
 
     const content = fs.readFileSync(this.data.controller);
-    const { text, methods } = parseTypes(this.data.controller);
+    const { text, methods } = await parseTypes(this.data.controller);
 
     this.data.types = text;
     this.data.methods = methods;
