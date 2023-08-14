@@ -2,4 +2,4 @@
 
 cd /connector/
 
-exec node src/index.js $@
+exec node build/index.mjs $@
