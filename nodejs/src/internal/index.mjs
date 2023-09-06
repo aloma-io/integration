@@ -45,9 +45,10 @@ const unwrap = async (ret, options) => {
 };
 
 class Fetcher {
-  constructor({ retry = 5, baseUrl }) {
+  constructor({ retry = 5, baseUrl, onResponse }) {
     this.retry = retry;
     this.baseUrl = baseUrl;
+    this.onResponse = onResponse;
   }
 
   async customize(options, args = {}) {}
@@ -112,6 +113,11 @@ class Fetcher {
         e.status = status;
         throw e;
       }
+      
+      if (local.onResponse)
+      {
+        await local.onResponse(ret);
+      }
 
       return unwrap(ret, options);
     } catch (e) {
@@ -127,8 +133,8 @@ class Fetcher {
 }
 
 class OAuthFetcher extends Fetcher {
-  constructor({ oauth, retry = 5, getToken, baseUrl }) {
-    super({ retry, baseUrl });
+  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse }) {
+    super({ retry, baseUrl, onResponse });
 
     this.oauth = oauth;
     this._getToken = getToken;
