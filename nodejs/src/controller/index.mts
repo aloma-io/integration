@@ -22,7 +22,7 @@ export abstract class AbstractController {
     throw new Error("not implemented");
   }
 
-  protected getClient({ baseUrl }: { baseUrl: string }): Promise<any> {
+  protected getClient({ baseUrl, onResponse }: { baseUrl: string, onResponse?: (response: any) => void }): Promise<any> {
     throw new Error("not implemented");
   }
 
