@@ -40,8 +40,15 @@ const reply = (arg, packet, transport) => {
 const unwrap = async (ret, options) => {
   if (options?.text) return await ret.text();
   if (options?.base64) return (await ret.buffer()).toString("base64");
-
-  return await ret.json();
+  
+  const text = await ret.text();
+  
+  try
+  {
+    return JSON.parse(text);
+  } catch(e) {
+    throw (e + ' ' + text)
+  }
 };
 
 class Fetcher {
