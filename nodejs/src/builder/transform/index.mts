@@ -31,7 +31,18 @@ const transform = (meta: any) => {
           const docs = sig.getJSDoc().serialize() || [];
           const desc = docs.find((what: any) => what.kind === "description")
             ?.value;
+            
+          const example = docs.find((what: any) => what.kind === "example")
+            ?.value;
 
+          let eg;
+          if (example)
+          {
+            const parts = example.split(/```/);
+            const backticks = '```';
+            eg = `@example ${parts[0]}\n${backticks}${parts[1]}${backticks}`;
+          }
+          
           const paramDocs =
             docs
               .filter((what: any) => what.kind === "param")
@@ -46,7 +57,7 @@ const transform = (meta: any) => {
             .getParameters()
             .map((param: any) => {
               const serialized = param.serialize();
-
+              
               switch (!!param.isNamed()) {
                 case true:
                   const tmp = param
@@ -58,13 +69,12 @@ const transform = (meta: any) => {
                       return `${p.name}${defaultVal}`;
                     })
                     .join("; ");
-                  return `{${tmp}}: ${param.getType().text}`;
+                  return `{${tmp}}: ${serialized.type.text}`;
                 case false:
-                  return `${param.getName()}: ${param.getType().text}`;
+                  return `${serialized.name}: ${serialized.type.text}`;
               }
             })
             .join(", ");
-
           const retVal = sig
             .serialize()
             .return.type.text.replace(/^Promise</, "")
@@ -75,6 +85,8 @@ const transform = (meta: any) => {
  * ${desc || ""}
  *
 ${paramDocs}
+ *
+ * ${eg || ''}
  **/    
 declare function ${member.getName()}(${params}): ${retVal};
       `;
