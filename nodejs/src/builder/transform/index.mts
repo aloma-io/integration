@@ -40,41 +40,44 @@ const transform = (meta: any) => {
           {
             const parts = example.split(/```/);
             const backticks = '```';
-            eg = `@example ${parts[0]}\n${backticks}${parts[1]}${backticks}`;
+            eg = `@example ${parts[0] || 'usage'}\n${backticks}${parts[1]}${backticks}`;
           }
           
           const paramDocs =
             docs
               .filter((what: any) => what.kind === "param")
-              .map((what: any) => {
-                return ` * @param {${what.value.type}} ${what.value.name} - ${
-                  what.value.description || ""
-                }`;
-              })
-              .join("\n") || " *";
 
           const params = sig
             .getParameters()
+            .filter((param) => param.isNamed())
             .map((param: any) => {
               const serialized = param.serialize();
-              
-              switch (!!param.isNamed()) {
-                case true:
-                  const tmp = param
-                    .getNamedElements()
-                    .map((p) => {
-                      const defaultVal =
-                        p.default != null ? " = " + p.default : "";
 
-                      return `${p.name}${defaultVal}`;
-                    })
-                    .join("; ");
-                  return `{${tmp}}: ${serialized.type.text}`;
-                case false:
-                  return `${serialized.name}: ${serialized.type.text}`;
-              }
+              const prefix = param
+                .getNamedElements()
+                .map((p) => {
+                  const defaultVal =
+                    p.getDefault() != null ? " = " + p.getDefault() : "";
+
+                  return `${p.getName()}${defaultVal}`;
+                })
+                .join("; ");
+                
+              const suffix = serialized
+                .type
+                .properties
+                .map((p) => {
+                  const comment = paramDocs.find((what) => what.value.name === p.name);
+                  const desc = (comment?.value.description || '').replace(/\\@/gi, '@');
+                  
+                  return `\n/**\n${desc}\n */\n ${p.name}: ${p.type.text}`;
+                })
+                .join("; ");
+                
+              return `{${prefix}}: {${suffix}}`;
             })
             .join(", ");
+            
           const retVal = sig
             .serialize()
             .return.type.text.replace(/^Promise</, "")
@@ -83,8 +86,6 @@ const transform = (meta: any) => {
           return `
 /**
  * ${desc || ""}
- *
-${paramDocs}
  *
  * ${eg || ''}
  **/    
@@ -100,5 +101,5 @@ declare function ${member.getName()}(${params}): ${retVal};
 
 export default async (path: string) => {
   const parsed = await parseFromFiles([path]);
-  return transform(parsed?.result || []);
+  return transform(parsed.project?.getModules() || []);
 };

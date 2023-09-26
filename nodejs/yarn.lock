@@ -35,10 +35,10 @@
   dependencies:
     "@noble/hashes" "^1.1.5"
 
-"@ts-ast-parser/core@^0.4.0":
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/@ts-ast-parser/core/-/core-0.4.0.tgz#0954e6c832f5206fba93eb5f8b8317cee307ebbf"
-  integrity sha512-Qcp/4ypCl1E+DNm8e4SyT5vr+2wPlU7+WT0bwZXNYFbvp7uiJsxGjOv6rX7oVX+/9Bry8TeQvjZKnW2HQJndow==
+"@ts-ast-parser/core@^0.5":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@ts-ast-parser/core/-/core-0.5.0.tgz#a670d03bee3ad288d4d033fb9b6068c2c8623c65"
+  integrity sha512-9lRSMdwFUH88uSRVnoasiuvOp6JYiU5GkE7OTCAQ6ZZkfe/yxppbLzor3oPhLLGleFZAg433kTnpqswUEfji6w==
   dependencies:
     "@typescript/vfs" "^1.5.0"
     comment-parser "^1.4.0"
