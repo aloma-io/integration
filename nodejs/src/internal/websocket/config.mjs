@@ -13,6 +13,7 @@ class Config {
     publicKey,
     introspect,
     configSchema,
+    icon
   }) {
     this._token = null;
     this._registrationToken = registrationToken;
@@ -27,6 +28,7 @@ class Config {
     this._jwe = new JWE({});
     this._introspect = introspect;
     this._configSchema = configSchema;
+    this._icon = icon;
 
     if (!registrationToken)
       throw new Error("empty registration token (set env.REGISTRATION_TOKEN)");
@@ -97,6 +99,10 @@ class Config {
 
   token() {
     return this._token;
+  }
+  
+  icon() {
+    return this._icon;
   }
 
   setToken(what) {

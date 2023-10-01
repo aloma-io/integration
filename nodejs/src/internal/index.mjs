@@ -235,10 +235,11 @@ class OAuth {
 }
 
 class Connector {
-  constructor({ version, id, name }) {
+  constructor({ version, id, name, icon }) {
     this.id = id;
     this.version = version;
     this.name = name;
+    this.icon = icon;
   }
 
   configure() {
@@ -293,6 +294,7 @@ class Connector {
       publicKey: process.env.PUBLIC_KEY,
       introspect,
       configSchema,
+      icon
     });
 
     if (Object.keys(configSchema().fields).length) {

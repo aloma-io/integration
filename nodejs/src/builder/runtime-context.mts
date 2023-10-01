@@ -18,6 +18,7 @@ export default class RuntimeContext {
       id: data.id,
       version: data.version,
       name: `${data.id}/${data.version}`,
+      icon: data.icon
     });
 
     const configuration = connector.configure().config(data.config || {});

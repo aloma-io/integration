@@ -37,13 +37,32 @@ export class Builder {
   async build(): Promise<RuntimeContext> {
     await this.parsePackageJson();
     await this.discoverTypes();
-
+    await this.checkLogo();
+    
     // @ts-ignore
     const Controller = (
       await import(__dirname + "/../../../../../build/controller/index.mjs")
     ).default;
 
     return new RuntimeContext(new Controller(), this.data);
+  }
+  
+  private async checkLogo() {
+    const data = this.data;
+    const root = __dirname + "/../../../../../"
+    
+    const logo = ['logo.png'].find((name) => 
+    {
+      try
+      {
+        fs.readFileSync(`${root}/${name}`);
+        return `${root}/${name}`;
+      } catch(e) {
+        // blank
+      }
+    })
+    
+    data.logo = logo;
   }
 
   private async parsePackageJson() {

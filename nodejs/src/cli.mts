@@ -52,7 +52,8 @@ const extract = ({ target, name, connectorId }) => {
     `.DS_Store
 node_modules
 build
-.env`,
+.env
+yarn-error.log`,
   );
 };
 
