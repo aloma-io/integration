@@ -294,7 +294,7 @@ class Connector {
       publicKey: process.env.PUBLIC_KEY,
       introspect,
       configSchema,
-      icon
+      icon: this.icon
     });
 
     if (Object.keys(configSchema().fields).length) {
