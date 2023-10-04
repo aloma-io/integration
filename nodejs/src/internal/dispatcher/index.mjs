@@ -38,6 +38,7 @@ class Dispatcher {
           name: "OAuth Result",
           placeholder: "will be set by finishing the oauth flow",
           type: "managed",
+          optional: !!arg.connectionOptional,
         },
       },
     });
@@ -89,8 +90,10 @@ ${arg.configurableClientScope}
     return this;
   }
 
-  config({ fields, oauth }) {
+  config({ fields, oauth, description, summary }) {
     this._config.oauth = this._config.oauth || oauth;
+    this._config.description = this._config.description || description;
+    this._config.summary = this._config.summary || summary;
     this._config.fields = { ...fields, ...this._config.fields };
 
     return this;
@@ -106,9 +109,9 @@ ${arg.configurableClientScope}
     this.config({
       fields: {
         _endpointToken: {
-          name: "Endpoint Token (set to enable the endpoint)",
+          name: "Endpoint Token",
           placeholder: "e.g. 1234",
-          type: "line",
+          type: !!notOptional?"managed":"line",
           plain: true,
           optional: !notOptional,
         },

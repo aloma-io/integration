@@ -101,5 +101,6 @@ declare function ${member.getName()}(${params}): ${retVal};
 
 export default async (path: string) => {
   const parsed = await parseFromFiles([path]);
+  if (parsed.errors?.length) throw new Error(path + ' ' + JSON.stringify(parsed.errors));
   return transform(parsed.project?.getModules() || []);
 };

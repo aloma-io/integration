@@ -342,7 +342,7 @@ ${text}
             const value = secrets[key];
             if (!value) continue;
 
-            if (fields[key]?.plain) {
+            if (fields[key]?.plain || ['endpointUrl'].includes(key)) {
               decrypted[key] = value;
             } else {
               try {
