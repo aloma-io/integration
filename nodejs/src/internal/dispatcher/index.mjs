@@ -49,11 +49,13 @@ class Dispatcher {
             name: "OAuth Client ID",
             placeholder: "e.g. 1234",
             type: "line",
+            optional: !!arg.configurableClientOptional,
             plain: true
           },
           clientSecret: {
             name: "OAuth Client Secret",
             placeholder: "e.g. axd5xde",
+            optional: !!arg.configurableClientOptional,
             type: "line",
           },
         },
