@@ -61,6 +61,24 @@ class Dispatcher {
         },
       });
     }
+    
+    if (arg.configurableClientScopes) {
+      this.config({
+        fields: {
+          scope: {
+            name: "OAuth Scope",
+            placeholder: "e.g. x y z",
+            type: "line",
+            description: `Default Scope:
+            
+${arg.configurableClientScopes}
+`,
+            optional: !!arg.configurableClientScopes,
+            plain: true
+          }
+        },
+      });
+    }
 
     return this;
   }
