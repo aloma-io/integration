@@ -12,7 +12,7 @@ class Registration {
     const configSchema = config.configSchema();
     const intro = await config.introspect();
     const icon = config.icon();
-
+    
     const response = await fetch(
       config.url() + "register",
       C.augmentRegistration(

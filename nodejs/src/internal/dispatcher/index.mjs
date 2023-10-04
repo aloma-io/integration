@@ -49,6 +49,7 @@ class Dispatcher {
             name: "OAuth Client ID",
             placeholder: "e.g. 1234",
             type: "line",
+            plain: true
           },
           clientSecret: {
             name: "OAuth Client Secret",

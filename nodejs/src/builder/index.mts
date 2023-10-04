@@ -37,7 +37,7 @@ export class Builder {
   async build(): Promise<RuntimeContext> {
     await this.parsePackageJson();
     await this.discoverTypes();
-    await this.checkLogo();
+    await this.checkIcon();
     
     // @ts-ignore
     const Controller = (
@@ -47,22 +47,11 @@ export class Builder {
     return new RuntimeContext(new Controller(), this.data);
   }
   
-  private async checkLogo() {
+  private async checkIcon() {
     const data = this.data;
     const root = __dirname + "/../../../../../"
     
-    const logo = ['logo.png'].find((name) => 
-    {
-      try
-      {
-        fs.readFileSync(`${root}/${name}`);
-        return `${root}/${name}`;
-      } catch(e) {
-        // blank
-      }
-    })
-    
-    data.logo = logo;
+    data.icon = `${root}/logo.png`;
   }
 
   private async parsePackageJson() {
