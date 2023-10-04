@@ -62,7 +62,7 @@ class Dispatcher {
       });
     }
     
-    if (arg.configurableClientScopes) {
+    if (arg.configurableClientScope) {
       this.config({
         fields: {
           scope: {
