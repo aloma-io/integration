@@ -102,7 +102,7 @@ ${arg.configurableClientScope}
     return this;
   }
 
-  endpoint(what) {
+  endpoint(what, notOptional) {
     this.config({
       fields: {
         _endpointToken: {
@@ -110,7 +110,7 @@ ${arg.configurableClientScope}
           placeholder: "e.g. 1234",
           type: "line",
           plain: true,
-          optional: true,
+          optional: !notOptional,
         },
       },
     });
