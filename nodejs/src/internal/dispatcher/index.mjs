@@ -71,9 +71,9 @@ class Dispatcher {
             type: "line",
             description: `Default Scope:
             
-${arg.configurableClientScopes}
+${arg.configurableClientScope}
 `,
-            optional: !!arg.configurableClientScopes,
+            optional: true,
             plain: true
           }
         },
