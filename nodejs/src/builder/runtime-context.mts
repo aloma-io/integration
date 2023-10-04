@@ -56,7 +56,7 @@ export default class RuntimeContext {
     configuration.types(data.types).resolvers(resolvers);
 
     if (data.options?.endpoint?.enabled) {
-      configuration.endpoint((arg) => controller.__endpoint(arg));
+      configuration.endpoint((arg) => controller.__endpoint(arg), data.options?.endpoint?.required);
     }
 
     if (data.auth?.oauth) {
