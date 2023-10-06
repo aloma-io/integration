@@ -4,7 +4,7 @@ export abstract class AbstractController {
 
   protected async start(): Promise<void> {}
 
-  protected async stop(): Promise<void> {}
+  protected async stop(isShutdown: boolean = false): Promise<void> {}
 
   protected configQuery(arg: any): Promise<any> {
     return Promise.resolve({});
@@ -58,7 +58,7 @@ export abstract class AbstractController {
     await this.start();
   }
 
-  async _doStop(): Promise<void> {
-    await this.stop();
+  async _doStop(isShutdown: boolean = false): Promise<void> {
+    await this.stop(isShutdown);
   }
 }

@@ -81,5 +81,14 @@ export default class RuntimeContext {
     );
 
     connector.run();
+    
+    const term = async () => {
+      await controller._doStop(true);
+
+      process.exit(0);
+    };
+
+    process.on("SIGTERM", term);
+    process.on("SIGINT", term);
   }
 }
