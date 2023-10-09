@@ -33,7 +33,7 @@
     "express": "^4",
     "jose": "^4",
     "node-fetch": "^3",
-    "prom-client": "^14",
+    "prom-client": "^15",
     "ws": "^8"
   },
   "optionalDependencies": {
