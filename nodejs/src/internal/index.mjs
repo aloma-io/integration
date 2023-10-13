@@ -188,6 +188,13 @@ class OAuthFetcher extends Fetcher {
     });
   }
 
+  async periodicRefresh() {
+    const local = this, oauth = local.oauth;
+    if (!oauth.refreshToken()) return;
+    
+    await local.getToken(true);
+  }
+
   async customize(options, args = {}) {
     const local = this;
     const token = await local.getToken(args.forceTokenRefresh);
@@ -205,6 +212,7 @@ class OAuth {
     this._data = data || {};
     this.saveOAuthResult = saveOAuthResult;
     this.obtainViaRefreshToken = getRefreshToken;
+    this.clients = [];
   }
 
   data() {
@@ -229,8 +237,22 @@ class OAuth {
     await this.saveOAuthResult(this._data);
   }
 
+  async periodicRefresh() {
+    const clients = this.clients;
+    
+    console.log('refreshing oauth clients', clients.length)
+    
+    for (let i = 0; i < clients.length; ++i) {
+      const client = clients[0];
+      
+      await client.periodicRefresh();
+    }
+  }
+
   getClient(arg = {}) {
-    return new OAuthFetcher({ ...arg, oauth: this });
+    const client = new OAuthFetcher({ ...arg, oauth: this });
+    this.clients.push(client);
+    return client;
   }
 }
 
@@ -546,6 +568,24 @@ ${text}
           const theOAuth = decrypted.oauthResult
             ? new OAuth(decrypted.oauthResult, saveOAuthResult, getRefreshToken)
             : null;
+
+          if (theOAuth) {
+            clearInterval(this._refreshOAuthToken);
+            
+            if (!(this._oauth.noPeriodicTokenRefresh === false)) {
+              this._refreshOAuthToken = setInterval(async () => {
+                
+                try
+                {
+                  await theOAuth.periodicRefresh();
+                } catch(e) {
+                  console.log('periodic refresh', e);
+                }
+              }, 4 * 60 * 60 * 15000);
+            }
+            
+          }
+            
           start({
             config: decrypted,
             oauth: theOAuth,
