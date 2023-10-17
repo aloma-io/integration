@@ -378,16 +378,16 @@ ${text}
           this.startOAuth = async function (args) {
             if (!this._oauth) throw new Error("oauth not configured");
 
-            const clientId =
-              this._oauth.clientId ||
-              process.env.OAUTH_CLIENT_ID ||
-              decrypted.clientId;
+            const clientId = process.env.OAUTH_CLIENT_ID ||
+              decrypted.clientId ||
+            this._oauth.clientId;
+            
             if (!clientId) throw new Error("clientId not configured");
 
             const scopes =
-              this._oauth.scope ||
               process.env.OAUTH_SCOPE ||
               decrypted.scope ||
+                          this._oauth.scope ||
               "";
             const useCodeChallenge = !!that._oauth.useCodeChallenge;
 
@@ -412,16 +412,18 @@ ${text}
               if (!arg.code || !arg.redirectURI)
                 throw new Error("need code and redirectUri");
 
-              const clientId =
-                that._oauth.clientId ||
-                process.env.OAUTH_CLIENT_ID ||
-                decrypted.clientId;
+              const clientId =                              process.env.OAUTH_CLIENT_ID || 
+                              decrypted.clientId ||
+
+              that._oauth.clientId;
+
+;
               if (!clientId) throw new Error("clientId not configured");
 
               const clientSecret =
-                that._oauth.clientSecret ||
                 process.env.OAUTH_CLIENT_SECRET ||
-                decrypted.clientSecret;
+                decrypted.clientSecret ||
+              that._oauth.clientSecret;
               if (!clientSecret) throw new Error("clientSecret not configured");
 
               const additionalTokenArgs = that._oauth.additionalTokenArgs || {};
@@ -515,15 +517,17 @@ ${text}
 
           const getRefreshToken = async (refreshToken) => {
             const clientId =
-              that._oauth.clientId ||
+
               process.env.OAUTH_CLIENT_ID ||
-              decrypted.clientId;
+              decrypted.clientId || 
+                          that._oauth.clientId;
             if (!clientId) throw new Error("clientId not configured");
 
             const clientSecret =
-              that._oauth.clientSecret ||
+
               process.env.OAUTH_CLIENT_SECRET ||
-              decrypted.clientSecret;
+              decrypted.clientSecret ||
+                          that._oauth.clientSecret;
             if (!clientSecret) throw new Error("clientSecret not configured");
 
             const useAuthHeader = !!that._oauth.useAuthHeader;
