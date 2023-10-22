@@ -128,6 +128,11 @@ class Fetcher {
 
       return unwrap(ret, options);
     } catch (e) {
+      // too many requests
+      if (e.status === 429) {
+         return local.onError(e, url, options, retries, args, true);
+      }
+      
       --retries;
 
       console.log(theURL, e);
@@ -170,7 +175,7 @@ class OAuthFetcher extends Fetcher {
     }
   }
 
-  async onError(e, url, options, retries, args) {
+  async onError(e, url, options, retries, args, rateLimit) {
     var local = this;
 
     return new Promise((resolve, reject) => {
@@ -184,7 +189,7 @@ class OAuthFetcher extends Fetcher {
         } catch (e) {
           reject(e);
         }
-      }, 500);
+      }, rateLimit?10000:500);
     });
   }
 
