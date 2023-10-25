@@ -31,7 +31,7 @@
     "commander": "^11",
     "dotenv": "*",
     "express": "^4",
-    "jose": "^4",
+    "jose": "^5",
     "node-fetch": "^3",
     "prom-client": "^15",
     "ws": "^8"
