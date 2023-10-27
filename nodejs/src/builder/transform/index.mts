@@ -31,21 +31,20 @@ const transform = (meta: any) => {
           const docs = sig.getJSDoc().serialize() || [];
           const desc = docs.find((what: any) => what.kind === "description")
             ?.value;
-            
+
           const example = docs.find((what: any) => what.kind === "example")
             ?.value;
 
           let eg;
-          if (example)
-          {
+          if (example) {
             const parts = example.split(/```/);
-            const backticks = '```';
-            eg = `@example ${parts[0] || 'usage'}\n${backticks}${parts[1]}${backticks}`;
+            const backticks = "```";
+            eg = `@example ${parts[0] || "usage"}\n${backticks}${
+              parts[1]
+            }${backticks}`;
           }
-          
-          const paramDocs =
-            docs
-              .filter((what: any) => what.kind === "param")
+
+          const paramDocs = docs.filter((what: any) => what.kind === "param");
 
           const params = sig
             .getParameters()
@@ -62,22 +61,25 @@ const transform = (meta: any) => {
                   return `${p.getName()}${defaultVal}`;
                 })
                 .join("; ");
-                
-              const suffix = serialized
-                .type
-                .properties
+
+              const suffix = serialized.type.properties
                 .map((p) => {
-                  const comment = paramDocs.find((what) => what.value.name === p.name);
-                  const desc = (comment?.value.description || '').replace(/\\@/gi, '@');
-                  
+                  const comment = paramDocs.find(
+                    (what) => what.value.name === p.name,
+                  );
+                  const desc = (comment?.value.description || "").replace(
+                    /\\@/gi,
+                    "@",
+                  );
+
                   return `\n/**\n${desc}\n */\n ${p.name}: ${p.type.text}`;
                 })
                 .join("; ");
-                
+
               return `{${prefix}}: {${suffix}}`;
             })
             .join(", ");
-            
+
           const retVal = sig
             .serialize()
             .return.type.text.replace(/^Promise</, "")
@@ -87,7 +89,7 @@ const transform = (meta: any) => {
 /**
  * ${desc || ""}
  *
- * ${eg || ''}
+ * ${eg || ""}
  **/    
 declare function ${member.getName()}(${params}): ${retVal};
       `;
@@ -101,6 +103,7 @@ declare function ${member.getName()}(${params}): ${retVal};
 
 export default async (path: string) => {
   const parsed = await parseFromFiles([path]);
-  if (parsed.errors?.length) throw new Error(path + ' ' + JSON.stringify(parsed.errors));
+  if (parsed.errors?.length)
+    throw new Error(path + " " + JSON.stringify(parsed.errors));
   return transform(parsed.project?.getModules() || []);
 };

@@ -68,9 +68,18 @@ class Transport {
       C.augmentRequest({ headers: {} }, config),
     ));
 
+    ws.onPing = function () {
+      clearTimeout(this.pingTimeout);
+      this.pingTimeout = setTimeout(() => {
+        console.log("terminating ws");
+        if (local.running) this.terminate();
+      }, 30000 + 15000);
+    };
+
     ws.on("open", () => {
       console.log("websocket connected");
       local.connected = true;
+      ws.onPing();
       local.pinger = setInterval(() => ws.ping(() => null), pingInterval);
 
       local.onConnect(local);
@@ -79,6 +88,8 @@ class Transport {
     ws.on("message", (message) => {
       setTimeout(() => local.onMessages(JSON.parse(message)), 0);
     });
+
+    ws.on("ping", () => ws.onPing());
 
     ws.on("error", (message) => {
       console.log("error:", message);

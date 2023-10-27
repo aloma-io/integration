@@ -38,7 +38,7 @@ export class Builder {
     await this.parsePackageJson();
     await this.discoverTypes();
     await this.checkIcon();
-    
+
     // @ts-ignore
     const Controller = (
       await import(__dirname + "/../../../../../build/controller/index.mjs")
@@ -46,11 +46,11 @@ export class Builder {
 
     return new RuntimeContext(new Controller(), this.data);
   }
-  
+
   private async checkIcon() {
     const data = this.data;
-    const root = __dirname + "/../../../../../"
-    
+    const root = __dirname + "/../../../../../";
+
     data.icon = `${root}/logo.png`;
   }
 

@@ -1,7 +1,7 @@
 import { AbstractController } from "../controller/index.mjs";
 import { Connector } from "../internal/index.mjs";
 import fs from "node:fs";
-    
+
 export default class RuntimeContext {
   constructor(
     private controller: AbstractController,
@@ -14,25 +14,22 @@ export default class RuntimeContext {
     if (!(controller instanceof AbstractController))
       throw new Error("the controller needs to extend AbstractController");
     const data: any = this.data;
-    
+
     let icon;
-    
-    try
-    {
-      if (data.icon) 
-      {
-        icon = fs.readFileSync(data.icon).toString('base64');
+
+    try {
+      if (data.icon) {
+        icon = fs.readFileSync(data.icon).toString("base64");
       }
-    } catch(e) {
+    } catch (e) {
       // blank
     }
-    
 
     const connector = new Connector({
       id: data.id,
       version: data.version,
       name: `${data.id}/${data.version}`,
-      icon
+      icon,
     });
 
     const configuration = connector.configure().config(data.config || {});
@@ -56,7 +53,10 @@ export default class RuntimeContext {
     configuration.types(data.types).resolvers(resolvers);
 
     if (data.options?.endpoint?.enabled) {
-      configuration.endpoint((arg) => controller.__endpoint(arg), data.options?.endpoint?.required);
+      configuration.endpoint(
+        (arg) => controller.__endpoint(arg),
+        data.options?.endpoint?.required,
+      );
     }
 
     if (data.auth?.oauth) {
@@ -81,7 +81,7 @@ export default class RuntimeContext {
     );
 
     connector.run();
-    
+
     const term = async () => {
       await controller._doStop(true);
 

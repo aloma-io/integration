@@ -13,7 +13,7 @@ class Config {
     publicKey,
     introspect,
     configSchema,
-    icon
+    icon,
   }) {
     this._token = null;
     this._registrationToken = registrationToken;
@@ -100,7 +100,7 @@ class Config {
   token() {
     return this._token;
   }
-  
+
   icon() {
     return this._icon;
   }

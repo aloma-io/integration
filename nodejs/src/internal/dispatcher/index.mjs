@@ -51,7 +51,7 @@ class Dispatcher {
             placeholder: "e.g. 1234",
             type: "line",
             optional: !!arg.configurableClientOptional,
-            plain: true
+            plain: true,
           },
           clientSecret: {
             name: "OAuth Client Secret",
@@ -62,7 +62,7 @@ class Dispatcher {
         },
       });
     }
-    
+
     if (arg.configurableClientScope) {
       this.config({
         fields: {
@@ -75,8 +75,8 @@ class Dispatcher {
 ${arg.configurableClientScope}
 `,
             optional: true,
-            plain: true
-          }
+            plain: true,
+          },
         },
       });
     }
@@ -111,7 +111,7 @@ ${arg.configurableClientScope}
         _endpointToken: {
           name: "Endpoint Token",
           placeholder: "e.g. 1234",
-          type: !!notOptional?"managed":"line",
+          type: !!notOptional ? "managed" : "line",
           plain: true,
           optional: !notOptional,
         },

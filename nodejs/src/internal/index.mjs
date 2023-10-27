@@ -40,14 +40,13 @@ const reply = (arg, packet, transport) => {
 const unwrap = async (ret, options) => {
   if (options?.text) return await ret.text();
   if (options?.base64) return (await ret.buffer()).toString("base64");
-  
+
   const text = await ret.text();
-  
-  try
-  {
+
+  try {
     return JSON.parse(text);
-  } catch(e) {
-    throw (e + ' ' + text)
+  } catch (e) {
+    throw e + " " + text;
   }
 };
 
@@ -120,9 +119,8 @@ class Fetcher {
         e.status = status;
         throw e;
       }
-      
-      if (local.onResponse)
-      {
+
+      if (local.onResponse) {
         await local.onResponse(ret);
       }
 
@@ -130,9 +128,9 @@ class Fetcher {
     } catch (e) {
       // too many requests
       if (e.status === 429) {
-         return local.onError(e, url, options, retries, args, true);
+        return local.onError(e, url, options, retries, args, true);
       }
-      
+
       --retries;
 
       console.log(theURL, e);
@@ -179,24 +177,28 @@ class OAuthFetcher extends Fetcher {
     var local = this;
 
     return new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          resolve(
-            await local.fetch(url, options, retries, {
-              forceTokenRefresh: e.status === 401,
-            }),
-          );
-        } catch (e) {
-          reject(e);
-        }
-      }, rateLimit?10000:500);
+      setTimeout(
+        async () => {
+          try {
+            resolve(
+              await local.fetch(url, options, retries, {
+                forceTokenRefresh: e.status === 401,
+              }),
+            );
+          } catch (e) {
+            reject(e);
+          }
+        },
+        rateLimit ? 10000 : 500,
+      );
     });
   }
 
   async periodicRefresh() {
-    const local = this, oauth = local.oauth;
+    const local = this,
+      oauth = local.oauth;
     if (!oauth.refreshToken()) return;
-    
+
     await local.getToken(true);
   }
 
@@ -244,12 +246,12 @@ class OAuth {
 
   async periodicRefresh() {
     const clients = this.clients;
-    
-    console.log('refreshing oauth clients', clients.length)
-    
+
+    console.log("refreshing oauth clients", clients.length);
+
     for (let i = 0; i < clients.length; ++i) {
       const client = clients[0];
-      
+
       await client.periodicRefresh();
     }
   }
@@ -321,7 +323,7 @@ class Connector {
       publicKey: process.env.PUBLIC_KEY,
       introspect,
       configSchema,
-      icon: this.icon
+      icon: this.icon,
     });
 
     if (Object.keys(configSchema().fields).length) {
@@ -369,7 +371,7 @@ ${text}
             const value = secrets[key];
             if (!value) continue;
 
-            if (fields[key]?.plain || ['endpointUrl'].includes(key)) {
+            if (fields[key]?.plain || ["endpointUrl"].includes(key)) {
               decrypted[key] = value;
             } else {
               try {
@@ -383,16 +385,17 @@ ${text}
           this.startOAuth = async function (args) {
             if (!this._oauth) throw new Error("oauth not configured");
 
-            const clientId = process.env.OAUTH_CLIENT_ID ||
+            const clientId =
+              process.env.OAUTH_CLIENT_ID ||
               decrypted.clientId ||
-            this._oauth.clientId;
-            
+              this._oauth.clientId;
+
             if (!clientId) throw new Error("clientId not configured");
 
             const scopes =
               process.env.OAUTH_SCOPE ||
               decrypted.scope ||
-                          this._oauth.scope ||
+              this._oauth.scope ||
               "";
             const useCodeChallenge = !!that._oauth.useCodeChallenge;
 
@@ -417,18 +420,17 @@ ${text}
               if (!arg.code || !arg.redirectURI)
                 throw new Error("need code and redirectUri");
 
-              const clientId =                              process.env.OAUTH_CLIENT_ID || 
-                              decrypted.clientId ||
+              const clientId =
+                process.env.OAUTH_CLIENT_ID ||
+                decrypted.clientId ||
+                that._oauth.clientId;
 
-              that._oauth.clientId;
-
-;
               if (!clientId) throw new Error("clientId not configured");
 
               const clientSecret =
                 process.env.OAUTH_CLIENT_SECRET ||
                 decrypted.clientSecret ||
-              that._oauth.clientSecret;
+                that._oauth.clientSecret;
               if (!clientSecret) throw new Error("clientSecret not configured");
 
               const additionalTokenArgs = that._oauth.additionalTokenArgs || {};
@@ -522,17 +524,15 @@ ${text}
 
           const getRefreshToken = async (refreshToken) => {
             const clientId =
-
               process.env.OAUTH_CLIENT_ID ||
-              decrypted.clientId || 
-                          that._oauth.clientId;
+              decrypted.clientId ||
+              that._oauth.clientId;
             if (!clientId) throw new Error("clientId not configured");
 
             const clientSecret =
-
               process.env.OAUTH_CLIENT_SECRET ||
               decrypted.clientSecret ||
-                          that._oauth.clientSecret;
+              that._oauth.clientSecret;
             if (!clientSecret) throw new Error("clientSecret not configured");
 
             const useAuthHeader = !!that._oauth.useAuthHeader;
@@ -580,21 +580,21 @@ ${text}
 
           if (theOAuth) {
             clearInterval(this._refreshOAuthToken);
-            
+
             if (!(this._oauth.noPeriodicTokenRefresh === false)) {
-              this._refreshOAuthToken = setInterval(async () => {
-                
-                try
-                {
-                  await theOAuth.periodicRefresh();
-                } catch(e) {
-                  console.log('periodic refresh', e);
-                }
-              }, 4 * 60 * 60 * 15000);
+              this._refreshOAuthToken = setInterval(
+                async () => {
+                  try {
+                    await theOAuth.periodicRefresh();
+                  } catch (e) {
+                    console.log("periodic refresh", e);
+                  }
+                },
+                4 * 60 * 60 * 15000,
+              );
             }
-            
           }
-            
+
           start({
             config: decrypted,
             oauth: theOAuth,
