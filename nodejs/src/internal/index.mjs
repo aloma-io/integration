@@ -59,17 +59,20 @@ class Fetcher {
 
   async customize(options, args = {}) {}
 
-  async onError(e, url, options, retries, args) {
+  async onError(e, url, options, retries, args, rateLimit) {
     var local = this;
 
     return new Promise((resolve, reject) => {
-      setTimeout(async () => {
-        try {
-          resolve(await local.fetch(url, options, retries, args));
-        } catch (e) {
-          reject(e);
-        }
-      }, 500);
+      setTimeout(
+        async () => {
+          try {
+            resolve(await local.fetch(url, options, retries, args));
+          } catch (e) {
+            reject(e);
+          }
+        },
+        rateLimit ? 10000 : 500,
+      );
     });
   }
 
@@ -159,17 +162,25 @@ class OAuthFetcher extends Fetcher {
     if (!force && oauth.accessToken()) return oauth.accessToken();
 
     const refreshToken = oauth.refreshToken();
-    if (!refreshToken)
-      throw new Error("have no access_token and no refresh_token");
 
-    const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
+    try {
+      if (!refreshToken) {
+        throw new Error("have no access_token and no refresh_token");
+      }
 
-    if (ret.access_token) {
-      oauth.update(ret.access_token, ret.refresh_token);
+      const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
 
-      return ret.access_token;
-    } else {
-      throw new Error("could not obtain access token via refresh token");
+      if (ret.access_token) {
+        oauth.update(ret.access_token, ret.refresh_token);
+
+        return ret.access_token;
+      } else {
+        throw new Error("could not obtain access token via refresh token");
+      }
+    } catch (e) {
+      oauth.invalidate(e);
+
+      throw e;
     }
   }
 
@@ -197,6 +208,7 @@ class OAuthFetcher extends Fetcher {
   async periodicRefresh() {
     const local = this,
       oauth = local.oauth;
+
     if (!oauth.refreshToken()) return;
 
     await local.getToken(true);
@@ -254,6 +266,18 @@ class OAuth {
 
       await client.periodicRefresh();
     }
+  }
+
+  async invalidate(err) {
+    if (true) return;
+    if (this._data.access_token === "invalid") return;
+
+    console.log(
+      "could not obtain access token, marking connector as disconnected",
+      err,
+    );
+
+    await this.update("invalid", null);
   }
 
   getClient(arg = {}) {
@@ -510,11 +534,13 @@ ${text}
 
           const saveOAuthResult = async (what) => {
             const jwe = await config.validateKeys("RSA-OAEP-256");
+            const value = await jwe.encrypt(what, "none", config.id());
+
             const packet = transport.newPacket({});
 
             packet.method("connector.config-update");
             packet.args({
-              value: await jwe.encrypt(what, "none", config.id()),
+              value,
             });
 
             transport.send(packet);
