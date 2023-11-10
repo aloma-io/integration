@@ -462,6 +462,7 @@ ${text}
               const useCodeChallenge = !!that._oauth.useCodeChallenge;
 
               let body = {
+                grant_type: "authorization_code",
                 ...additionalTokenArgs,
                 code: arg.code,
                 redirect_uri: arg.redirectURI,

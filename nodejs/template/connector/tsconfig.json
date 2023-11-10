@@ -4,7 +4,7 @@
     "skipLibCheck": true,                     
     "module": "node16",
     "moduleResolution": "node16",
-    "lib": ["es2015", "es6", "esnext"],           
+    "lib": ["es2015", "es6", "esnext", "dom"],           
     "declaration": true,          
     "allowJs": true,
     "outDir": "build",                          
