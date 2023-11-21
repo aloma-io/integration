@@ -1,6 +1,6 @@
 {
   "name": "@aloma.io/integration-sdk",
-  "version": "3.3.75",
+  "version": "3.3.76",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
@@ -34,9 +34,9 @@
     "jose": "^5",
     "node-fetch": "^3",
     "prom-client": "^15",
+    "typescript": "^5",
     "ws": "^8",
-    "zod": "^3",
-    "typescript": "^5"
+    "zod": "^3"
   },
   "optionalDependencies": {
     "bufferutil": "^4",
