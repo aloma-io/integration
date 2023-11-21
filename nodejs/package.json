@@ -35,7 +35,8 @@
     "node-fetch": "^3",
     "prom-client": "^15",
     "ws": "^8",
-    "zod": "^3"
+    "zod": "^3",
+    "typescript": "^5"
   },
   "optionalDependencies": {
     "bufferutil": "^4",
@@ -43,7 +44,6 @@
   },
   "devDependencies": {
     "mocha": "^10",
-    "prettier": "^3",
-    "typescript": "^5"
+    "prettier": "^3"
   }
 }
