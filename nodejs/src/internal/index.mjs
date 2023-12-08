@@ -51,13 +51,16 @@ const unwrap = async (ret, options) => {
 };
 
 class Fetcher {
-  constructor({ retry = 5, baseUrl, onResponse }) {
+  constructor({ retry = 5, baseUrl, onResponse, customize }) {
     this.retry = retry;
     this.baseUrl = baseUrl;
     this.onResponse = onResponse;
+    if (customize) this.customize0 = customize;
   }
 
-  async customize(options, args = {}) {}
+  async customize(options, args = {}) {
+    if (this.customize0) await this.customize0(options, args);
+  }
 
   async onError(e, url, options, retries, args, rateLimit) {
     var local = this;
@@ -146,8 +149,8 @@ class Fetcher {
 }
 
 class OAuthFetcher extends Fetcher {
-  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse }) {
-    super({ retry, baseUrl, onResponse });
+  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize}) {
+    super({ retry, baseUrl, onResponse, customize });
 
     this.oauth = oauth;
     this._getToken = getToken;
@@ -216,6 +219,8 @@ class OAuthFetcher extends Fetcher {
 
   async customize(options, args = {}) {
     const local = this;
+    if (this.customize0) await this.customize0(options, args);
+    
     const token = await local.getToken(args.forceTokenRefresh);
 
     options.headers = {
