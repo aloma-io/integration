@@ -1,18 +1,12 @@
-// @ts-nocheck
-import dotenv from "dotenv";
-dotenv.config();
-import fs from "node:fs";
-import { Config } from "./websocket/config.mjs";
-import { Connection } from "./websocket/connection/index.mjs";
-import { Transport } from "./websocket/transport/index.mjs";
-import { Dispatcher } from "./dispatcher/index.mjs";
-import { WebsocketConnector } from "./websocket/index.mjs";
-import JWE from "./util/jwe/index.mjs";
-import fetch from "node-fetch";
 import { init } from "@paralleldrive/cuid2";
-const cuid = init({ length: 32 });
 import express from "express";
+import fetch from "node-fetch";
 import PromClient from "prom-client";
+import { Dispatcher } from "./dispatcher/index.mjs";
+import JWE from "./util/jwe/index.mjs";
+import { Config } from "./websocket/config.mjs";
+import { WebsocketConnector } from "./websocket/index.mjs";
+const cuid = init({ length: 32 });
 
 // TODO fetch with retry
 
@@ -85,7 +79,7 @@ class Fetcher {
 
     if (retries == null) retries = local.retry;
 
-    const theURL = `${
+    let theURL = `${
       baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
     }${url}`.replace(/\/\/+/gi, "/");
 
@@ -95,6 +89,10 @@ class Fetcher {
       
       url = options.url;
       delete(options.url);
+
+      theURL = `${
+        baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
+      }${url}`.replace(/\/\/+/gi, "/");
 
       if (!options?.headers || !options?.headers?.Accept) {
         options.headers = {
@@ -280,14 +278,8 @@ class OAuth {
 
   async invalidate(err) {
     if (true) return;
-    if (this._data.access_token === "invalid") return;
+    //if (this._data.access_token === "invalid") return;
 
-    console.log(
-      "could not obtain access token, marking connector as disconnected",
-      err,
-    );
-
-    await this.update("invalid", null);
   }
 
   getClient(arg = {}) {
