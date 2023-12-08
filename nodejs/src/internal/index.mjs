@@ -58,7 +58,7 @@ class Fetcher {
     if (customize) this.customize0 = customize;
   }
 
-  async customize(options, args = {}) {
+  async customize(options = {}, args = {}) {
     if (this.customize0) await this.customize0(options, args);
   }
 
@@ -90,7 +90,11 @@ class Fetcher {
     }${url}`.replace(/\/\/+/gi, "/");
 
     try {
+      options.url = url;
       await local.customize(options, args);
+      
+      url = options.url;
+      delete(options.url);
 
       if (!options?.headers || !options?.headers?.Accept) {
         options.headers = {
@@ -219,6 +223,7 @@ class OAuthFetcher extends Fetcher {
 
   async customize(options, args = {}) {
     const local = this;
+    
     if (this.customize0) await this.customize0(options, args);
     
     const token = await local.getToken(args.forceTokenRefresh);
