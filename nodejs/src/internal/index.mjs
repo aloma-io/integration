@@ -31,18 +31,27 @@ const reply = (arg, packet, transport) => {
   transport.send(transport.newPacket({ c: packet.cb(), a: { ...arg } }));
 };
 
+const unwrap0 = (ret, body, options) => {
+  if (options?.bodyOnly === false) {
+    return {status: ret.status, headers: ret.headers, body};
+  } else {
+    return body;    
+  }
+}
+
 const unwrap = async (ret, options) => {
-  if (options?.text) return await ret.text();
-  if (options?.base64) return (await ret.buffer()).toString("base64");
+  if (options?.text) return unwrap0(ret, await ret.text(), options);
+  if (options?.base64) return unwrap0(ret, (await ret.buffer()).toString("base64"), options);
 
   const text = await ret.text();
 
   try {
-    return JSON.parse(text);
+    return unwrap0(ret, JSON.parse(text), options);
   } catch (e) {
     throw e + " " + text;
   }
 };
+
 
 class Fetcher {
   constructor({ retry = 5, baseUrl, onResponse, customize }) {
@@ -137,6 +146,11 @@ class Fetcher {
       // too many requests
       if (e.status === 429) {
         return local.onError(e, url, options, retries, args, true);
+      }
+      
+      // bad request
+      if (e.status === 400 || e.status === 422) {
+        throw(e);
       }
 
       --retries;
