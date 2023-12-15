@@ -25,7 +25,7 @@ export abstract class AbstractController {
   protected getClient({
     baseUrl,
     onResponse,
-    customize
+    customize,
   }: {
     baseUrl: string;
     onResponse?: (response: any) => void;
@@ -35,6 +35,38 @@ export abstract class AbstractController {
   }
 
   protected async updateTask(name: string, data: any): Promise<string> {
+    throw new Error("not implemented");
+  }
+
+  protected async newBlob({
+    content,
+    name,
+    size,
+    mimetype,
+    meta,
+    taskId,
+  }: {
+    content: string;
+    name?: string;
+    size?: number;
+    mimetype?: string;
+    meta?: any;
+    taskId?: string;
+  }): Promise<string> {
+    throw new Error("not implemented");
+  }
+
+  protected async getBlob(id: string): Promise<{
+    name?: string;
+    id;
+    size?: number;
+    mimetype?: string;
+    meta?: any;
+  }> {
+    throw new Error("not implemented");
+  }
+
+  protected async getBlobContent(id: string): Promise<string> {
     throw new Error("not implemented");
   }
 
@@ -55,6 +87,9 @@ export abstract class AbstractController {
     client: any,
     newTask: any,
     updateTask: any,
+    getBlob: any,
+    getBlobContent: any,
+    putBlob: any,
     getClient: any,
   ): Promise<void> {
     this.config = config;
@@ -62,6 +97,9 @@ export abstract class AbstractController {
     this.newTask = newTask;
     this.updateTask = updateTask;
     this.getClient = getClient;
+    this.newBlob = putBlob;
+    this.getBlob = getBlob;
+    this.getBlobContent = getBlobContent;
 
     await this.start();
   }

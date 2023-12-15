@@ -33,15 +33,16 @@ const reply = (arg, packet, transport) => {
 
 const unwrap0 = (ret, body, options) => {
   if (options?.bodyOnly === false) {
-    return {status: ret.status, headers: ret.headers, body};
+    return { status: ret.status, headers: ret.headers, body };
   } else {
-    return body;    
+    return body;
   }
-}
+};
 
 const unwrap = async (ret, options) => {
   if (options?.text) return unwrap0(ret, await ret.text(), options);
-  if (options?.base64) return unwrap0(ret, (await ret.buffer()).toString("base64"), options);
+  if (options?.base64)
+    return unwrap0(ret, (await ret.buffer()).toString("base64"), options);
 
   const text = await ret.text();
 
@@ -51,7 +52,6 @@ const unwrap = async (ret, options) => {
     throw e + " " + text;
   }
 };
-
 
 class Fetcher {
   constructor({ retry = 5, baseUrl, onResponse, customize }) {
@@ -95,9 +95,9 @@ class Fetcher {
     try {
       options.url = url;
       await local.customize(options, args);
-      
+
       url = options.url;
-      delete(options.url);
+      delete options.url;
 
       theURL = `${
         baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
@@ -147,10 +147,10 @@ class Fetcher {
       if (e.status === 429) {
         return local.onError(e, url, options, retries, args, true);
       }
-      
+
       // bad request
       if (e.status === 400 || e.status === 422) {
-        throw(e);
+        throw e;
       }
 
       --retries;
@@ -165,7 +165,7 @@ class Fetcher {
 }
 
 class OAuthFetcher extends Fetcher {
-  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize}) {
+  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize }) {
     super({ retry, baseUrl, onResponse, customize });
 
     this.oauth = oauth;
@@ -235,9 +235,9 @@ class OAuthFetcher extends Fetcher {
 
   async customize(options, args = {}) {
     const local = this;
-    
+
     if (this.customize0) await this.customize0(options, args);
-    
+
     const token = await local.getToken(args.forceTokenRefresh);
 
     options.headers = {
@@ -293,7 +293,6 @@ class OAuth {
   async invalidate(err) {
     if (true) return;
     //if (this._data.access_token === "invalid") return;
-
   }
 
   getClient(arg = {}) {
@@ -638,9 +637,61 @@ ${text}
             }
           }
 
+          const getBlob = (id) => {
+            return new Promise((resolve, reject) => {
+              const packet = transport.newPacket(
+                {},
+                (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
+                `_req-${cuid()}`,
+              );
+
+              packet.method("connector.blob.get");
+              packet.args({
+                id,
+              });
+
+              transport.send(packet);
+            });
+          };
+
+          const getBlobContent = (id) => {
+            return new Promise((resolve, reject) => {
+              const packet = transport.newPacket(
+                {},
+                (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
+                `_req-${cuid()}`,
+              );
+
+              packet.method("connector.blob.get-content");
+              packet.args({
+                id,
+              });
+
+              transport.send(packet);
+            });
+          };
+
+          const putBlob = (args = {}) => {
+            return new Promise((resolve, reject) => {
+              const packet = transport.newPacket(
+                {},
+                (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
+                `_req-${cuid()}`,
+              );
+
+              packet.method("connector.blob.put");
+              packet.args(args);
+
+              transport.send(packet);
+            });
+          };
+
           start({
             config: decrypted,
             oauth: theOAuth,
+            getBlob,
+            getBlobContent,
+            putBlob,
             getClient: (arg) =>
               theOAuth ? theOAuth.getClient(arg) : new Fetcher(arg),
             newTask: (name, data) => {

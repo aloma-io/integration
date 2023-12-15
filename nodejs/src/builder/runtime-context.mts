@@ -64,7 +64,16 @@ export default class RuntimeContext {
     }
 
     configuration.main(
-      async ({ newTask, updateTask, config, oauth, getClient }) => {
+      async ({
+        newTask,
+        updateTask,
+        config,
+        oauth,
+        getClient,
+        getBlob,
+        getBlobContent,
+        putBlob,
+      }) => {
         try {
           await controller._doStop();
           await controller._doStart(
@@ -73,6 +82,9 @@ export default class RuntimeContext {
             newTask,
             updateTask,
             getClient,
+            getBlob,
+            getBlobContent,
+            putBlob,
           );
         } catch (e) {
           console.log(e);
