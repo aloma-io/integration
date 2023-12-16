@@ -87,10 +87,10 @@ export abstract class AbstractController {
     client: any,
     newTask: any,
     updateTask: any,
+    getClient: any,
     getBlob: any,
     getBlobContent: any,
     putBlob: any,
-    getClient: any,
   ): Promise<void> {
     this.config = config;
     this.client = client;
