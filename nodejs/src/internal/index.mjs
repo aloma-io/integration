@@ -658,7 +658,8 @@ ${text}
             return new Promise((resolve, reject) => {
               const packet = transport.newPacket(
                 {},
-                (ret) => (ret?.error ? reject(ret.error) : resolve(ret?.content)),
+                (ret) =>
+                  ret?.error ? reject(ret.error) : resolve(ret?.content),
                 `_req-${cuid()}`,
               );
 
