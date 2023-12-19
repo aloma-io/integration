@@ -38,7 +38,7 @@ export abstract class AbstractController {
     throw new Error("not implemented");
   }
 
-  protected async newBlob({
+  protected async createBlob({
     content,
     name,
     size,
@@ -90,14 +90,14 @@ export abstract class AbstractController {
     getClient: any,
     getBlob: any,
     getBlobContent: any,
-    putBlob: any,
+    createBlob: any,
   ): Promise<void> {
     this.config = config;
     this.client = client;
     this.newTask = newTask;
     this.updateTask = updateTask;
     this.getClient = getClient;
-    this.newBlob = putBlob;
+    this.createBlob = createBlob;
     this.getBlob = getBlob;
     this.getBlobContent = getBlobContent;
 

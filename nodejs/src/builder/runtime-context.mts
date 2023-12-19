@@ -72,7 +72,7 @@ export default class RuntimeContext {
         getClient,
         getBlob,
         getBlobContent,
-        putBlob,
+        createBlob,
       }) => {
         try {
           await controller._doStop();
@@ -84,7 +84,7 @@ export default class RuntimeContext {
             getClient,
             getBlob,
             getBlobContent,
-            putBlob,
+            createBlob,
           );
         } catch (e) {
           console.log(e);

@@ -672,7 +672,7 @@ ${text}
             });
           };
 
-          const putBlob = (args = {}) => {
+          const createBlob = (args = {}) => {
             return new Promise((resolve, reject) => {
               const packet = transport.newPacket(
                 {},
@@ -680,7 +680,7 @@ ${text}
                 `_req-${cuid()}`,
               );
 
-              packet.method("connector.blob.put");
+              packet.method("connector.blob.create");
               packet.args(args);
 
               transport.send(packet);
@@ -692,7 +692,7 @@ ${text}
             oauth: theOAuth,
             getBlob,
             getBlobContent,
-            putBlob,
+            createBlob,
             getClient: (arg) =>
               theOAuth ? theOAuth.getClient(arg) : new Fetcher(arg),
             newTask: (name, data) => {
