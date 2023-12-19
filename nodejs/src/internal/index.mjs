@@ -675,7 +675,7 @@ ${text}
             return new Promise((resolve, reject) => {
               const packet = transport.newPacket(
                 {},
-                (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
+                (ret) => (ret?.error ? reject(ret.error) : resolve(ret?.id)),
                 `_req-${cuid()}`,
               );
 
