@@ -32,7 +32,6 @@
     "dotenv": "*",
     "express": "^4",
     "jose": "^5",
-    "node-fetch": "^3",
     "prom-client": "^15",
     "typescript": "^5",
     "ws": "^8",
