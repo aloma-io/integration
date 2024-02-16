@@ -1,14 +1,11 @@
 import { init } from "@paralleldrive/cuid2";
 import express from "express";
-import fetch from "node-fetch";
 import PromClient from "prom-client";
 import { Dispatcher } from "./dispatcher/index.mjs";
 import JWE from "./util/jwe/index.mjs";
 import { Config } from "./websocket/config.mjs";
 import { WebsocketConnector } from "./websocket/index.mjs";
 const cuid = init({ length: 32 });
-
-// TODO fetch with retry
 
 const handlePacketError = (packet, e, transport) => {
   if (!packet.cb()) {
@@ -126,7 +123,7 @@ class Fetcher {
         options.body = JSON.stringify(options.body);
       }
 
-      const ret = await fetch(theURL, options);
+      const ret = await fetch(theURL, {...options, signal: AbortSignal.timeout(30 * 60 * 1000)});
       const status = await ret.status;
 
       if (status > 399) {
@@ -510,6 +507,7 @@ ${text}
                 method: "POST",
                 body: new URLSearchParams(body),
                 headers,
+                signal: AbortSignal.timeout(60 * 1000)
               });
 
               const status = await response.status;
@@ -602,6 +600,7 @@ ${text}
                 Accept: "application/json",
                 ...headers,
               },
+              signal: AbortSignal.timeout(60 * 1000)
             });
 
             const status = await response.status;
