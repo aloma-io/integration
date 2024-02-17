@@ -626,12 +626,13 @@ ${text}
               this._refreshOAuthToken = setInterval(
                 async () => {
                   try {
+                    console.log('refreshing oauth token')
                     await theOAuth.periodicRefresh();
                   } catch (e) {
                     console.log("periodic refresh", e);
                   }
                 },
-                4 * 60 * 60 * 15000,
+                this._oauth.tokenRefreshPeriod || (4 * 60 * 60 * 15000),
               );
             }
           }

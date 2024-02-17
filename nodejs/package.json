@@ -28,7 +28,7 @@
     "@paralleldrive/cuid2": "^2",
     "@ts-ast-parser/core": "^0.5",
     "@types/node": "^18",
-    "commander": "^11",
+    "commander": "^12",
     "dotenv": "*",
     "express": "^4",
     "jose": "^5",
