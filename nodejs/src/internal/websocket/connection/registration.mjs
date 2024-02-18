@@ -27,7 +27,7 @@ class Registration {
             icon,
           }),
           headers: { "Content-Type": "application/json" },
-          signal: AbortSignal.timeout(60 * 1000)
+          signal: AbortSignal.timeout(60 * 1000),
         },
         config,
       ),

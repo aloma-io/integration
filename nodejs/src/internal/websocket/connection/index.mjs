@@ -1,4 +1,3 @@
-
 import { Registration } from "./registration.mjs";
 import C from "./constants.mjs";
 
@@ -20,10 +19,9 @@ class Connection {
             method: "POST",
             body: JSON.stringify({}),
             headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(60 * 1000)
+            signal: AbortSignal.timeout(60 * 1000),
           },
           config,
-          
         ),
       );
 
@@ -59,7 +57,7 @@ class Connection {
             method: "POST",
             body: JSON.stringify({}),
             headers: { "Content-Type": "application/json" },
-            signal: AbortSignal.timeout(60 * 1000)
+            signal: AbortSignal.timeout(60 * 1000),
           },
           this.config,
         ),

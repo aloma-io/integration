@@ -123,7 +123,10 @@ class Fetcher {
         options.body = JSON.stringify(options.body);
       }
 
-      const ret = await fetch(theURL, {...options, signal: AbortSignal.timeout(30 * 60 * 1000)});
+      const ret = await fetch(theURL, {
+        ...options,
+        signal: AbortSignal.timeout(30 * 60 * 1000),
+      });
       const status = await ret.status;
 
       if (status > 399) {
@@ -225,9 +228,12 @@ class OAuthFetcher extends Fetcher {
     const local = this,
       oauth = local.oauth;
 
+    console.log("refreshing oauth token, have token", !!oauth.refreshToken());
     if (!oauth.refreshToken()) return;
 
     await local.getToken(true);
+
+    console.log("refreshed oauth token");
   }
 
   async customize(options, args = {}) {
@@ -507,7 +513,7 @@ ${text}
                 method: "POST",
                 body: new URLSearchParams(body),
                 headers,
-                signal: AbortSignal.timeout(60 * 1000)
+                signal: AbortSignal.timeout(60 * 1000),
               });
 
               const status = await response.status;
@@ -600,7 +606,7 @@ ${text}
                 Accept: "application/json",
                 ...headers,
               },
-              signal: AbortSignal.timeout(60 * 1000)
+              signal: AbortSignal.timeout(60 * 1000),
             });
 
             const status = await response.status;
@@ -626,13 +632,13 @@ ${text}
               this._refreshOAuthToken = setInterval(
                 async () => {
                   try {
-                    console.log('refreshing oauth token')
+                    console.log("refreshing oauth token");
                     await theOAuth.periodicRefresh();
                   } catch (e) {
                     console.log("periodic refresh", e);
                   }
                 },
-                this._oauth.tokenRefreshPeriod || (4 * 60 * 60 * 15000),
+                this._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000,
               );
             }
           }
