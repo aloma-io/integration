@@ -39,7 +39,11 @@ const unwrap0 = (ret, body, options) => {
 const unwrap = async (ret, options) => {
   if (options?.text) return unwrap0(ret, await ret.text(), options);
   if (options?.base64)
-    return unwrap0(ret, (await ret.buffer()).toString("base64"), options);
+  {
+    const base64 = Buffer.from(await ret.arrayBuffer()).toString('base64');
+
+    return unwrap0(ret, base64, options);
+  }
 
   const text = await ret.text();
 
