@@ -89,7 +89,7 @@ class Fetcher {
 
     if (retries == null) retries = local.retry;
 
-    let theURL = `${
+    let theURL = !baseUrl?url:`${
       baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
     }${url}`.replace(/\/\/+/gi, "/");
 
@@ -100,7 +100,7 @@ class Fetcher {
       url = options.url;
       delete options.url;
 
-      theURL = `${
+      theURL = !baseUrl?url:`${
         baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
       }${url}`.replace(/\/\/+/gi, "/");
 
