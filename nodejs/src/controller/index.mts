@@ -27,7 +27,7 @@ export abstract class AbstractController {
     onResponse,
     customize,
   }: {
-    baseUrl: string;
+    baseUrl?: string;
     onResponse?: (response: any) => void;
     customize?: (request: any) => void;
   }): Promise<any> {
