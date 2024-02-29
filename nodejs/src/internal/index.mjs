@@ -38,9 +38,8 @@ const unwrap0 = (ret, body, options) => {
 
 const unwrap = async (ret, options) => {
   if (options?.text) return unwrap0(ret, await ret.text(), options);
-  if (options?.base64)
-  {
-    const base64 = Buffer.from(await ret.arrayBuffer()).toString('base64');
+  if (options?.base64) {
+    const base64 = Buffer.from(await ret.arrayBuffer()).toString("base64");
 
     return unwrap0(ret, base64, options);
   }
@@ -89,9 +88,12 @@ class Fetcher {
 
     if (retries == null) retries = local.retry;
 
-    let theURL = !baseUrl?url:`${
-      baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
-    }${url}`.replace(/\/\/+/gi, "/");
+    let theURL = !baseUrl
+      ? url
+      : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
+          /\/\/+/gi,
+          "/",
+        );
 
     try {
       options.url = url;
@@ -100,9 +102,12 @@ class Fetcher {
       url = options.url;
       delete options.url;
 
-      theURL = !baseUrl?url:`${
-        baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"
-      }${url}`.replace(/\/\/+/gi, "/");
+      theURL = !baseUrl
+        ? url
+        : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
+            /\/\/+/gi,
+            "/",
+          );
 
       if (!options?.headers || !options?.headers?.Accept) {
         options.headers = {
