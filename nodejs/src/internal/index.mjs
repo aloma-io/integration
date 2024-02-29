@@ -139,7 +139,7 @@ class Fetcher {
       const timeout = Math.min(options?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
       const ret = await fetch(theURL, {
         ...options,
-        signal: AbortSignal.timeout(30 * 60 * 1000),
+        signal: AbortSignal.timeout(timeout),
       });
       const status = await ret.status;
 
