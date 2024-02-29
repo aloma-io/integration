@@ -43,6 +43,10 @@ const unwrap = async (ret, options) => {
 
     return unwrap0(ret, base64, options);
   }
+  
+  if (options?.skipResponseBody) {
+    return { status: ret.status, headers: ret.headers};
+  }
 
   const text = await ret.text();
 
@@ -132,6 +136,7 @@ class Fetcher {
         options.body = JSON.stringify(options.body);
       }
 
+      const timeout = Math.min(options?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
       const ret = await fetch(theURL, {
         ...options,
         signal: AbortSignal.timeout(30 * 60 * 1000),
