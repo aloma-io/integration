@@ -4,8 +4,7 @@ import { fileURLToPath } from "node:url";
 import { notEmpty } from "../internal/util/index.mjs";
 import RuntimeContext from "./runtime-context.mjs";
 
-//const offset = '/../../../../../'; 
-const offset = '/../../../..//../../../..//../../../..//../../../..//../../../..//Users/xg04123/NetBeansProjects/automation/connector-google-drive/'; 
+const offset = '/../../../../../'; 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
