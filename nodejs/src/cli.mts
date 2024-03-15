@@ -121,8 +121,15 @@ program
   .description("Build the current connector project")
   .action(async (str, options) => {
     const { stdout, stderr } = await exec(
-      `rm -rf build; mkdir -p build`,
+      `rm -rf build; mkdir -p build; `,
     );
+
+    try
+    {
+      fs.copyFileSync('./logo.png', './build/');
+    } catch(e) {
+      // blank
+    }
 
     if (stdout) console.log(stdout);
 
