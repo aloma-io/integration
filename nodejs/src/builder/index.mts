@@ -4,9 +4,11 @@ import { fileURLToPath } from "node:url";
 import { notEmpty } from "../internal/util/index.mjs";
 import RuntimeContext from "./runtime-context.mjs";
 
-const offset = '/../../../../../'; 
+const DIR_OFFSET = '/../../../../../'; 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export const TARGET_DIR = `${__dirname}${DIR_OFFSET}`;
 
 export class Builder {
   private data: any = {
@@ -31,13 +33,12 @@ export class Builder {
   }
 
   async build(): Promise<RuntimeContext> {
-    await this.parsePackageJson();
-    await this.loadTypes();
+    await this.loadDescriptor();
     await this.checkIcon();
 
     // @ts-ignore
     const Controller = (
-      await import(__dirname + offset + "build/controller/index.mjs")
+      await import(TARGET_DIR + "build/controller/index.mjs")
     ).default;
 
     return new RuntimeContext(new Controller(), this.data);
@@ -45,31 +46,21 @@ export class Builder {
 
   private async checkIcon() {
     const data = this.data;
-    const root = __dirname + offset;
+    const root = TARGET_DIR;
 
     data.icon = `${root}/logo.png`;
   }
 
-  private async parsePackageJson() {
-    const data = this.data;
-
-    const packageJson = JSON.parse(
-      fs.readFileSync(__dirname + offset + "package.json", {
-        encoding: "utf-8",
-      }),
-    );
-
-    notEmpty((data.id = packageJson.connectorId), "id");
-    notEmpty((data.version = packageJson.version), "version");
-  }
-
-  private async loadTypes() {
+  private async loadDescriptor() {
     notEmpty(this.data.controller, "controller");
 
     const content = fs.readFileSync(this.data.controller, {encoding: 'utf-8'});
-    const {text, methods} = JSON.parse(content);
+    const {text, methods, connectorId, version} = JSON.parse(content);
 
     this.data.types = text;
     this.data.methods = methods;
+
+    notEmpty((this.data.id = connectorId), "id");
+    notEmpty((this.data.version = version), "version");
   }
 }

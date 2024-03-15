@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import util from "node:util";
+import { TARGET_DIR } from "./builder/index.mjs";
 import { notEmpty } from "./internal/util/index.mjs";
 import JWE from "./internal/util/jwe/index.mjs";
 import parseTypes from "./transform/index.mjs";
@@ -135,7 +136,13 @@ class Extractor {
     fs.readFileSync(source);
     const { text, methods } = await parseTypes(source);
 
-    fs.writeFileSync(target, JSON.stringify({text, methods}), {encoding: 'utf-8'})
+    const packageJson = JSON.parse(
+      fs.readFileSync(TARGET_DIR + "package.json", {
+        encoding: "utf-8",
+      }),
+    );
+
+    fs.writeFileSync(target, JSON.stringify({text, methods, connectorId: packageJson.connectorId, version: packageJson.version}), {encoding: 'utf-8'})
   }
 }
 
