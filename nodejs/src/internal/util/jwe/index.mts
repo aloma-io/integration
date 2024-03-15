@@ -1,6 +1,9 @@
 import * as jose from "jose";
 
 class JWE {
+  issuer: string;
+  algorithm: string;
+  pair?: jose.GenerateKeyPairResult<jose.KeyLike>;
   constructor({ algorithm = "PS256" }) {
     this.issuer = "home.aloma.io";
     this.algorithm = algorithm;
@@ -12,8 +15,8 @@ class JWE {
 
   async exportPair() {
     return {
-      publicKey: await jose.exportSPKI(this.pair.publicKey),
-      privateKey: await jose.exportPKCS8(this.pair.privateKey),
+      publicKey: await jose.exportSPKI(this.pair!.publicKey),
+      privateKey: await jose.exportPKCS8(this.pair!.privateKey),
     };
   }
 
@@ -53,13 +56,13 @@ class JWE {
 
     if (expiration && expiration !== "none") item.setExpirationTime(expiration);
 
-    return await item.encrypt(this.pair.publicKey);
+    return await item.encrypt(this.pair!.publicKey);
   }
 
   async decrypt(what, audience) {
     const { payload, protectedHeader } = await jose.jwtDecrypt(
       what,
-      this.pair.privateKey,
+      this.pair!.privateKey,
       {
         issuer: this.issuer,
         audience,

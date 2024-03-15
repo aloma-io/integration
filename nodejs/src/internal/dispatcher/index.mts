@@ -1,4 +1,10 @@
-class Dispatcher {
+export default class Dispatcher {
+  private _config: any;
+  private _main: any;
+  _oauth: any;
+  private _types: any;
+  private _resolvers: any;
+  
   constructor() {
     this._config = { fields: {} };
   }
@@ -90,7 +96,7 @@ ${arg.configurableClientScope}
     return this;
   }
 
-  config({ fields, oauth, description, summary }) {
+  config({ fields, oauth, description, summary }: any) {
     this._config.oauth = this._config.oauth || oauth;
     this._config.description = this._config.description || description;
     this._config.summary = this._config.summary || summary;
@@ -189,14 +195,17 @@ ${arg.configurableClientScope}
     const processPacket = async (packet) => {
       switch (packet.method()) {
         case "connector.introspect":
+          // @ts-ignore
           const intro = await introspect({});
 
           return { configSchema: local._config, introspect: intro };
 
         case "connector.start-oauth":
+          // @ts-ignore
           return await local.startOAuth(packet.args());
 
         case "connector.finish-oauth":
+          // @ts-ignore
           return await local.finishOAuth(packet.args());
 
         case "connector.query":
@@ -223,6 +232,9 @@ ${arg.configurableClientScope}
       processPacket,
       start,
     };
+  }
+  onConfig(arg0: any) {
+    throw new Error("Method not implemented.");
   }
 }
 

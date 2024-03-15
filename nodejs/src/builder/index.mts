@@ -1,20 +1,17 @@
 import fs from "node:fs";
-import parseTypes from "./transform/index.mjs";
-import RuntimeContext from "./runtime-context.mjs";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { notEmpty } from "../internal/util/index.mjs";
+import RuntimeContext from "./runtime-context.mjs";
+
+//const offset = '/../../../../../'; 
+const offset = '/../../../..//../../../..//../../../..//../../../..//../../../..//Users/xg04123/NetBeansProjects/automation/connector-google-drive/'; 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const notEmpty = (what, name) => {
-  if (!what?.trim()) throw new Error(`${name} cannot be empty`);
-
-  return what;
-};
-
 export class Builder {
   private data: any = {
-    controller: "./build/controller/.controller-for-types.mts",
+    controller: "./build/.controller.json",
   };
 
   config(arg: any): Builder {
@@ -36,12 +33,12 @@ export class Builder {
 
   async build(): Promise<RuntimeContext> {
     await this.parsePackageJson();
-    await this.discoverTypes();
+    await this.loadTypes();
     await this.checkIcon();
 
     // @ts-ignore
     const Controller = (
-      await import(__dirname + "/../../../../../build/controller/index.mjs")
+      await import(__dirname + offset + "build/controller/index.mjs")
     ).default;
 
     return new RuntimeContext(new Controller(), this.data);
@@ -49,7 +46,7 @@ export class Builder {
 
   private async checkIcon() {
     const data = this.data;
-    const root = __dirname + "/../../../../../";
+    const root = __dirname + offset;
 
     data.icon = `${root}/logo.png`;
   }
@@ -58,7 +55,7 @@ export class Builder {
     const data = this.data;
 
     const packageJson = JSON.parse(
-      fs.readFileSync(__dirname + "/../../../../../package.json", {
+      fs.readFileSync(__dirname + offset + "package.json", {
         encoding: "utf-8",
       }),
     );
@@ -67,11 +64,11 @@ export class Builder {
     notEmpty((data.version = packageJson.version), "version");
   }
 
-  private async discoverTypes() {
+  private async loadTypes() {
     notEmpty(this.data.controller, "controller");
 
-    const content = fs.readFileSync(this.data.controller);
-    const { text, methods } = await parseTypes(this.data.controller);
+    const content = fs.readFileSync(this.data.controller, {encoding: 'utf-8'});
+    const {text, methods} = JSON.parse(content);
 
     this.data.types = text;
     this.data.methods = methods;

@@ -1,6 +1,6 @@
+import fs from "node:fs";
 import { AbstractController } from "../controller/index.mjs";
 import { Connector } from "../internal/index.mjs";
-import fs from "node:fs";
 
 export default class RuntimeContext {
   constructor(
@@ -12,7 +12,10 @@ export default class RuntimeContext {
     const controller = this.controller;
 
     if (!(controller instanceof AbstractController))
+    {
       throw new Error("the controller needs to extend AbstractController");
+    }
+      
     const data: any = this.data;
 
     let icon;

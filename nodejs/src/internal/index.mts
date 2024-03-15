@@ -2,324 +2,20 @@ import { init } from "@paralleldrive/cuid2";
 import express from "express";
 import PromClient from "prom-client";
 import { Dispatcher } from "./dispatcher/index.mjs";
+import Fetcher from "./fetcher/fetcher.mjs";
+import { OAuth } from "./fetcher/oauth-fetcher.mjs";
+import { handlePacketError, reply } from "./util/index.mjs";
 import JWE from "./util/jwe/index.mjs";
 import { Config } from "./websocket/config.mjs";
 import { WebsocketConnector } from "./websocket/index.mjs";
 const cuid = init({ length: 32 });
 
-const handlePacketError = (packet, e, transport) => {
-  if (!packet.cb()) {
-    console.dir({ msg: "packet error", e, packet }, { depth: null });
-    return;
-  }
-
-  transport.send(transport.newPacket({ c: packet.cb(), a: { error: "" + e } }));
-};
-
-const reply = (arg, packet, transport) => {
-  if (!packet.cb()) {
-    console.dir(
-      { msg: "cannot reply to packet without cb", arg, packet },
-      { depth: null },
-    );
-    return;
-  }
-
-  transport.send(transport.newPacket({ c: packet.cb(), a: { ...arg } }));
-};
-
-const unwrap0 = (ret, body, options) => {
-  if (options?.bodyOnly === false) {
-    return { status: ret.status, headers: ret.headers, body };
-  } else {
-    return body;
-  }
-};
-
-const unwrap = async (ret, options) => {
-  if (options?.text) return unwrap0(ret, await ret.text(), options);
-  if (options?.base64) {
-    const base64 = Buffer.from(await ret.arrayBuffer()).toString("base64");
-
-    return unwrap0(ret, base64, options);
-  }
-  
-  if (options?.skipResponseBody) {
-    return { status: ret.status, headers: ret.headers};
-  }
-
-  const text = await ret.text();
-
-  try {
-    return unwrap0(ret, JSON.parse(text), options);
-  } catch (e) {
-    throw e + " " + text;
-  }
-};
-
-class Fetcher {
-  constructor({ retry = 5, baseUrl, onResponse, customize }) {
-    this.retry = retry;
-    this.baseUrl = baseUrl;
-    this.onResponse = onResponse;
-    if (customize) this.customize0 = customize;
-  }
-
-  async customize(options = {}, args = {}) {
-    if (this.customize0) await this.customize0(options, args);
-  }
-
-  async onError(e, url, options, retries, args, rateLimit) {
-    var local = this;
-
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        async () => {
-          try {
-            resolve(await local.fetch(url, options, retries, args));
-          } catch (e) {
-            reject(e);
-          }
-        },
-        rateLimit ? 10000 : 500,
-      );
-    });
-  }
-
-  async fetch(url, options = {}, retries, args = {}) {
-    var local = this,
-      baseUrl = local.baseUrl;
-
-    if (retries == null) retries = local.retry;
-
-    let theURL = !baseUrl
-      ? url
-      : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
-          /\/\/+/gi,
-          "/",
-        );
-
-    try {
-      options.url = url;
-      await local.customize(options, args);
-
-      url = options.url;
-      delete options.url;
-
-      theURL = !baseUrl
-        ? url
-        : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
-            /\/\/+/gi,
-            "/",
-          );
-
-      if (!options?.headers || !options?.headers?.Accept) {
-        options.headers = {
-          ...options.headers,
-          Accept: "application/json",
-        };
-      }
-
-      if (!options?.headers || !options?.headers?.["Content-type"]) {
-        options.headers = {
-          ...options.headers,
-          "Content-type": "application/json",
-        };
-      }
-
-      if (
-        !(options?.method === "GET" || options?.method === "HEAD") &&
-        options?.body &&
-        !(typeof options.body === "string") &&
-        options?.headers?.["Content-type"] === "application/json"
-      ) {
-        options.body = JSON.stringify(options.body);
-      }
-
-      const timeout = Math.min(options?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
-      const ret = await fetch(theURL, {
-        ...options,
-        signal: AbortSignal.timeout(timeout),
-      });
-      const status = await ret.status;
-
-      if (status > 399) {
-        const text = await ret.text();
-        const e = new Error(status + " " + text);
-
-        e.status = status;
-        throw e;
-      }
-
-      if (local.onResponse) {
-        await local.onResponse(ret);
-      }
-
-      return unwrap(ret, options);
-    } catch (e) {
-      // too many requests
-      if (e.status === 429) {
-        return local.onError(e, url, options, retries, args, true);
-      }
-
-      // bad request
-      if (e.status === 400 || e.status === 422) {
-        throw e;
-      }
-
-      --retries;
-
-      console.log(theURL, e);
-
-      if (retries <= 0) throw e;
-
-      return local.onError(e, url, options, retries, args);
-    }
-  }
-}
-
-class OAuthFetcher extends Fetcher {
-  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize }) {
-    super({ retry, baseUrl, onResponse, customize });
-
-    this.oauth = oauth;
-    this._getToken = getToken;
-  }
-
-  async getToken(force) {
-    var local = this,
-      oauth = local.oauth;
-
-    if (local._getToken) return local._getToken(force);
-
-    if (!force && oauth.accessToken()) return oauth.accessToken();
-
-    const refreshToken = oauth.refreshToken();
-
-    try {
-      if (!refreshToken) {
-        throw new Error("have no access_token and no refresh_token");
-      }
-
-      const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
-
-      if (ret.access_token) {
-        oauth.update(ret.access_token, ret.refresh_token);
-
-        return ret.access_token;
-      } else {
-        throw new Error("could not obtain access token via refresh token");
-      }
-    } catch (e) {
-      oauth.invalidate(e);
-
-      throw e;
-    }
-  }
-
-  async onError(e, url, options, retries, args, rateLimit) {
-    var local = this;
-
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        async () => {
-          try {
-            resolve(
-              await local.fetch(url, options, retries, {
-                forceTokenRefresh: e.status === 401,
-              }),
-            );
-          } catch (e) {
-            reject(e);
-          }
-        },
-        rateLimit ? 10000 : 500,
-      );
-    });
-  }
-
-  async periodicRefresh() {
-    const local = this,
-      oauth = local.oauth;
-
-    console.log("refreshing oauth token, have token", !!oauth.refreshToken());
-    if (!oauth.refreshToken()) return;
-
-    await local.getToken(true);
-
-    console.log("refreshed oauth token");
-  }
-
-  async customize(options, args = {}) {
-    const local = this;
-
-    if (this.customize0) await this.customize0(options, args);
-
-    const token = await local.getToken(args.forceTokenRefresh);
-
-    options.headers = {
-      ...options.headers,
-      Authorization: `Bearer ${token}`,
-    };
-  }
-}
-
-class OAuth {
-  constructor(data, saveOAuthResult, getRefreshToken) {
-    var local = this;
-    this._data = data || {};
-    this.saveOAuthResult = saveOAuthResult;
-    this.obtainViaRefreshToken = getRefreshToken;
-    this.clients = [];
-  }
-
-  data() {
-    return this._data;
-  }
-
-  accessToken() {
-    return this._data.access_token;
-  }
-
-  refreshToken() {
-    return this._data.refresh_token;
-  }
-
-  async update(accessToken, refreshToken) {
-    this._data.access_token = accessToken;
-
-    if (refreshToken) {
-      this._data.refresh_token = refreshToken;
-    }
-
-    await this.saveOAuthResult(this._data);
-  }
-
-  async periodicRefresh() {
-    const clients = this.clients;
-
-    console.log("refreshing oauth clients", clients.length);
-
-    for (let i = 0; i < clients.length; ++i) {
-      const client = clients[0];
-
-      await client.periodicRefresh();
-    }
-  }
-
-  async invalidate(err) {
-    if (true) return;
-    //if (this._data.access_token === "invalid") return;
-  }
-
-  getClient(arg = {}) {
-    const client = new OAuthFetcher({ ...arg, oauth: this });
-    this.clients.push(client);
-    return client;
-  }
-}
-
 class Connector {
+  id: any;
+  version: any;
+  name: any;
+  icon: any;
+  dispatcher?: Dispatcher;
   constructor({ version, id, name, icon }) {
     this.id = id;
     this.version = version;
@@ -365,7 +61,7 @@ class Connector {
     makeMetricsServer(makeMetrics()).listen(4050, "0.0.0.0");
 
     const { processPacket, start, introspect, configSchema } =
-      this.dispatcher.build();
+      this.dispatcher!.build();
 
     const config = new Config({
       id: this.id,
@@ -415,8 +111,9 @@ ${text}
     const server = new WebsocketConnector({
       config,
       onConnect: (transport) => {
-        local.dispatcher.onConfig = async function (secrets) {
-          const decrypted = {};
+        // @ts-ignore
+        local.dispatcher!.onConfig = async function (secrets) {
+          const decrypted: any = {};
           const fields = configSchema().fields;
 
           const keys = Object.keys(secrets);
@@ -438,6 +135,7 @@ ${text}
             }
           }
 
+          // @ts-ignore
           this.startOAuth = async function (args) {
             if (!this._oauth) throw new Error("oauth not configured");
 
@@ -463,6 +161,7 @@ ${text}
             };
           };
 
+          // @ts-ignore
           this.finishOAuth = async function (arg) {
             var that = this;
 
@@ -504,7 +203,7 @@ ${text}
                 body.code_verifier = arg.codeVerifier;
               }
 
-              let headers = {
+              let headers: any = {
                 "Content-Type":
                   "application/x-www-form-urlencoded;charset=UTF-8",
                 Accept: "application/json",
@@ -640,9 +339,11 @@ ${text}
             : null;
 
           if (theOAuth) {
+            // @ts-ignore
             clearInterval(this._refreshOAuthToken);
 
             if (!(this._oauth.noPeriodicTokenRefresh === false)) {
+              // @ts-ignore
               this._refreshOAuthToken = setInterval(
                 async () => {
                   try {
@@ -769,7 +470,7 @@ ${text}
       await new Promise((resolve) => {
         setTimeout(async () => {
           await server.close();
-          resolve();
+          resolve(null);
         }, 10000);
       });
 

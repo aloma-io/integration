@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import fs from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
-import JWE from "./internal/util/jwe/index.mjs";
-import util from "node:util";
 import ChildProcess from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import util from "node:util";
+import { notEmpty } from "./internal/util/index.mjs";
+import JWE from "./internal/util/jwe/index.mjs";
+import parseTypes from "./transform/index.mjs";
 
 const exec = util.promisify(ChildProcess.exec);
 
@@ -118,10 +120,23 @@ program
   .description("Build the current connector project")
   .action(async (str, options) => {
     const { stdout, stderr } = await exec(
-      `rm -rf build; mkdir -p build/controller; cp ./src/controller/index.mts ./build/controller/.controller-for-types.mts;`,
+      `rm -rf build; mkdir -p build`,
     );
 
     if (stdout) console.log(stdout);
+
+    new Extractor().extract('./src/controller/index.mts', './build/.controller.json')
   });
+
+class Extractor {
+  async extract(source, target) {
+    notEmpty(source, "source");
+
+    fs.readFileSync(source);
+    const { text, methods } = await parseTypes(source);
+
+    fs.writeFileSync(target, JSON.stringify({text, methods}), {encoding: 'utf-8'})
+  }
+}
 
 program.parse();
