@@ -46,9 +46,8 @@ export class Builder {
 
   private async checkIcon() {
     const data = this.data;
-    const root = TARGET_DIR;
 
-    data.icon = `${root}/logo.png`;
+    data.icon = TARGET_DIR + "build/logo.png";
   }
 
   private async loadDescriptor() {

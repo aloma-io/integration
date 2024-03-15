@@ -126,7 +126,7 @@ program
 
     try
     {
-      fs.copyFileSync('./logo.png', './build/');
+      fs.copyFileSync(`${TARGET_DIR}/logo.png`, `${TARGET_DIR}/build/logo.png`);
     } catch(e) {
       // blank
     }
