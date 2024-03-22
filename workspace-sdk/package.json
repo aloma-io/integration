@@ -1,0 +1,37 @@
+{
+  "name": "@aloma.io/workspace-sdk",
+  "version": "0.0.3",
+  "description": "",
+  "author": "aloma.io",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "aloma": "./build/cli.mjs"
+  },
+  "scripts": {
+    "dev": "./node_modules/typescript/bin/tsc --watch",
+    "build": "./node_modules/typescript/bin/tsc",
+    "test": "./node_modules/mocha/bin/_mocha --recursive",
+    "format": "yarn prettier --write src/"
+  },
+  "main": "./build/index.js",
+  "exports": {
+    ".": {
+      "import": "./build/index.mjs",
+      "require": "./build/index.js"
+    },
+    "./build/*": "./build/*",
+    "./package": "./package.json",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@types/node": "^20",
+    "commander": "^12",
+    "jshint": "^2",
+    "typescript": "^5"
+  },
+  "devDependencies": {
+    "mocha": "^10",
+    "prettier": "^3"
+  }
+}
