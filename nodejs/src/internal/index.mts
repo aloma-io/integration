@@ -139,6 +139,12 @@ ${text}
           this.startOAuth = async function (args) {
             if (!this._oauth) throw new Error("oauth not configured");
 
+            const authorizationURL = process.env.OAUTH_AUTHORIZATION_URL ||
+            decrypted.authorizationURL ||
+            that._oauth.authorizationURL;
+
+            if (!authorizationURL) throw new Error("authorizationURL not configured");
+
             const clientId =
               process.env.OAUTH_CLIENT_ID ||
               decrypted.clientId ||
@@ -154,7 +160,7 @@ ${text}
             const useCodeChallenge = !!that._oauth.useCodeChallenge;
 
             return {
-              url: this._oauth.authorizationURL
+              url: authorizationURL
                 .replace(/\{\{clientId\}\}/gi, encodeURIComponent(clientId))
                 .replace(/\{\{scope\}\}/gi, encodeURIComponent(scopes)),
               useCodeChallenge,
@@ -165,8 +171,12 @@ ${text}
           this.finishOAuth = async function (arg) {
             var that = this;
 
+            const tokenURL = process.env.OAUTH_TOKEN_URL ||
+            decrypted.tokenURL ||
+            that._oauth.tokenURL;
+
             if (!this._oauth) throw new Error("oauth not configured");
-            if (!this._oauth.tokenURL && !this._oauth.finishOAuth)
+            if (!tokenURL && !this._oauth.finishOAuth)
               throw new Error("need tokenURL or finishOAuth(arg)");
 
             var data = null;
@@ -222,7 +232,7 @@ ${text}
                 };
               }
 
-              const response = await fetch(that._oauth.tokenURL, {
+              const response = await fetch(tokenURL, {
                 method: "POST",
                 body: new URLSearchParams(body),
                 headers,
@@ -282,6 +292,10 @@ ${text}
           const that = this;
 
           const getRefreshToken = async (refreshToken) => {
+            const tokenURL = process.env.OAUTH_TOKEN_URL ||
+            decrypted.tokenURL ||
+            that._oauth.tokenURL;
+
             const clientId =
               process.env.OAUTH_CLIENT_ID ||
               decrypted.clientId ||
@@ -305,7 +319,7 @@ ${text}
               };
             }
 
-            const response = await fetch(that._oauth.tokenURL, {
+            const response = await fetch(tokenURL, {
               method: "POST",
               body: new URLSearchParams({
                 grant_type: "refresh_token",
