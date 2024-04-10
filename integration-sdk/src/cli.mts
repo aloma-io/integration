@@ -120,20 +120,20 @@ program
   .command("build")
   .description("Build the current connector project")
   .action(async (str, options) => {
-    const { stdout, stderr } = await exec(
-      `rm -rf build; mkdir -p build; `,
-    );
+    const { stdout, stderr } = await exec(`rm -rf build; mkdir -p build; `);
 
-    try
-    {
+    try {
       fs.copyFileSync(`${TARGET_DIR}/logo.png`, `${TARGET_DIR}/build/logo.png`);
-    } catch(e) {
+    } catch (e) {
       // blank
     }
 
     if (stdout) console.log(stdout);
 
-    new Extractor().extract('./src/controller/index.mts', './build/.controller.json')
+    new Extractor().extract(
+      "./src/controller/index.mts",
+      "./build/.controller.json",
+    );
   });
 
 class Extractor {
@@ -149,7 +149,16 @@ class Extractor {
       }),
     );
 
-    fs.writeFileSync(target, JSON.stringify({text, methods, connectorId: packageJson.connectorId, version: packageJson.version}), {encoding: 'utf-8'})
+    fs.writeFileSync(
+      target,
+      JSON.stringify({
+        text,
+        methods,
+        connectorId: packageJson.connectorId,
+        version: packageJson.version,
+      }),
+      { encoding: "utf-8" },
+    );
   }
 }
 

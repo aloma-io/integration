@@ -139,11 +139,13 @@ ${text}
           this.startOAuth = async function (args) {
             if (!this._oauth) throw new Error("oauth not configured");
 
-            const authorizationURL = process.env.OAUTH_AUTHORIZATION_URL ||
-            decrypted.authorizationURL ||
-            that._oauth.authorizationURL;
+            const authorizationURL =
+              process.env.OAUTH_AUTHORIZATION_URL ||
+              decrypted.authorizationURL ||
+              that._oauth.authorizationURL;
 
-            if (!authorizationURL) throw new Error("authorizationURL not configured");
+            if (!authorizationURL)
+              throw new Error("authorizationURL not configured");
 
             const clientId =
               process.env.OAUTH_CLIENT_ID ||
@@ -171,9 +173,10 @@ ${text}
           this.finishOAuth = async function (arg) {
             var that = this;
 
-            const tokenURL = process.env.OAUTH_TOKEN_URL ||
-            decrypted.tokenURL ||
-            that._oauth.tokenURL;
+            const tokenURL =
+              process.env.OAUTH_TOKEN_URL ||
+              decrypted.tokenURL ||
+              that._oauth.tokenURL;
 
             if (!this._oauth) throw new Error("oauth not configured");
             if (!tokenURL && !this._oauth.finishOAuth)
@@ -292,9 +295,10 @@ ${text}
           const that = this;
 
           const getRefreshToken = async (refreshToken) => {
-            const tokenURL = process.env.OAUTH_TOKEN_URL ||
-            decrypted.tokenURL ||
-            that._oauth.tokenURL;
+            const tokenURL =
+              process.env.OAUTH_TOKEN_URL ||
+              decrypted.tokenURL ||
+              that._oauth.tokenURL;
 
             const clientId =
               process.env.OAUTH_CLIENT_ID ||

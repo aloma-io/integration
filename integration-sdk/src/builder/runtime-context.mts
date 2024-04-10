@@ -11,11 +11,10 @@ export default class RuntimeContext {
   async start(): Promise<void> {
     const controller = this.controller;
 
-    if (!(controller instanceof AbstractController))
-    {
+    if (!(controller instanceof AbstractController)) {
       throw new Error("the controller needs to extend AbstractController");
     }
-      
+
     const data: any = this.data;
 
     let icon;

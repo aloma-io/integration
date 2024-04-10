@@ -1,4 +1,3 @@
-
 export const handlePacketError = (packet, e, transport) => {
   if (!packet.cb()) {
     console.dir({ msg: "packet error", e, packet }, { depth: null });
@@ -35,9 +34,9 @@ export const unwrap = async (ret, options) => {
 
     return unwrap0(ret, base64, options);
   }
-  
+
   if (options?.skipResponseBody) {
-    return { status: ret.status, headers: ret.headers};
+    return { status: ret.status, headers: ret.headers };
   }
 
   const text = await ret.text();
@@ -48,7 +47,6 @@ export const unwrap = async (ret, options) => {
     throw e + " " + text;
   }
 };
-
 
 export const notEmpty = (what, name) => {
   if (!what?.trim()) throw new Error(`${name} cannot be empty`);

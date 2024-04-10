@@ -16,7 +16,14 @@ export default class Fetcher {
     if (this.customize0) await this.customize0(options, args);
   }
 
-  async onError(e: any, url: string, options: any, retries: number, args: any, rateLimit?) {
+  async onError(
+    e: any,
+    url: string,
+    options: any,
+    retries: number,
+    args: any,
+    rateLimit?,
+  ) {
     var local = this;
 
     return new Promise((resolve, reject) => {
@@ -83,7 +90,10 @@ export default class Fetcher {
         options.body = JSON.stringify(options.body);
       }
 
-      const timeout = Math.min(options?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
+      const timeout = Math.min(
+        options?.timeout || 30 * 60 * 1000,
+        30 * 60 * 1000,
+      );
       const ret = await fetch(theURL, {
         ...options,
         signal: AbortSignal.timeout(timeout),

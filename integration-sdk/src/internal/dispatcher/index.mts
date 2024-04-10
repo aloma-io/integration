@@ -4,7 +4,7 @@ export default class Dispatcher {
   _oauth: any;
   private _types: any;
   private _resolvers: any;
-  
+
   constructor() {
     this._config = { fields: {} };
   }

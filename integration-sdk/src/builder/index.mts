@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { notEmpty } from "../internal/util/index.mjs";
 import RuntimeContext from "./runtime-context.mjs";
 
-const DIR_OFFSET = '/../../../../../'; 
+const DIR_OFFSET = "/../../../../../";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,9 +37,8 @@ export class Builder {
     await this.checkIcon();
 
     // @ts-ignore
-    const Controller = (
-      await import(TARGET_DIR + "build/controller/index.mjs")
-    ).default;
+    const Controller = (await import(TARGET_DIR + "build/controller/index.mjs"))
+      .default;
 
     return new RuntimeContext(new Controller(), this.data);
   }
@@ -53,8 +52,10 @@ export class Builder {
   private async loadDescriptor() {
     notEmpty(this.data.controller, "controller");
 
-    const content = fs.readFileSync(this.data.controller, {encoding: 'utf-8'});
-    const {text, methods, connectorId, version} = JSON.parse(content);
+    const content = fs.readFileSync(this.data.controller, {
+      encoding: "utf-8",
+    });
+    const { text, methods, connectorId, version } = JSON.parse(content);
 
     this.data.types = text;
     this.data.methods = methods;
