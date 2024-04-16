@@ -29,7 +29,7 @@
     "@ts-ast-parser/core": "^0.5",
     "@types/node": "^18",
     "commander": "^12",
-    "dotenv": "*",
+    "dotenv": "^16",
     "express": "^4",
     "jose": "^5",
     "prom-client": "^15",

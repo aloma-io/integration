@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { notEmpty } from "../internal/util/index.mjs";
 import RuntimeContext from "./runtime-context.mjs";
+import 'dotenv/config'
 
 const DIR_OFFSET = "/../../../../../";
 
