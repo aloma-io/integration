@@ -77,7 +77,7 @@ export default class RuntimeContext {
         getBlob,
         getBlobContent,
         createBlob,
-        healthCheck
+        healthCheck,
       }) => {
         try {
           clearInterval(healthInterval);
