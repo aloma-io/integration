@@ -1,10 +1,10 @@
-import C from "../connection/constants.mjs";
 import { init } from "@paralleldrive/cuid2";
+import C from "../connection/constants.mjs";
 const cuid = init({ length: 32 });
 
-import { DurableWebsocket } from "./durable.mjs";
 import WebSocket from "ws";
-import { Packet, Callback } from "./packet.mjs";
+import { DurableWebsocket } from "./durable.mjs";
+import { Callback, Packet } from "./packet.mjs";
 
 const cleanInterval = 45 * 1000;
 const pingInterval = 30 * 1000;
@@ -77,7 +77,7 @@ class Transport {
     };
 
     ws.on("open", () => {
-      console.log("websocket connected");
+      console.log("transport connected");
       local.connected = true;
       ws.onPing();
       local.pinger = setInterval(() => ws.ping(() => null), pingInterval);

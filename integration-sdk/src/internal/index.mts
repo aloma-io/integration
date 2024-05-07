@@ -432,6 +432,24 @@ ${text}
             getBlob,
             getBlobContent,
             createBlob,
+            healthCheck: async (controller) => {
+              let result: any = {ok: true};
+
+              try
+              {
+                await controller.__healthCheck()
+              } catch(e: any) {
+                result.ok = false;
+                result.error = e.message;
+              }
+
+              const packet = transport.newPacket({});
+
+              packet.method("connector.health.check");
+              packet.args(result);
+
+              transport.send(packet);
+            },
             getClient: (arg) =>
               theOAuth ? theOAuth.getClient(arg) : new Fetcher(arg),
             newTask: (name, data) => {

@@ -65,6 +65,8 @@ export default class RuntimeContext {
       configuration.oauth(data.auth?.oauth);
     }
 
+    let healthInterval;
+
     configuration.main(
       async ({
         newTask,
@@ -75,8 +77,11 @@ export default class RuntimeContext {
         getBlob,
         getBlobContent,
         createBlob,
+        healthCheck
       }) => {
         try {
+          clearInterval(healthInterval);
+
           await controller._doStop();
           await controller._doStart(
             config,
@@ -88,6 +93,8 @@ export default class RuntimeContext {
             getBlobContent,
             createBlob,
           );
+
+          healthInterval = setInterval(() => healthCheck(controller), 30000);
         } catch (e) {
           console.log(e);
         }
@@ -97,6 +104,7 @@ export default class RuntimeContext {
     connector.run();
 
     const term = async () => {
+      clearInterval(healthInterval);
       await controller._doStop(true);
 
       process.exit(0);

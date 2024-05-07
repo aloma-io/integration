@@ -146,9 +146,9 @@ ${arg.configurableClientScope}
 
     const main = this._main || (() => {});
 
-    const start = async (transport) => {
+    const start = async (arg) => {
       console.log("starting ...");
-      await main(transport);
+      await main(arg);
     };
 
     const resolveMethod = (query) => {

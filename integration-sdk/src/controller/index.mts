@@ -70,6 +70,10 @@ export abstract class AbstractController {
     throw new Error("not implemented");
   }
 
+  protected async healthCheck(): Promise<any> {
+    // blank, throw an error if unhealthy
+  }
+
   async __endpoint(arg: any): Promise<any | null> {
     return this.endpoint(arg);
   }
@@ -80,6 +84,10 @@ export abstract class AbstractController {
 
   async __default(arg: any): Promise<any | null> {
     return this.fallback(arg);
+  }
+
+  async __healthCheck(): Promise<any> {
+    return this.healthCheck();
   }
 
   async _doStart(
