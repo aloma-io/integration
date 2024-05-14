@@ -373,9 +373,6 @@ ${text}
                 },
                 this._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000,
               );
-              
-              // @ts-ignore
-              theOAuth.getToken();
             }
           }
 
