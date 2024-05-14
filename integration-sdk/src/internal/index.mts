@@ -426,6 +426,8 @@ ${text}
             });
           };
 
+          let oauthClient;
+
           start({
             config: decrypted,
             oauth: theOAuth,
@@ -436,6 +438,10 @@ ${text}
               let result: any = { ok: true, error: null };
 
               try {
+                if (oauthClient) {
+                  await oauthClient.__healthCheck();
+                }
+                
                 await controller.__healthCheck();
               } catch (e: any) {
                 result.ok = false;
@@ -450,7 +456,7 @@ ${text}
               transport.send(packet);
             },
             getClient: (arg) =>
-              theOAuth ? theOAuth.getClient(arg) : new Fetcher(arg),
+              theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg),
             newTask: (name, data) => {
               return new Promise((resolve, reject) => {
                 const packet = transport.newPacket(
