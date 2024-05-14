@@ -433,7 +433,7 @@ ${text}
             getBlobContent,
             createBlob,
             healthCheck: async (controller) => {
-              let result: any = { ok: true };
+              let result: any = { ok: true, error: null };
 
               try {
                 await controller.__healthCheck();

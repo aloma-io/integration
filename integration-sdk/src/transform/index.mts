@@ -36,6 +36,9 @@ const transform = (meta: any) => {
           const example = docs.find(
             (what: any) => what.kind === "example",
           )?.value;
+          
+          const ns = docs.find((what: any) => what.kind === 'namespace')?.value;
+          let space = ns?`@namespace ${ns}`:''
 
           let eg;
           if (example) {
@@ -91,6 +94,7 @@ const transform = (meta: any) => {
 /**
  * ${desc || ""}
  *
+ * ${space || ''}
  * ${eg || ""}
  **/    
 declare function ${member.getName()}(${params}): ${retVal};
