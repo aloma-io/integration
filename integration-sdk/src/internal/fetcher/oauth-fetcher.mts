@@ -3,6 +3,7 @@ import Fetcher from "./fetcher.mjs";
 class OAuthFetcher extends Fetcher {
   oauth: any;
   _getToken: any;
+  used: boolean = false;
   constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize }) {
     super({ retry, baseUrl, onResponse, customize });
 
@@ -11,13 +12,15 @@ class OAuthFetcher extends Fetcher {
   }
   
   async __healthCheck() {
-    if (!this.oauth.accessToken()) throw new Error('no access token');
+    if (this.used && !this.oauth.accessToken()) throw new Error('no access token');
   }
 
   async getToken(force) {
     var local = this,
       oauth = local.oauth;
-
+      
+    this.used = true;
+      
     if (local._getToken) return local._getToken(force);
 
     if (!force && oauth.accessToken()) return oauth.accessToken();
@@ -139,8 +142,7 @@ export class OAuth {
   }
 
   async invalidate(err) {
-    if (true) return;
-    //if (this._data.access_token === "invalid") return;
+    this._data.access_token = null;
   }
 
   getClient(arg: any = {}) {
