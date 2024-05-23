@@ -351,8 +351,8 @@ ${text}
               );
             }
           };
-
-          const theOAuth = decrypted.oauthResult
+          
+          const theOAuth = that._oauth
             ? new OAuth(decrypted.oauthResult, saveOAuthResult, getRefreshToken)
             : null;
 
