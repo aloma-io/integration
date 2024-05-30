@@ -12,7 +12,7 @@ const stripFunction = (what: string) => {
   what = what.trim();
 
   let stripped: any = what.split(/\{/gi);
-    
+
   stripped.shift();
   stripped = stripped.join("{");
 
@@ -86,7 +86,7 @@ const walkSync = function (dir: string, filter: any, filelist: string[] = []) {
     }
   });
 
-  return filelist;
+  return [...new Set(filelist)];
 };
 
 const parseSteps = async (root: string) => {

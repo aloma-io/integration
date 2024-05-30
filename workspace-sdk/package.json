@@ -1,6 +1,6 @@
 {
   "name": "@aloma.io/workspace-sdk",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
@@ -28,7 +28,8 @@
     "@types/node": "^20",
     "commander": "^12",
     "jshint": "^2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "yaml": "^2"
   },
   "devDependencies": {
     "mocha": "^10",

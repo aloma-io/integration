@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node build/index.mjs",
     "dev": "./node_modules/typescript/bin/tsc --watch",
-    "build": "./node_modules/@aloma.io/workspace-sdk/build/cli.mjs build; ./node_modules/typescript/bin/tsc",
+    "build": "./node_modules/typescript/bin/tsc; ./node_modules/@aloma.io/workspace-sdk/build/cli.mjs build;",
     "test": "./node_modules/mocha/bin/_mocha --recursive",
     "format": "yarn prettier --write src/"
   },
