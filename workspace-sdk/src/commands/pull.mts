@@ -143,6 +143,7 @@ const processStep = async (
     .split(/\//)
     .map((what) => what.trim())
     .filter((what) => !!what && !what.startsWith("."));
+
   const fileName = parts.pop();
   const path = `${target}/${parts.join("/")}`;
   const targetFile = `${path}/${fileName}.mts`;
@@ -187,6 +188,7 @@ const processSteps = async (
 
 export const pull = async (id: string, options: any) => {
   const workspace = await getWorkspace(id);
+
   console.log(
     `Updating from workspace ${workspace.name} (id: ${workspace.id}) ...`,
   );

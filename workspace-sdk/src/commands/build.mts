@@ -4,6 +4,8 @@ import util from "node:util";
 import parseSteps from "../step-parser/index.mjs";
 
 const exec = util.promisify(ChildProcess.exec);
+
+
 export const build = async () => {
   console.log(`Building ...`);
   const dir = `${process.cwd()}/`;
