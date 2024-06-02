@@ -39,6 +39,7 @@ export default class RuntimeContext {
     const resolvers: any = {};
     const methods: string[] = [
       ...data.methods,
+      "__autocomplete",
       "__endpoint",
       "__configQuery",
       "__default",

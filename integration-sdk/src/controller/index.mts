@@ -9,6 +9,10 @@ export abstract class AbstractController {
   protected configQuery(arg: any): Promise<any> {
     return Promise.resolve({});
   }
+  
+  protected autocomplete(arg: any): Promise<any> {
+    return Promise.resolve({});
+  }
 
   protected fallback(arg: any): Promise<any> {
     throw new Error("method not found");
@@ -80,6 +84,10 @@ export abstract class AbstractController {
 
   async __configQuery(arg: any): Promise<any | null> {
     return this.configQuery(arg);
+  }
+  
+  async __autocomplete(arg: any): Promise<any | null> {
+    return this.autocomplete(arg);
   }
 
   async __default(arg: any): Promise<any | null> {
