@@ -148,8 +148,8 @@ ${text}
               throw new Error("authorizationURL not configured");
 
             const clientId =
-              process.env.OAUTH_CLIENT_ID ||
               decrypted.clientId ||
+              process.env.OAUTH_CLIENT_ID ||
               this._oauth.clientId;
 
             if (!clientId) throw new Error("clientId not configured");
@@ -189,15 +189,15 @@ ${text}
                 throw new Error("need code and redirectUri");
 
               const clientId =
-                process.env.OAUTH_CLIENT_ID ||
                 decrypted.clientId ||
+                process.env.OAUTH_CLIENT_ID ||
                 that._oauth.clientId;
 
               if (!clientId) throw new Error("clientId not configured");
 
               const clientSecret =
-                process.env.OAUTH_CLIENT_SECRET ||
                 decrypted.clientSecret ||
+                process.env.OAUTH_CLIENT_SECRET ||
                 that._oauth.clientSecret;
               if (!clientSecret) throw new Error("clientSecret not configured");
 
@@ -301,14 +301,14 @@ ${text}
               that._oauth.tokenURL;
 
             const clientId =
-              process.env.OAUTH_CLIENT_ID ||
               decrypted.clientId ||
+              process.env.OAUTH_CLIENT_ID ||
               that._oauth.clientId;
             if (!clientId) throw new Error("clientId not configured");
 
             const clientSecret =
-              process.env.OAUTH_CLIENT_SECRET ||
               decrypted.clientSecret ||
+              process.env.OAUTH_CLIENT_SECRET ||
               that._oauth.clientSecret;
             if (!clientSecret) throw new Error("clientSecret not configured");
 
