@@ -351,7 +351,7 @@ ${text}
               );
             }
           };
-          
+
           const theOAuth = that._oauth
             ? new OAuth(decrypted.oauthResult, saveOAuthResult, getRefreshToken)
             : null;
@@ -441,7 +441,7 @@ ${text}
                 if (oauthClient) {
                   await oauthClient.__healthCheck();
                 }
-                
+
                 await controller.__healthCheck();
               } catch (e: any) {
                 result.ok = false;
@@ -456,7 +456,9 @@ ${text}
               transport.send(packet);
             },
             getClient: (arg) =>
-              theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg),
+              theOAuth
+                ? (oauthClient = theOAuth.getClient(arg))
+                : new Fetcher(arg),
             newTask: (name, data) => {
               return new Promise((resolve, reject) => {
                 const packet = transport.newPacket(

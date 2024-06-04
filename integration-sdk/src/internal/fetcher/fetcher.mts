@@ -111,10 +111,9 @@ export default class Fetcher {
       if (local.onResponse) {
         await local.onResponse(ret);
       }
-      
-      if (status === 204)
-      {
-        return {ok: true};
+
+      if (status === 204) {
+        return { ok: true };
       }
 
       return unwrap(ret, options);

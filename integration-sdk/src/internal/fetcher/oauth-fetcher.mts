@@ -10,17 +10,18 @@ class OAuthFetcher extends Fetcher {
     this.oauth = oauth;
     this._getToken = getToken;
   }
-  
+
   async __healthCheck() {
-    if (this.used && !this.oauth.accessToken()) throw new Error('no access token');
+    if (this.used && !this.oauth.accessToken())
+      throw new Error("no access token");
   }
 
   async getToken(force) {
     var local = this,
       oauth = local.oauth;
-      
+
     this.used = true;
-      
+
     if (local._getToken) return local._getToken(force);
 
     if (!force && oauth.accessToken()) return oauth.accessToken();
