@@ -4,11 +4,23 @@ import { WebsocketConnector } from "../../websocket/index.mjs";
 import { onConnect } from "./on-connect/index.mjs";
 import { onMessage } from "./on-message.mjs";
 
-export const makeServer = async ({config, configSchema, start, processPacket, dispatcher}: {config: Config, configSchema: any, start: any, processPacket: any, dispatcher: Dispatcher}): Promise<WebsocketConnector> => {
+export const makeServer = async ({
+  config,
+  configSchema,
+  start,
+  processPacket,
+  dispatcher,
+}: {
+  config: Config;
+  configSchema: any;
+  start: any;
+  processPacket: any;
+  dispatcher: Dispatcher;
+}): Promise<WebsocketConnector> => {
   const server = new WebsocketConnector({
     config,
-    onConnect: onConnect({config, configSchema, dispatcher, start}),
-    onMessage: onMessage(processPacket)
+    onConnect: onConnect({ config, configSchema, dispatcher, start }),
+    onMessage: onMessage(processPacket),
   });
 
   const term = async () => {
@@ -36,4 +48,4 @@ export const makeServer = async ({config, configSchema, start, processPacket, di
   process.on("SIGINT", term);
 
   return server;
-}
+};

@@ -23,7 +23,8 @@ export class Connector {
   async run() {
     console.log(`Running ${this.name}`);
 
-    const { processPacket, start, introspect, configSchema } = this.dispatcher!.build();
+    const { processPacket, start, introspect, configSchema } =
+      this.dispatcher!.build();
 
     const config = await makeConfig({
       id: this.id,
@@ -40,9 +41,14 @@ export class Connector {
       version: this.version,
     });
 
-    const server = await makeServer({config, configSchema, start, processPacket, dispatcher: this.dispatcher!})
+    const server = await makeServer({
+      config,
+      configSchema,
+      start,
+      processPacket,
+      dispatcher: this.dispatcher!,
+    });
 
     await server.start();
   }
 }
-

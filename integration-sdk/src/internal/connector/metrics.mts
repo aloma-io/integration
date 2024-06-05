@@ -1,7 +1,7 @@
 import express from "express";
 import PromClient from "prom-client";
 
-export const makeMetrics = async ({id, name, version}): Promise<void> => {
+export const makeMetrics = async ({ id, name, version }): Promise<void> => {
   const newMetrics = () => {
     const metrics = PromClient;
 
@@ -31,5 +31,4 @@ export const makeMetrics = async ({id, name, version}): Promise<void> => {
   };
 
   makeMetricsServer(newMetrics()).listen(4050, "0.0.0.0");
-
-}
+};

@@ -1,5 +1,4 @@
-
-export const patchStartOAuth = async ({dispatcher, decrypted}) => {
+export const patchStartOAuth = async ({ dispatcher, decrypted }) => {
   dispatcher.startOAuth = async function () {
     if (!dispatcher._oauth) throw new Error("oauth not configured");
 
@@ -8,8 +7,7 @@ export const patchStartOAuth = async ({dispatcher, decrypted}) => {
       decrypted.authorizationURL ||
       dispatcher._oauth.authorizationURL;
 
-    if (!authorizationURL)
-      throw new Error("authorizationURL not configured");
+    if (!authorizationURL) throw new Error("authorizationURL not configured");
 
     const clientId =
       decrypted.clientId ||
@@ -32,4 +30,4 @@ export const patchStartOAuth = async ({dispatcher, decrypted}) => {
       useCodeChallenge,
     };
   };
-}
+};

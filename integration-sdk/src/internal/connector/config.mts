@@ -1,7 +1,14 @@
 import JWE from "../util/jwe/index.mjs";
 import { Config } from "../websocket/config.mjs";
 
-export const makeConfig = async ({id, version, name, introspect, configSchema, icon}): Promise<Config> => {
+export const makeConfig = async ({
+  id,
+  version,
+  name,
+  introspect,
+  configSchema,
+  icon,
+}): Promise<Config> => {
   const config = new Config({
     id: id,
     version: version,
@@ -44,14 +51,17 @@ ${text}
       `);
 
       await new Promise((resolve) => {
-        setTimeout(() => {
-          resolve(null);
-        }, 2 * 60 * 1000);
+        setTimeout(
+          () => {
+            resolve(null);
+          },
+          2 * 60 * 1000,
+        );
       });
 
-      throw new Error('could not start');
+      throw new Error("could not start");
     }
   }
 
   return config;
-}
+};

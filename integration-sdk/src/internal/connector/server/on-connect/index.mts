@@ -9,15 +9,34 @@ import { patchStartOAuth } from "./start-oauth.mjs";
 
 const cuid = init({ length: 32 });
 
-export const onConnect = ({dispatcher, configSchema, config, start}:  {config: Config, configSchema: any, start: any, dispatcher: Dispatcher}) => {
+export const onConnect = ({
+  dispatcher,
+  configSchema,
+  config,
+  start,
+}: {
+  config: Config;
+  configSchema: any;
+  start: any;
+  dispatcher: Dispatcher;
+}) => {
   return async (transport) => {
     dispatcher.onConfig = async function (secrets) {
-      const decrypted: any = await decryptConfig({configSchema, secrets, config});
+      const decrypted: any = await decryptConfig({
+        configSchema,
+        secrets,
+        config,
+      });
 
-      await patchStartOAuth({dispatcher, decrypted});
-      await patchFinishOAuth({dispatcher, decrypted, config, transport});
+      await patchStartOAuth({ dispatcher, decrypted });
+      await patchFinishOAuth({ dispatcher, decrypted, config, transport });
 
-      const theOAuth = await makeOAuth({config, transport, decrypted, dispatcher});
+      const theOAuth = await makeOAuth({
+        config,
+        transport,
+        decrypted,
+        dispatcher,
+      });
 
       const getBlob = (id) => {
         return new Promise((resolve, reject) => {
@@ -40,8 +59,7 @@ export const onConnect = ({dispatcher, configSchema, config, start}:  {config: C
         return new Promise((resolve, reject) => {
           const packet = transport.newPacket(
             {},
-            (ret) =>
-              ret?.error ? reject(ret.error) : resolve(ret?.content),
+            (ret) => (ret?.error ? reject(ret.error) : resolve(ret?.content)),
             `_req-${cuid()}`,
           );
 
@@ -99,9 +117,7 @@ export const onConnect = ({dispatcher, configSchema, config, start}:  {config: C
           transport.send(packet);
         },
         getClient: (arg) =>
-          theOAuth
-            ? (oauthClient = theOAuth.getClient(arg))
-            : new Fetcher(arg),
+          theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg),
         newTask: (name, data) => {
           return new Promise((resolve, reject) => {
             const packet = transport.newPacket(
@@ -138,5 +154,5 @@ export const onConnect = ({dispatcher, configSchema, config, start}:  {config: C
         },
       });
     };
-  }
+  };
 };

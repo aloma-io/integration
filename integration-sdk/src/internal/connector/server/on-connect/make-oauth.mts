@@ -2,7 +2,17 @@ import Dispatcher from "../../../dispatcher/index.mjs";
 import { OAuth } from "../../../fetcher/oauth-fetcher.mjs";
 import { Config } from "../../../websocket/config.mjs";
 
-export const makeOAuth = async ({config, transport, decrypted, dispatcher}: {config: Config, transport: any, decrypted: any, dispatcher: Dispatcher}) => {
+export const makeOAuth = async ({
+  config,
+  transport,
+  decrypted,
+  dispatcher,
+}: {
+  config: Config;
+  transport: any;
+  decrypted: any;
+  dispatcher: Dispatcher;
+}) => {
   const saveOAuthResult = async (what) => {
     const jwe = await config.validateKeys("RSA-OAEP-256");
     const value = await jwe.encrypt(what, "none", config.id());
@@ -55,8 +65,7 @@ export const makeOAuth = async ({config, transport, decrypted, dispatcher}: {con
         client_secret: clientSecret,
       }),
       headers: {
-        "Content-Type":
-          "application/x-www-form-urlencoded;charset=UTF-8",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         Accept: "application/json",
         ...headers,
       },
@@ -69,33 +78,31 @@ export const makeOAuth = async ({config, transport, decrypted, dispatcher}: {con
     if (status === 200) {
       return JSON.parse(text);
     } else {
-      throw new Error(
-        "could not get refresh token " + status + " " + text,
-      );
+      throw new Error("could not get refresh token " + status + " " + text);
     }
   };
 
-  const theOAuth =  dispatcher._oauth
+  const theOAuth = dispatcher._oauth
     ? new OAuth(decrypted.oauthResult, saveOAuthResult, getRefreshToken)
     : null;
 
-    if (theOAuth) {
-      clearInterval(dispatcher._refreshOAuthToken);
+  if (theOAuth) {
+    clearInterval(dispatcher._refreshOAuthToken);
 
-      if (!(dispatcher._oauth.noPeriodicTokenRefresh === false)) {
-        dispatcher._refreshOAuthToken = setInterval(
-          async () => {
-            try {
-              console.log("refreshing oauth token");
-              await theOAuth.periodicRefresh();
-            } catch (e) {
-              console.log("periodic refresh", e);
-            }
-          },
-          dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000,
-        );
-      }
+    if (!(dispatcher._oauth.noPeriodicTokenRefresh === false)) {
+      dispatcher._refreshOAuthToken = setInterval(
+        async () => {
+          try {
+            console.log("refreshing oauth token");
+            await theOAuth.periodicRefresh();
+          } catch (e) {
+            console.log("periodic refresh", e);
+          }
+        },
+        dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000,
+      );
     }
+  }
 
-    return theOAuth
-}
+  return theOAuth;
+};

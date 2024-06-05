@@ -1,5 +1,4 @@
-
-export const decryptConfig = async ({configSchema, config, secrets}) => {
+export const decryptConfig = async ({ configSchema, config, secrets }) => {
   const decrypted: any = {};
 
   const fields = configSchema().fields;
@@ -24,4 +23,4 @@ export const decryptConfig = async ({configSchema, config, secrets}) => {
   }
 
   return decrypted;
-}
+};

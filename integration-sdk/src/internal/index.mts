@@ -1,3 +1,3 @@
-import { Connector } from './connector/index.mjs';
+import { Connector } from "./connector/index.mjs";
 
 export { Connector };

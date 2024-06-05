@@ -2,8 +2,22 @@ import Dispatcher from "../../../dispatcher/index.mjs";
 import { Config } from "../../../websocket/config.mjs";
 import { WebsocketConnector } from "../../../websocket/index.mjs";
 
-export const patchFinishOAuth = async ({dispatcher, decrypted, config, transport}: {dispatcher: Dispatcher, decrypted: any, config: Config, transport: WebsocketConnector}) => {
-  dispatcher.finishOAuth = async function (arg: {code: string, redirectURI: string, codeVerifier?: string}): Promise<{value: string}>{
+export const patchFinishOAuth = async ({
+  dispatcher,
+  decrypted,
+  config,
+  transport,
+}: {
+  dispatcher: Dispatcher;
+  decrypted: any;
+  config: Config;
+  transport: WebsocketConnector;
+}) => {
+  dispatcher.finishOAuth = async function (arg: {
+    code: string;
+    redirectURI: string;
+    codeVerifier?: string;
+  }): Promise<{ value: string }> {
     const tokenURL =
       process.env.OAUTH_TOKEN_URL ||
       decrypted.tokenURL ||
@@ -48,8 +62,7 @@ export const patchFinishOAuth = async ({dispatcher, decrypted, config, transport
       }
 
       let headers: any = {
-        "Content-Type":
-          "application/x-www-form-urlencoded;charset=UTF-8",
+        "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
         Accept: "application/json",
       };
 
@@ -85,9 +98,7 @@ export const patchFinishOAuth = async ({dispatcher, decrypted, config, transport
         } else if (ret.access_token) {
           return { ...ret };
         } else {
-          throw new Error(
-            status + " response has no access_token - " + text,
-          );
+          throw new Error(status + " response has no access_token - " + text);
         }
       } else {
         throw new Error(status + " " + text);
@@ -108,4 +119,4 @@ export const patchFinishOAuth = async ({dispatcher, decrypted, config, transport
 
     return { value: await jwe.encrypt(data, "none", config.id()) };
   };
-}
+};

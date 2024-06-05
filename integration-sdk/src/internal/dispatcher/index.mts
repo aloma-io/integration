@@ -131,13 +131,17 @@ ${arg.configurableClientScope}
   }
 
   async startOAuth(): Promise<{
-    url: string,
-    useCodeChallenge: boolean,
+    url: string;
+    useCodeChallenge: boolean;
   }> {
     throw new Error("oauth not configured");
   }
 
-  async finishOAuth(arg: {code: string, redirectURI: string, codeVerifier?: string}): Promise<{value: string}> {
+  async finishOAuth(arg: {
+    code: string;
+    redirectURI: string;
+    codeVerifier?: string;
+  }): Promise<{ value: string }> {
     throw new Error("oauth not configured");
   }
 
