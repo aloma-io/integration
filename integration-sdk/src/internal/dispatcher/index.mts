@@ -4,6 +4,7 @@ export default class Dispatcher {
   _oauth: any;
   private _types: any;
   private _resolvers: any;
+  _refreshOAuthToken?: any;
 
   constructor() {
     this._config = { fields: {} };
@@ -77,7 +78,7 @@ export default class Dispatcher {
             placeholder: "e.g. x y z",
             type: "line",
             description: `Default Scope:
-            
+
 ${arg.configurableClientScope}
 `,
             optional: true,
@@ -129,11 +130,14 @@ ${arg.configurableClientScope}
     return this;
   }
 
-  startOAuth() {
+  async startOAuth(): Promise<{
+    url: string,
+    useCodeChallenge: boolean,
+  }> {
     throw new Error("oauth not configured");
   }
 
-  finishOAuth() {
+  async finishOAuth(arg: {code: string, redirectURI: string, codeVerifier?: string}): Promise<{value: string}> {
     throw new Error("oauth not configured");
   }
 
