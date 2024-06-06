@@ -1,6 +1,8 @@
+import Fetcher from "../internal/fetcher/fetcher.mjs";
+
 export abstract class AbstractController {
-  protected config;
-  protected client;
+  protected config: {[key: string]: any} = {};
+  protected client: any;
 
   protected async start(): Promise<void> {}
 
@@ -34,7 +36,7 @@ export abstract class AbstractController {
     baseUrl?: string;
     onResponse?: (response: any) => void;
     customize?: (request: any) => void;
-  }): Promise<any> {
+  }): Fetcher {
     throw new Error("not implemented");
   }
 

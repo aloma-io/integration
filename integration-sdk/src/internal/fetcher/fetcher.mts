@@ -1,22 +1,29 @@
 import { unwrap } from "../util/index.mjs";
 
+/**
+ * http request fetcher
+ */
 export default class Fetcher {
-  retry: number;
-  baseUrl: any;
-  onResponse: any;
-  customize0: any;
-  constructor({ retry = 5, baseUrl, onResponse, customize }) {
+  protected retry: number;
+  protected baseUrl: any;
+  protected onResponse: any;
+  protected customize0: any;
+  constructor({ retry = 5, baseUrl, onResponse, customize }: {retry?: number; baseUrl?: string; onResponse?: (response: Response) => void; customize?: (request: {[key: string]: any}) => void} = {}) {
     this.retry = retry;
     this.baseUrl = baseUrl;
     this.onResponse = onResponse;
     if (customize) this.customize0 = customize;
   }
 
-  async customize(options = {}, args = {}) {
+  async getToken(force: boolean): Promise<string> {
+    throw new Error('not implemented');
+  }
+
+  protected async customize(options = {}, args = {}) {
     if (this.customize0) await this.customize0(options, args);
   }
 
-  async onError(
+  protected async onError(
     e: any,
     url: string,
     options: any,
@@ -40,9 +47,32 @@ export default class Fetcher {
     });
   }
 
-  async fetch(url: string, options: any = {}, retries: number, args: any = {}) {
+  /**
+   * fetch data from a url
+   * @param url url to fetch
+   * @param options request options
+   * @param retries retries left for the request
+   * @param args optional args for customize()
+   * @returns
+   */
+  async fetch(url: string, options: {
+    /**
+     * request method like GET, POST, PUT, DELETE
+     */
+    method?: string;
+    /**
+     * request headers like Accept, Content-type
+     */
+    headers?: {[key: string]: any};
+    /**
+     * request body like "hello world" or {hello: "world"}
+     */
+    body?: any;
+  } = {}, retries?: number, args: any = {}) {
     var local = this,
       baseUrl = local.baseUrl;
+
+    const options0: any = {...options};
 
     if (retries == null) retries = local.retry;
 
@@ -54,11 +84,11 @@ export default class Fetcher {
         );
 
     try {
-      options.url = url;
-      await local.customize(options, args);
+      options0.url = url;
+      await local.customize(options0, args);
 
-      url = options.url;
-      delete options.url;
+      url = options0.url;
+      delete options0.url;
 
       theURL = !baseUrl
         ? url
@@ -67,35 +97,35 @@ export default class Fetcher {
             "/",
           );
 
-      if (!options?.headers || !options?.headers?.Accept) {
-        options.headers = {
-          ...options.headers,
+      if (!options0?.headers || !options0?.headers?.Accept) {
+        options0.headers = {
+          ...options0.headers,
           Accept: "application/json",
         };
       }
 
-      if (!options?.headers || !options?.headers?.["Content-type"]) {
-        options.headers = {
-          ...options.headers,
+      if (!options0?.headers || !options0?.headers?.["Content-type"]) {
+        options0.headers = {
+          ...options0.headers,
           "Content-type": "application/json",
         };
       }
 
       if (
-        !(options?.method === "GET" || options?.method === "HEAD") &&
-        options?.body &&
-        !(typeof options.body === "string") &&
-        options?.headers?.["Content-type"] === "application/json"
+        !(options0?.method === "GET" || options0?.method === "HEAD") &&
+        options0?.body &&
+        !(typeof options0.body === "string") &&
+        options0?.headers?.["Content-type"] === "application/json"
       ) {
-        options.body = JSON.stringify(options.body);
+        options0.body = JSON.stringify(options0.body);
       }
 
       const timeout = Math.min(
-        options?.timeout || 30 * 60 * 1000,
+        options0?.timeout || 30 * 60 * 1000,
         30 * 60 * 1000,
       );
       const ret = await fetch(theURL, {
-        ...options,
+        ...options0,
         signal: AbortSignal.timeout(timeout),
       });
       const status = await ret.status;
@@ -116,11 +146,11 @@ export default class Fetcher {
         return { ok: true };
       }
 
-      return unwrap(ret, options);
+      return unwrap(ret, options0);
     } catch (e: any) {
       // too many requests
       if (e.status === 429) {
-        return local.onError(e, url, options, retries, args, true);
+        return local.onError(e, url, options0, retries, args, true);
       }
 
       // bad request
@@ -134,7 +164,7 @@ export default class Fetcher {
 
       if (retries <= 0) throw e;
 
-      return local.onError(e, url, options, retries, args);
+      return local.onError(e, url, options0, retries, args);
     }
   }
 }

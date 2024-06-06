@@ -40,7 +40,7 @@ export type ConfigField = {
   /**
    * a single line text field
    */
-  | "text"
+  | "line"
   /**
    * a number field
    */
