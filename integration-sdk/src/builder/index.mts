@@ -1,9 +1,9 @@
+import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { notEmpty } from "../internal/util/index.mjs";
 import RuntimeContext from "./runtime-context.mjs";
-import "dotenv/config";
 
 const DIR_OFFSET = "/../../../../../";
 
@@ -11,28 +11,204 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export const TARGET_DIR = `${__dirname}${DIR_OFFSET}`;
 
+/**
+ * a configuration field
+ */
+export type ConfigField = {
+  /**
+   * the name of the field
+   */
+  name: string;
+  /**
+   * a description about the field
+   *
+   * supports markdown
+   */
+  description?: string;
+  /**
+   * a placeholder for the field
+   */
+  placeholder?: string;
+  /**
+   * the type of the field
+   */
+  type:
+  /**
+   * a multiline text field
+   */
+  "multiline"
+  /**
+   * a single line text field
+   */
+  | "text"
+  /**
+   * a number field
+   */
+  | "number"
+  /**
+   * a boolean text field
+   */
+  | "boolean";
+  /**
+   * if true, the field is optional, otherwise a value is required
+   */
+  optional?: boolean;
+  /**
+   * if true, the field will NOT be encrypted
+   */
+  plain?: boolean;
+} | undefined;
+
+/**
+ * connector configuration
+ */
+declare type Config = {
+  /**
+   * a short summary about the connector
+   */
+  summary?: string;
+  /**
+   * a longer description about the connector, including further reference or setup instructions
+   *
+   * supports markdown
+   */
+  description?: string;
+
+  /**
+   * fields that can be configured by the user in the ui
+   */
+  fields?: {
+    authorizationURL?: ConfigField;
+    tokenURL?: ConfigField;
+    scope?: ConfigField;
+    clientId?: ConfigField;
+    clientSecret?: ConfigField;
+    [key: string]: ConfigField
+  };
+};
+
+/**
+ * connector options
+ */
+declare type Options = {
+  /**
+   * if an endpoint is enabled for sending data to the connector
+   */
+  endpoint?: {
+    /**
+     * if the endpoint is enabled
+     */
+    enabled: boolean,
+    /**
+     * if true, the endpoint is required to operate the connector and not visible in the ui
+     */
+    required?: boolean
+  };
+};
+
+/**
+ * OAuth configuration
+ *
+ * @see https://oauth.net/2/
+ */
+declare type OAuth = {
+  /**
+   * oauth2 client id
+   *
+   * NOTE: preferred via process.env.OAUTH_CLIENT_ID
+   */
+  clientId?: string;
+
+  /**
+   * oauth2 client secret
+   *
+   * NOTE: preferred via process.env.OAUTH_CLIENT_SECRET
+   */
+  clientSecret?: string;
+
+  /**
+   * @example https://example.com/oauth2/v2/auth?client_id={{clientId}}&redirect_uri={{redirectURI}}&scope={{scope}}&response_type=code
+   */
+  authorizationURL?: string;
+
+  /**
+   * oauth2 token url
+   * @example https://example.com/oauth2/v2/token
+   */
+  tokenURL?: string;
+  /**
+   * oauth2 scope
+   * @example openid offline_access
+   */
+  scope?: string;
+
+  /**
+   * milliseconds to automatically refresh the token, if a refresh_token is available
+   *
+  * @default 4 * 60 * 60 * 1000 // 4 hours
+   */
+  tokenRefreshPeriod?: number;
+
+  /**
+   * if true, the clientId and clientSecret are sent to the tokenURL as basic auth header
+   */
+  useAuthHeader?: boolean;
+
+  /**
+   * additional token arguments
+   */
+  additionalTokenArgs?: {
+    /**
+     * oauth2 grant type
+     */
+    grant_type?: string
+  }
+};
+
+/**
+ * a builder for creating a connector
+ */
 export class Builder {
   private data: any = {
     controller: "./build/.controller.json",
   };
 
-  config(arg: any): Builder {
+  /**
+   * configure properties of the connector
+   * @param arg
+   * @returns
+   */
+  config(arg: Config): Builder {
     this.data.config = arg;
 
     return this;
   }
 
-  options(arg: any): Builder {
+  /**
+   * configure additional options of the connector
+   * @param arg
+   * @returns
+   */
+  options(arg: Options): Builder {
     this.data.options = arg;
 
     return this;
   }
 
-  auth(arg: any): Builder {
+  /**
+   * configure the authentication of the connector
+   * @param arg
+   * @returns
+   */
+  auth(arg: {oauth?: OAuth}): Builder {
     this.data.auth = arg;
     return this;
   }
 
+  /**
+   * build the connector
+   * @returns
+   */
   async build(): Promise<RuntimeContext> {
     await this.loadDescriptor();
     await this.checkIcon();
