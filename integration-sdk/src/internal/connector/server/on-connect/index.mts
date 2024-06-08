@@ -1,4 +1,5 @@
 import {init} from '@paralleldrive/cuid2';
+import {AbstractController} from '../../../../index.mjs';
 import Dispatcher from '../../../dispatcher/index.mjs';
 import Fetcher from '../../../fetcher/fetcher.mjs';
 import {Config} from '../../../websocket/config.mjs';
@@ -95,7 +96,7 @@ export const onConnect = ({
         getBlob,
         getBlobContent,
         createBlob,
-        healthCheck: async (controller) => {
+        healthCheck: async (controller: AbstractController) => {
           let result: any = {ok: true, error: null};
 
           try {
@@ -103,7 +104,7 @@ export const onConnect = ({
               await oauthClient.__healthCheck();
             }
 
-            await controller.__healthCheck();
+            await controller.__healthCheck(configSchema);
           } catch (e: any) {
             result.ok = false;
             result.error = e.message;

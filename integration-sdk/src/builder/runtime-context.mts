@@ -67,7 +67,9 @@ export default class RuntimeContext {
           await controller._doStop();
           await controller._doStart(config, oauth, newTask, updateTask, getClient, getBlob, getBlobContent, createBlob);
 
-          healthInterval = setInterval(() => healthCheck(controller), 30000);
+          healthInterval = setInterval(() => healthCheck(controller), 30000).unref();
+
+          await healthCheck(controller);
         } catch (e) {
           console.log(e);
         }

@@ -8,7 +8,7 @@ export class Connector {
   version: any;
   name: any;
   icon: any;
-  dispatcher?: Dispatcher;
+  dispatcher!: Dispatcher;
   constructor({version, id, name, icon}) {
     this.id = id;
     this.version = version;
@@ -23,7 +23,7 @@ export class Connector {
   async run() {
     console.log(`Running ${this.name}`);
 
-    const {processPacket, start, introspect, configSchema} = this.dispatcher!.build();
+    const {processPacket, start, introspect, configSchema} = this.dispatcher.build();
 
     const config = await makeConfig({
       id: this.id,
@@ -45,7 +45,7 @@ export class Connector {
       configSchema,
       start,
       processPacket,
-      dispatcher: this.dispatcher!,
+      dispatcher: this.dispatcher,
     });
 
     await server.start();
