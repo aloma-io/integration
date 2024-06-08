@@ -1,18 +1,18 @@
-import fs from "node:fs";
-import { AbstractController } from "../controller/index.mjs";
-import { Connector } from "../internal/index.mjs";
+import fs from 'node:fs';
+import {AbstractController} from '../controller/index.mjs';
+import {Connector} from '../internal/index.mjs';
 
 export default class RuntimeContext {
   constructor(
     private controller: AbstractController,
-    private data: any,
+    private data: any
   ) {}
 
   async start(): Promise<void> {
     const controller = this.controller;
 
     if (!(controller instanceof AbstractController)) {
-      throw new Error("the controller needs to extend AbstractController");
+      throw new Error('the controller needs to extend AbstractController');
     }
 
     const data: any = this.data;
@@ -21,7 +21,7 @@ export default class RuntimeContext {
 
     try {
       if (data.icon) {
-        icon = fs.readFileSync(data.icon).toString("base64");
+        icon = fs.readFileSync(data.icon).toString('base64');
       }
     } catch (e) {
       // blank
@@ -37,13 +37,7 @@ export default class RuntimeContext {
     const configuration = connector.configure().config(data.config || {});
 
     const resolvers: any = {};
-    const methods: string[] = [
-      ...data.methods,
-      "__autocomplete",
-      "__endpoint",
-      "__configQuery",
-      "__default",
-    ];
+    const methods: string[] = [...data.methods, '__autocomplete', '__endpoint', '__configQuery', '__default'];
 
     methods.forEach((method) => {
       resolvers[method] = async (args) => {
@@ -56,10 +50,7 @@ export default class RuntimeContext {
     configuration.types(data.types).resolvers(resolvers);
 
     if (data.options?.endpoint?.enabled) {
-      configuration.endpoint(
-        (arg) => controller.__endpoint(arg),
-        data.options?.endpoint?.required,
-      );
+      configuration.endpoint((arg) => controller.__endpoint(arg), data.options?.endpoint?.required);
     }
 
     if (data.auth?.oauth) {
@@ -69,37 +60,18 @@ export default class RuntimeContext {
     let healthInterval;
 
     configuration.main(
-      async ({
-        newTask,
-        updateTask,
-        config,
-        oauth,
-        getClient,
-        getBlob,
-        getBlobContent,
-        createBlob,
-        healthCheck,
-      }) => {
+      async ({newTask, updateTask, config, oauth, getClient, getBlob, getBlobContent, createBlob, healthCheck}) => {
         try {
           clearInterval(healthInterval);
 
           await controller._doStop();
-          await controller._doStart(
-            config,
-            oauth,
-            newTask,
-            updateTask,
-            getClient,
-            getBlob,
-            getBlobContent,
-            createBlob,
-          );
+          await controller._doStart(config, oauth, newTask, updateTask, getClient, getBlob, getBlobContent, createBlob);
 
           healthInterval = setInterval(() => healthCheck(controller), 30000);
         } catch (e) {
           console.log(e);
         }
-      },
+      }
     );
 
     connector.run();
@@ -111,7 +83,7 @@ export default class RuntimeContext {
       process.exit(0);
     };
 
-    process.on("SIGTERM", term);
-    process.on("SIGINT", term);
+    process.on('SIGTERM', term);
+    process.on('SIGINT', term);
   }
 }

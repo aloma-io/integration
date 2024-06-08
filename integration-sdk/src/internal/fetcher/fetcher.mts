@@ -1,4 +1,4 @@
-import { unwrap } from "../util/index.mjs";
+import {unwrap} from '../util/index.mjs';
 
 /**
  * http request fetcher
@@ -8,7 +8,17 @@ export default class Fetcher {
   protected baseUrl: any;
   protected onResponse: any;
   protected customize0: any;
-  constructor({ retry = 5, baseUrl, onResponse, customize }: {retry?: number; baseUrl?: string; onResponse?: (response: Response) => void; customize?: (request: {[key: string]: any}) => void} = {}) {
+  constructor({
+    retry = 5,
+    baseUrl,
+    onResponse,
+    customize,
+  }: {
+    retry?: number;
+    baseUrl?: string;
+    onResponse?: (response: Response) => void;
+    customize?: (request: {[key: string]: any}) => void;
+  } = {}) {
     this.retry = retry;
     this.baseUrl = baseUrl;
     this.onResponse = onResponse;
@@ -23,14 +33,7 @@ export default class Fetcher {
     if (this.customize0) await this.customize0(options, args);
   }
 
-  protected async onError(
-    e: any,
-    url: string,
-    options: any,
-    retries: number,
-    args: any,
-    rateLimit?,
-  ) {
+  protected async onError(e: any, url: string, options: any, retries: number, args: any, rateLimit?) {
     var local = this;
 
     return new Promise((resolve, reject) => {
@@ -42,7 +45,7 @@ export default class Fetcher {
             reject(e);
           }
         },
-        rateLimit ? 10000 : 500,
+        rateLimit ? 10000 : 500
       );
     });
   }
@@ -55,20 +58,25 @@ export default class Fetcher {
    * @param args optional args for customize()
    * @returns
    */
-  async fetch(url: string, options: {
-    /**
-     * request method like GET, POST, PUT, DELETE
-     */
-    method?: string;
-    /**
-     * request headers like Accept, Content-type
-     */
-    headers?: {[key: string]: any};
-    /**
-     * request body like "hello world" or {hello: "world"}
-     */
-    body?: any;
-  } = {}, retries?: number, args: any = {}) {
+  async fetch(
+    url: string,
+    options: {
+      /**
+       * request method like GET, POST, PUT, DELETE
+       */
+      method?: string;
+      /**
+       * request headers like Accept, Content-type
+       */
+      headers?: {[key: string]: any};
+      /**
+       * request body like "hello world" or {hello: "world"}
+       */
+      body?: any;
+    } = {},
+    retries?: number,
+    args: any = {}
+  ) {
     var local = this,
       baseUrl = local.baseUrl;
 
@@ -76,12 +84,7 @@ export default class Fetcher {
 
     if (retries == null) retries = local.retry;
 
-    let theURL = !baseUrl
-      ? url
-      : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
-          /\/\/+/gi,
-          "/",
-        );
+    let theURL = !baseUrl ? url : `${baseUrl?.endsWith('/') ? baseUrl : baseUrl + '/'}${url}`.replace(/\/\/+/gi, '/');
 
     try {
       options0.url = url;
@@ -90,40 +93,32 @@ export default class Fetcher {
       url = options0.url;
       delete options0.url;
 
-      theURL = !baseUrl
-        ? url
-        : `${baseUrl?.endsWith("/") ? baseUrl : baseUrl + "/"}${url}`.replace(
-            /\/\/+/gi,
-            "/",
-          );
+      theURL = !baseUrl ? url : `${baseUrl?.endsWith('/') ? baseUrl : baseUrl + '/'}${url}`.replace(/\/\/+/gi, '/');
 
       if (!options0?.headers || !options0?.headers?.Accept) {
         options0.headers = {
           ...options0.headers,
-          Accept: "application/json",
+          Accept: 'application/json',
         };
       }
 
-      if (!options0?.headers || !options0?.headers?.["Content-type"]) {
+      if (!options0?.headers || !options0?.headers?.['Content-type']) {
         options0.headers = {
           ...options0.headers,
-          "Content-type": "application/json",
+          'Content-type': 'application/json',
         };
       }
 
       if (
-        !(options0?.method === "GET" || options0?.method === "HEAD") &&
+        !(options0?.method === 'GET' || options0?.method === 'HEAD') &&
         options0?.body &&
-        !(typeof options0.body === "string") &&
-        options0?.headers?.["Content-type"] === "application/json"
+        !(typeof options0.body === 'string') &&
+        options0?.headers?.['Content-type'] === 'application/json'
       ) {
         options0.body = JSON.stringify(options0.body);
       }
 
-      const timeout = Math.min(
-        options0?.timeout || 30 * 60 * 1000,
-        30 * 60 * 1000,
-      );
+      const timeout = Math.min(options0?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
       const ret = await fetch(theURL, {
         ...options0,
         signal: AbortSignal.timeout(timeout),
@@ -132,7 +127,7 @@ export default class Fetcher {
 
       if (status > 399) {
         const text = await ret.text();
-        const e: any = new Error(status + " " + text);
+        const e: any = new Error(status + ' ' + text);
 
         e.status = status;
         throw e;
@@ -143,7 +138,7 @@ export default class Fetcher {
       }
 
       if (status === 204) {
-        return { ok: true };
+        return {ok: true};
       }
 
       return unwrap(ret, options0);

@@ -1,7 +1,7 @@
-import { Dispatcher } from "../dispatcher/index.mjs";
-import { makeConfig } from "./config.mjs";
-import { makeMetrics } from "./metrics.mjs";
-import { makeServer } from "./server/index.mjs";
+import {Dispatcher} from '../dispatcher/index.mjs';
+import {makeConfig} from './config.mjs';
+import {makeMetrics} from './metrics.mjs';
+import {makeServer} from './server/index.mjs';
 
 export class Connector {
   id: any;
@@ -9,7 +9,7 @@ export class Connector {
   name: any;
   icon: any;
   dispatcher?: Dispatcher;
-  constructor({ version, id, name, icon }) {
+  constructor({version, id, name, icon}) {
     this.id = id;
     this.version = version;
     this.name = name;
@@ -23,8 +23,7 @@ export class Connector {
   async run() {
     console.log(`Running ${this.name}`);
 
-    const { processPacket, start, introspect, configSchema } =
-      this.dispatcher!.build();
+    const {processPacket, start, introspect, configSchema} = this.dispatcher!.build();
 
     const config = await makeConfig({
       id: this.id,

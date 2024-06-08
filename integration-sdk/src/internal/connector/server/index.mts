@@ -1,8 +1,8 @@
-import Dispatcher from "../../dispatcher/index.mjs";
-import { Config } from "../../websocket/config.mjs";
-import { WebsocketConnector } from "../../websocket/index.mjs";
-import { onConnect } from "./on-connect/index.mjs";
-import { onMessage } from "./on-message.mjs";
+import Dispatcher from '../../dispatcher/index.mjs';
+import {Config} from '../../websocket/config.mjs';
+import {WebsocketConnector} from '../../websocket/index.mjs';
+import {onConnect} from './on-connect/index.mjs';
+import {onMessage} from './on-message.mjs';
 
 export const makeServer = async ({
   config,
@@ -19,7 +19,7 @@ export const makeServer = async ({
 }): Promise<WebsocketConnector> => {
   const server = new WebsocketConnector({
     config,
-    onConnect: onConnect({ config, configSchema, dispatcher, start }),
+    onConnect: onConnect({config, configSchema, dispatcher, start}),
     onMessage: onMessage(processPacket),
   });
 
@@ -36,16 +36,16 @@ export const makeServer = async ({
     process.exit(0);
   };
 
-  process.on("uncaughtException", (e) => {
+  process.on('uncaughtException', (e) => {
     console.log(e);
   });
 
-  process.on("unhandledRejection", (e) => {
+  process.on('unhandledRejection', (e) => {
     console.log(e);
   });
 
-  process.on("SIGTERM", term);
-  process.on("SIGINT", term);
+  process.on('SIGTERM', term);
+  process.on('SIGINT', term);
 
   return server;
 };

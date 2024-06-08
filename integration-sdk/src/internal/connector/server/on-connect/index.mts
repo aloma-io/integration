@@ -1,13 +1,13 @@
-import { init } from "@paralleldrive/cuid2";
-import Dispatcher from "../../../dispatcher/index.mjs";
-import Fetcher from "../../../fetcher/fetcher.mjs";
-import { Config } from "../../../websocket/config.mjs";
-import { decryptConfig } from "./decrypt-config.mjs";
-import { patchFinishOAuth } from "./finish-oauth.mjs";
-import { makeOAuth } from "./make-oauth.mjs";
-import { patchStartOAuth } from "./start-oauth.mjs";
+import {init} from '@paralleldrive/cuid2';
+import Dispatcher from '../../../dispatcher/index.mjs';
+import Fetcher from '../../../fetcher/fetcher.mjs';
+import {Config} from '../../../websocket/config.mjs';
+import {decryptConfig} from './decrypt-config.mjs';
+import {patchFinishOAuth} from './finish-oauth.mjs';
+import {makeOAuth} from './make-oauth.mjs';
+import {patchStartOAuth} from './start-oauth.mjs';
 
-const cuid = init({ length: 32 });
+const cuid = init({length: 32});
 
 export const onConnect = ({
   dispatcher,
@@ -28,8 +28,8 @@ export const onConnect = ({
         config,
       });
 
-      await patchStartOAuth({ dispatcher, decrypted });
-      await patchFinishOAuth({ dispatcher, decrypted, config, transport });
+      await patchStartOAuth({dispatcher, decrypted});
+      await patchFinishOAuth({dispatcher, decrypted, config, transport});
 
       const theOAuth = await makeOAuth({
         config,
@@ -43,10 +43,10 @@ export const onConnect = ({
           const packet = transport.newPacket(
             {},
             (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
-            `_req-${cuid()}`,
+            `_req-${cuid()}`
           );
 
-          packet.method("connector.blob.get");
+          packet.method('connector.blob.get');
           packet.args({
             id,
           });
@@ -60,10 +60,10 @@ export const onConnect = ({
           const packet = transport.newPacket(
             {},
             (ret) => (ret?.error ? reject(ret.error) : resolve(ret?.content)),
-            `_req-${cuid()}`,
+            `_req-${cuid()}`
           );
 
-          packet.method("connector.blob.get-content");
+          packet.method('connector.blob.get-content');
           packet.args({
             id,
           });
@@ -77,10 +77,10 @@ export const onConnect = ({
           const packet = transport.newPacket(
             {},
             (ret) => (ret?.error ? reject(ret.error) : resolve(ret?.id)),
-            `_req-${cuid()}`,
+            `_req-${cuid()}`
           );
 
-          packet.method("connector.blob.create");
+          packet.method('connector.blob.create');
           packet.args(args);
 
           transport.send(packet);
@@ -96,7 +96,7 @@ export const onConnect = ({
         getBlobContent,
         createBlob,
         healthCheck: async (controller) => {
-          let result: any = { ok: true, error: null };
+          let result: any = {ok: true, error: null};
 
           try {
             if (oauthClient) {
@@ -111,22 +111,21 @@ export const onConnect = ({
 
           const packet = transport.newPacket({});
 
-          packet.method("connector.health.check");
+          packet.method('connector.health.check');
           packet.args(result);
 
           transport.send(packet);
         },
-        getClient: (arg) =>
-          theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg),
+        getClient: (arg) => (theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg)),
         newTask: (name, data) => {
           return new Promise((resolve, reject) => {
             const packet = transport.newPacket(
               {},
               (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
-              `_req-${cuid()}`,
+              `_req-${cuid()}`
             );
 
-            packet.method("connector.task.new");
+            packet.method('connector.task.new');
             packet.args({
               name,
               a: data,
@@ -140,10 +139,10 @@ export const onConnect = ({
             const packet = transport.newPacket(
               {},
               (ret) => (ret?.error ? reject(ret.error) : resolve(ret)),
-              `_req-${cuid()}`,
+              `_req-${cuid()}`
             );
 
-            packet.method("connector.task.update");
+            packet.method('connector.task.update');
             packet.args({
               id,
               a: data,

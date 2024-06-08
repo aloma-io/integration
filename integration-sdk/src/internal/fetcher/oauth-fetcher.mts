@@ -1,19 +1,18 @@
-import Fetcher from "./fetcher.mjs";
+import Fetcher from './fetcher.mjs';
 
 class OAuthFetcher extends Fetcher {
   oauth: any;
   _getToken: any;
   used: boolean = false;
-  constructor({ oauth, retry = 5, getToken, baseUrl, onResponse, customize }) {
-    super({ retry, baseUrl, onResponse, customize });
+  constructor({oauth, retry = 5, getToken, baseUrl, onResponse, customize}) {
+    super({retry, baseUrl, onResponse, customize});
 
     this.oauth = oauth;
     this._getToken = getToken;
   }
 
   async __healthCheck() {
-    if (this.used && !this.oauth.accessToken())
-      throw new Error("no access token");
+    if (this.used && !this.oauth.accessToken()) throw new Error('no access token');
   }
 
   async getToken(force) {
@@ -30,7 +29,7 @@ class OAuthFetcher extends Fetcher {
 
     try {
       if (!refreshToken) {
-        throw new Error("have no access_token and no refresh_token");
+        throw new Error('have no access_token and no refresh_token');
       }
 
       const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
@@ -40,7 +39,7 @@ class OAuthFetcher extends Fetcher {
 
         return ret.access_token;
       } else {
-        throw new Error("could not obtain access token via refresh token");
+        throw new Error('could not obtain access token via refresh token');
       }
     } catch (e) {
       oauth.invalidate(e);
@@ -59,13 +58,13 @@ class OAuthFetcher extends Fetcher {
             resolve(
               await local.fetch(url, options, retries, {
                 forceTokenRefresh: e.status === 401,
-              }),
+              })
             );
           } catch (e) {
             reject(e);
           }
         },
-        rateLimit ? 10000 : 500,
+        rateLimit ? 10000 : 500
       );
     });
   }
@@ -74,12 +73,12 @@ class OAuthFetcher extends Fetcher {
     const local = this,
       oauth = local.oauth;
 
-    console.log("refreshing oauth token, have token", !!oauth.refreshToken());
+    console.log('refreshing oauth token, have token', !!oauth.refreshToken());
     if (!oauth.refreshToken()) return;
 
     await local.getToken(true);
 
-    console.log("refreshed oauth token");
+    console.log('refreshed oauth token');
   }
 
   async customize(options: any, args: any = {}) {
@@ -133,7 +132,7 @@ export class OAuth {
   async periodicRefresh() {
     const clients = this.clients;
 
-    console.log("refreshing oauth clients", clients.length);
+    console.log('refreshing oauth clients', clients.length);
 
     for (let i = 0; i < clients.length; ++i) {
       const client = clients[0];
@@ -147,7 +146,7 @@ export class OAuth {
   }
 
   getClient(arg: any = {}) {
-    const client = new OAuthFetcher({ ...arg, oauth: this });
+    const client = new OAuthFetcher({...arg, oauth: this});
     this.clients.push(client);
     return client;
   }

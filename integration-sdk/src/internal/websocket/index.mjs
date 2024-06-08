@@ -1,12 +1,12 @@
-import WebSocket from "ws";
-import { Connection } from "./connection/index.mjs";
-import { Transport } from "./transport/index.mjs";
+import WebSocket from 'ws';
+import {Connection} from './connection/index.mjs';
+import {Transport} from './transport/index.mjs';
 
 class WebsocketConnector {
-  constructor({ config, onMessage, onConnect }) {
+  constructor({config, onMessage, onConnect}) {
     var local = this;
     this.config = config;
-    this.transport = new Transport({ config, onMessage, onConnect });
+    this.transport = new Transport({config, onMessage, onConnect});
   }
 
   async start() {
@@ -43,4 +43,4 @@ class WebsocketConnector {
   }
 }
 
-export { WebsocketConnector };
+export {WebsocketConnector};

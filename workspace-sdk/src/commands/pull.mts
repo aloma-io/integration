@@ -1,7 +1,6 @@
-import fs from "node:fs";
+import fs from 'node:fs';
 import * as YAML from 'yaml';
-import { build } from "./build.mjs";
-
+import {build} from './build.mjs';
 
 const verifyApiKey = () => {
   if (!process.env.ALOMA_KEY) {
@@ -22,7 +21,7 @@ declare type Workspace = {
 declare type Step = {
   name: string;
   id: string;
-  content: { if: string; do: string };
+  content: {if: string; do: string};
   nocode_type?: string;
   version: number;
   enabled: boolean;
@@ -57,12 +56,12 @@ const request = async (url: string, options: any): Promise<any> => {
 
 const graphql = async (query: string, variables: any = {}): Promise<any> => {
   const ret = await request(`https://graph.aloma.io/graphql`, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "content-type": "application/json",
-      accept: "application/json",
+      'content-type': 'application/json',
+      accept: 'application/json',
     },
-    body: JSON.stringify({ query, variables }),
+    body: JSON.stringify({query, variables}),
   });
 
   const data = ret?.data;
@@ -79,8 +78,7 @@ const graphql = async (query: string, variables: any = {}): Promise<any> => {
 };
 
 const getWorkspace = async (id: string): Promise<Workspace> => {
-  try
-  {
+  try {
     const workspace = await graphql(
       `
         query ($id: ID!) {
@@ -90,11 +88,11 @@ const getWorkspace = async (id: string): Promise<Workspace> => {
           }
         }
       `,
-      { id },
+      {id}
     );
 
     return workspace;
-  } catch(e: any) {
+  } catch (e: any) {
     throw new Error(`id: ${id} ${e.message}`, e);
   }
 };
@@ -116,7 +114,7 @@ const getSteps = async (id: string): Promise<Step[]> => {
         }
       }
     `,
-    { id },
+    {id}
   );
 
   return steps;
@@ -126,36 +124,32 @@ const getTarget = (): string => {
   const target = `./src/steps/`;
 
   if (!fs.existsSync(target)) {
-    fs.mkdirSync(target, { recursive: true });
+    fs.mkdirSync(target, {recursive: true});
   }
 
   return target;
 };
 
-const processStep = async (
-  target: string,
-  workspace: Workspace,
-  step: Step,
-) => {
+const processStep = async (target: string, workspace: Workspace, step: Step) => {
   console.log(`  ${step.name} (id: ${step.id}) ...`);
 
   const parts = step.name
     .split(/\//)
     .map((what) => what.trim())
-    .filter((what) => !!what && !what.startsWith("."));
+    .filter((what) => !!what && !what.startsWith('.'));
 
   const fileName = parts.pop();
-  const path = `${target}/${parts.join("/")}`;
+  const path = `${target}/${parts.join('/')}`;
   const targetFile = `${path}/${fileName}.mts`;
 
-  fs.mkdirSync(path, { recursive: true });
+  fs.mkdirSync(path, {recursive: true});
 
   const content = `/**
   Name:       ${step.name}
 
   ID:         ${step.id}
   Version:    ${step.version}
-  Path:       ${targetFile.replace(/\/\/+/gi, "/")}
+  Path:       ${targetFile.replace(/\/\/+/gi, '/')}
   UpdatedAt:  ${step.updatedAt}
 
   Workspace:  ${workspace.id}
@@ -169,17 +163,11 @@ export default async (data: any) => {
 ${step.content.do}
 }
 `;
-  fs.writeFileSync(targetFile, content, { encoding: "utf-8" });
+  fs.writeFileSync(targetFile, content, {encoding: 'utf-8'});
 };
 
-const processSteps = async (
-  target: string,
-  workspace: Workspace,
-  steps: Step[],
-) => {
-  steps = steps.filter(
-    (step) => step.enabled && !step.nocode_type && step.name,
-  );
+const processSteps = async (target: string, workspace: Workspace, steps: Step[]) => {
+  steps = steps.filter((step) => step.enabled && !step.nocode_type && step.name);
 
   for (let i = 0; i < steps.length; ++i) {
     await processStep(target, workspace, steps[i]);
@@ -189,9 +177,7 @@ const processSteps = async (
 export const pull = async (id: string, options: any) => {
   const workspace = await getWorkspace(id);
 
-  console.log(
-    `Updating from workspace ${workspace.name} (id: ${workspace.id}) ...`,
-  );
+  console.log(`Updating from workspace ${workspace.name} (id: ${workspace.id}) ...`);
 
   const steps = await getSteps(id);
   const target = getTarget();
@@ -212,7 +198,7 @@ pull:
   workspaces:
     - a-workspace-id
 `);
-}
+};
 
 export const pullAll = async (options: any) => {
   if (!fs.existsSync('./.aloma.yaml')) {
@@ -221,8 +207,7 @@ export const pullAll = async (options: any) => {
 
   const config = YAML.parse(fs.readFileSync('./.aloma.yaml', {encoding: 'utf-8'}));
 
-  if (config?.pull?.workspaces?.length)
-  {
+  if (config?.pull?.workspaces?.length) {
     const workspaces: string[] = config.pull.workspaces;
     for (let i = 0; i < workspaces.length; ++i) {
       await pull(workspaces[i], options);
@@ -230,4 +215,4 @@ export const pullAll = async (options: any) => {
   } else {
     yamlError();
   }
-}
+};

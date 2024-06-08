@@ -7,7 +7,7 @@ export default class Dispatcher {
   _refreshOAuthToken?: any;
 
   constructor() {
-    this._config = { fields: {} };
+    this._config = {fields: {}};
   }
 
   main(what) {
@@ -22,9 +22,9 @@ export default class Dispatcher {
         oauth: true,
         fields: {
           oauthResult: {
-            name: "OAuth Result",
-            placeholder: "will be set by finishing the oauth flow",
-            type: "managed",
+            name: 'OAuth Result',
+            placeholder: 'will be set by finishing the oauth flow',
+            type: 'managed',
           },
         },
       });
@@ -32,19 +32,18 @@ export default class Dispatcher {
       return this;
     }
 
-    if (!arg.authorizationURL) throw new Error("need a authorizationURL");
-    if (!arg.tokenURL && !arg.finishOAuth)
-      throw new Error("need a tokenURL or finishOAuth()");
+    if (!arg.authorizationURL) throw new Error('need a authorizationURL');
+    if (!arg.tokenURL && !arg.finishOAuth) throw new Error('need a tokenURL or finishOAuth()');
 
-    this._oauth = { ...arg };
+    this._oauth = {...arg};
 
     this.config({
       oauth: true,
       fields: {
         oauthResult: {
-          name: "OAuth Result",
-          placeholder: "will be set by finishing the oauth flow",
-          type: "managed",
+          name: 'OAuth Result',
+          placeholder: 'will be set by finishing the oauth flow',
+          type: 'managed',
           optional: !!arg.connectionOptional,
         },
       },
@@ -54,17 +53,17 @@ export default class Dispatcher {
       this.config({
         fields: {
           clientId: {
-            name: "OAuth Client ID",
-            placeholder: "e.g. 1234",
-            type: "line",
+            name: 'OAuth Client ID',
+            placeholder: 'e.g. 1234',
+            type: 'line',
             optional: !!arg.configurableClientOptional,
             plain: true,
           },
           clientSecret: {
-            name: "OAuth Client Secret",
-            placeholder: "e.g. axd5xde",
+            name: 'OAuth Client Secret',
+            placeholder: 'e.g. axd5xde',
             optional: !!arg.configurableClientOptional,
-            type: "line",
+            type: 'line',
           },
         },
       });
@@ -74,9 +73,9 @@ export default class Dispatcher {
       this.config({
         fields: {
           scope: {
-            name: "OAuth Scope",
-            placeholder: "e.g. x y z",
-            type: "line",
+            name: 'OAuth Scope',
+            placeholder: 'e.g. x y z',
+            type: 'line',
             description: `Default Scope:
 
 ${arg.configurableClientScope}
@@ -97,17 +96,17 @@ ${arg.configurableClientScope}
     return this;
   }
 
-  config({ fields, oauth, description, summary }: any) {
+  config({fields, oauth, description, summary}: any) {
     this._config.oauth = this._config.oauth || oauth;
     this._config.description = this._config.description || description;
     this._config.summary = this._config.summary || summary;
-    this._config.fields = { ...fields, ...this._config.fields };
+    this._config.fields = {...fields, ...this._config.fields};
 
     return this;
   }
 
   resolvers(what) {
-    this._resolvers = { ...this._resolvers, ...what };
+    this._resolvers = {...this._resolvers, ...what};
 
     return this;
   }
@@ -116,16 +115,16 @@ ${arg.configurableClientScope}
     this.config({
       fields: {
         _endpointToken: {
-          name: "Endpoint Token",
-          placeholder: "e.g. 1234",
-          type: !!notOptional ? "managed" : "line",
+          name: 'Endpoint Token',
+          placeholder: 'e.g. 1234',
+          type: !!notOptional ? 'managed' : 'line',
           plain: true,
           optional: !notOptional,
         },
       },
     });
 
-    this.resolvers({ _endpoint: what });
+    this.resolvers({_endpoint: what});
 
     return this;
   }
@@ -134,28 +133,23 @@ ${arg.configurableClientScope}
     url: string;
     useCodeChallenge: boolean;
   }> {
-    throw new Error("oauth not configured");
+    throw new Error('oauth not configured');
   }
 
-  async finishOAuth(arg: {
-    code: string;
-    redirectURI: string;
-    codeVerifier?: string;
-  }): Promise<{ value: string }> {
-    throw new Error("oauth not configured");
+  async finishOAuth(arg: {code: string; redirectURI: string; codeVerifier?: string}): Promise<{value: string}> {
+    throw new Error('oauth not configured');
   }
 
   build() {
-    if (!this._types || !this._resolvers)
-      throw new Error("missing types or resolvers");
+    if (!this._types || !this._resolvers) throw new Error('missing types or resolvers');
     var local = this;
 
-    const _resolvers = { ...this._resolvers };
+    const _resolvers = {...this._resolvers};
 
     const main = this._main || (() => {});
 
     const start = async (arg) => {
-      console.log("starting ...");
+      console.log('starting ...');
       await main(arg);
     };
 
@@ -169,32 +163,19 @@ ${arg.configurableClientScope}
       return current;
     };
 
-    const execute = async ({ query, variables }) => {
+    const execute = async ({query, variables}) => {
       if (!Array.isArray(query)) query = [query];
 
       query = query
         .filter(
-          (what) =>
-            !!what?.trim() &&
-            ![
-              "constructor",
-              "__proto__",
-              "toString",
-              "toSource",
-              "prototype",
-            ].includes(what),
+          (what) => !!what?.trim() && !['constructor', '__proto__', 'toString', 'toSource', 'prototype'].includes(what)
         )
         .slice(0, 20);
 
       const method = resolveMethod(query);
-      if (!method && !_resolvers.__default)
-        throw new Error(`${query} not found`);
+      if (!method && !_resolvers.__default) throw new Error(`${query} not found`);
 
-      return method
-        ? method(variables)
-        : _resolvers.__default(
-            variables ? { ...variables, __method: query } : variables,
-          );
+      return method ? method(variables) : _resolvers.__default(variables ? {...variables, __method: query} : variables);
     };
 
     const introspect = () => local._types;
@@ -202,35 +183,33 @@ ${arg.configurableClientScope}
 
     const processPacket = async (packet) => {
       switch (packet.method()) {
-        case "connector.introspect":
+        case 'connector.introspect':
           // @ts-ignore
           const intro = await introspect({});
 
-          return { configSchema: local._config, introspect: intro };
+          return {configSchema: local._config, introspect: intro};
 
-        case "connector.start-oauth":
+        case 'connector.start-oauth':
           // @ts-ignore
           return await local.startOAuth(packet.args());
 
-        case "connector.finish-oauth":
+        case 'connector.finish-oauth':
           // @ts-ignore
           return await local.finishOAuth(packet.args());
 
-        case "connector.query":
+        case 'connector.query':
           const ret = await execute(packet.args());
 
-          return typeof ret === "object" && !Array.isArray(ret)
-            ? ret
-            : { [packet.args().query]: ret };
+          return typeof ret === 'object' && !Array.isArray(ret) ? ret : {[packet.args().query]: ret};
 
-        case "connector.set-config":
-          await local.onConfig({ ...packet.args().secrets });
+        case 'connector.set-config':
+          await local.onConfig({...packet.args().secrets});
 
           return;
       }
 
-      console.dir(packet, { depth: null });
-      throw new Error("cannot handle packet");
+      console.dir(packet, {depth: null});
+      throw new Error('cannot handle packet');
     };
 
     return {
@@ -242,8 +221,8 @@ ${arg.configurableClientScope}
     };
   }
   onConfig(arg0: any) {
-    throw new Error("Method not implemented.");
+    throw new Error('Method not implemented.');
   }
 }
 
-export { Dispatcher };
+export {Dispatcher};

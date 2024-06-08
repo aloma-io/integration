@@ -1,4 +1,4 @@
-import { handlePacketError, reply } from "../../util/index.mjs";
+import {handlePacketError, reply} from '../../util/index.mjs';
 
 export const onMessage = (processPacket: any) => {
   return async (packet, transport) => {

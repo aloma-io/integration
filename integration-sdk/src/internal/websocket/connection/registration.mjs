@@ -1,4 +1,4 @@
-import C from "./constants.mjs";
+import C from './constants.mjs';
 
 class Registration {
   constructor(config) {
@@ -13,30 +13,30 @@ class Registration {
     const icon = config.icon();
 
     const response = await fetch(
-      config.url() + "register",
+      config.url() + 'register',
       C.augmentRegistration(
         {
-          method: "POST",
+          method: 'POST',
           body: JSON.stringify({
-            deployment: process.env.DEPLOYMENT || "",
+            deployment: process.env.DEPLOYMENT || '',
             name: config.name(),
             version: config.version(),
             id: config.id(),
             publicKey: config.publicKey(),
-            schema: { configSchema, introspect: intro },
+            schema: {configSchema, introspect: intro},
             icon,
           }),
-          headers: { "Content-Type": "application/json" },
+          headers: {'Content-Type': 'application/json'},
           signal: AbortSignal.timeout(60 * 1000),
         },
-        config,
-      ),
+        config
+      )
     );
 
     if (response.status === 200) return (await response.json()).key;
 
-    throw new Error("authentication failed");
+    throw new Error('authentication failed');
   }
 }
 
-export { Registration };
+export {Registration};

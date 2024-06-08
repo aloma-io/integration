@@ -1,16 +1,16 @@
-import { init } from "@paralleldrive/cuid2";
-import C from "../connection/constants.mjs";
-const cuid = init({ length: 32 });
+import {init} from '@paralleldrive/cuid2';
+import C from '../connection/constants.mjs';
+const cuid = init({length: 32});
 
-import WebSocket from "ws";
-import { DurableWebsocket } from "./durable.mjs";
-import { Callback, Packet } from "./packet.mjs";
+import WebSocket from 'ws';
+import {DurableWebsocket} from './durable.mjs';
+import {Callback, Packet} from './packet.mjs';
 
 const cleanInterval = 45 * 1000;
 const pingInterval = 30 * 1000;
 
 class Transport {
-  constructor({ config, onMessage, onConnect }) {
+  constructor({config, onMessage, onConnect}) {
     var local = this;
 
     this.config = config;
@@ -45,9 +45,9 @@ class Transport {
     if (!packets.length) return;
 
     try {
-      local.ws.send(JSON.stringify({ p: packets }));
+      local.ws.send(JSON.stringify({p: packets}));
     } catch (e) {
-      console.log("could not send packets ", e);
+      console.log('could not send packets ', e);
       packets.forEach((packet) => local.packets.unshift(packet));
     }
   }
@@ -62,22 +62,18 @@ class Transport {
 
     this.running = true;
 
-    const ws = (local.ws = new WebSocket(
-      config.wsUrl(),
-      ["connector"],
-      C.augmentRequest({ headers: {} }, config),
-    ));
+    const ws = (local.ws = new WebSocket(config.wsUrl(), ['connector'], C.augmentRequest({headers: {}}, config)));
 
     ws.onPing = function () {
       clearTimeout(this.pingTimeout);
       this.pingTimeout = setTimeout(() => {
-        console.log("terminating ws");
+        console.log('terminating ws');
         if (local.running) this.terminate();
       }, 30000 + 15000);
     };
 
-    ws.on("open", () => {
-      console.log("transport connected");
+    ws.on('open', () => {
+      console.log('transport connected');
       local.connected = true;
       ws.onPing();
       local.pinger = setInterval(() => ws.ping(() => null), pingInterval);
@@ -85,17 +81,17 @@ class Transport {
       local.onConnect(local);
     });
 
-    ws.on("message", (message) => {
+    ws.on('message', (message) => {
       setTimeout(() => local.onMessages(JSON.parse(message)), 0);
     });
 
-    ws.on("ping", () => ws.onPing());
+    ws.on('ping', () => ws.onPing());
 
-    ws.on("error", (message) => {
-      console.log("error:", message);
+    ws.on('error', (message) => {
+      console.log('error:', message);
     });
 
-    ws.on("close", (message) => {
+    ws.on('close', (message) => {
       local.connected = false;
       clearInterval(local.pinger);
 
@@ -103,8 +99,8 @@ class Transport {
     });
   }
 
-  newDurableWebsocket({ endpoint, secret, onConnect, onMessage }) {
-    return new DurableWebsocket({ endpoint, secret, onConnect, onMessage });
+  newDurableWebsocket({endpoint, secret, onConnect, onMessage}) {
+    return new DurableWebsocket({endpoint, secret, onConnect, onMessage});
   }
 
   send(packet) {
@@ -131,7 +127,7 @@ class Transport {
       try {
         this.callbacks[packet.cb()].cb(packet.args());
       } catch (e) {
-        console.log("error processing packet", e, packet);
+        console.log('error processing packet', e, packet);
       } finally {
         delete this.callbacks[packet.cb()];
       }
@@ -143,10 +139,10 @@ class Transport {
   }
 
   newPacket(data, cb, cbKey) {
-    const packet = new Packet({ ...data });
+    const packet = new Packet({...data});
 
     if (cb) {
-      this.callbacks[cbKey || packet.id()] = new Callback({ cb });
+      this.callbacks[cbKey || packet.id()] = new Callback({cb});
       packet.cb(cbKey || packet.id());
     }
 
@@ -155,7 +151,7 @@ class Transport {
 
   clean() {
     var local = this;
-    const cbs = { ...this.callbacks },
+    const cbs = {...this.callbacks},
       then = Date.now() - 5 * 60 * 1000;
 
     Object.keys(cbs).forEach((key) => {
@@ -163,12 +159,12 @@ class Transport {
       if (!cb) return;
 
       if (cb.created < then) {
-        console.log("callback timeout", key);
+        console.log('callback timeout', key);
 
         try {
-          cb.cb({ error: "timeout" });
+          cb.cb({error: 'timeout'});
         } catch (e) {
-          console.log("error while callback", key, cb, e);
+          console.log('error while callback', key, cb, e);
         }
 
         delete local.callbacks[key];
@@ -196,4 +192,4 @@ class Transport {
   }
 }
 
-export { Transport };
+export {Transport};

@@ -1,8 +1,8 @@
-import { Registration } from "./registration.mjs";
-import C from "./constants.mjs";
+import {Registration} from './registration.mjs';
+import C from './constants.mjs';
 
 class Connection {
-  constructor({ config, onStart }) {
+  constructor({config, onStart}) {
     this.config = config;
     this.onStart = onStart;
   }
@@ -13,16 +13,16 @@ class Connection {
 
     try {
       const response = await fetch(
-        config.url() + "connect",
+        config.url() + 'connect',
         C.augmentRequest(
           {
-            method: "POST",
+            method: 'POST',
             body: JSON.stringify({}),
-            headers: { "Content-Type": "application/json" },
+            headers: {'Content-Type': 'application/json'},
             signal: AbortSignal.timeout(60 * 1000),
           },
-          config,
-        ),
+          config
+        )
       );
 
       if (response.status === 401) {
@@ -51,16 +51,16 @@ class Connection {
   async close() {
     try {
       await fetch(
-        this.config.url() + "disconnect",
+        this.config.url() + 'disconnect',
         C.augmentRequest(
           {
-            method: "POST",
+            method: 'POST',
             body: JSON.stringify({}),
-            headers: { "Content-Type": "application/json" },
+            headers: {'Content-Type': 'application/json'},
             signal: AbortSignal.timeout(60 * 1000),
           },
-          this.config,
-        ),
+          this.config
+        )
       );
     } catch (e) {
       // blank
@@ -68,4 +68,4 @@ class Connection {
   }
 }
 
-export { Connection };
+export {Connection};

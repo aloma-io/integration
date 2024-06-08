@@ -1,11 +1,11 @@
-import { parseFromFiles } from "@ts-ast-parser/core";
+import {parseFromFiles} from '@ts-ast-parser/core';
 
 const transform = (meta: any) => {
-  if (!meta?.length) throw new Error("metadata is empty");
+  if (!meta?.length) throw new Error('metadata is empty');
   meta = meta[0];
 
   if (meta.getDeclarations()?.length !== 1) {
-    throw new Error("connector file needs to export default class");
+    throw new Error('connector file needs to export default class');
   }
 
   const methods = {};
@@ -15,9 +15,9 @@ const transform = (meta: any) => {
     return !(
       member.isStatic() ||
       member.isInherited() ||
-      member.getKind() !== "Method" ||
-      member.getModifier() !== "public" ||
-      member.getName().startsWith("_")
+      member.getKind() !== 'Method' ||
+      member.getModifier() !== 'public' ||
+      member.getName().startsWith('_')
     );
   });
 
@@ -29,27 +29,21 @@ const transform = (meta: any) => {
         .getSignatures()
         .map((sig: any) => {
           const docs = sig.getJSDoc().serialize() || [];
-          const desc = docs.find(
-            (what: any) => what.kind === "description",
-          )?.value;
+          const desc = docs.find((what: any) => what.kind === 'description')?.value;
 
-          const example = docs.find(
-            (what: any) => what.kind === "example",
-          )?.value;
+          const example = docs.find((what: any) => what.kind === 'example')?.value;
 
-          const ns = docs.find((what: any) => what.kind === "namespace")?.value;
-          let space = ns ? `@namespace ${ns}` : "";
+          const ns = docs.find((what: any) => what.kind === 'namespace')?.value;
+          let space = ns ? `@namespace ${ns}` : '';
 
           let eg;
           if (example) {
             const parts = example.split(/```/);
-            const backticks = "```";
-            eg = `@example ${parts[0] || "usage"}\n${backticks}${
-              parts[1]
-            }${backticks}`;
+            const backticks = '```';
+            eg = `@example ${parts[0] || 'usage'}\n${backticks}${parts[1]}${backticks}`;
           }
 
-          const paramDocs = docs.filter((what: any) => what.kind === "param");
+          const paramDocs = docs.filter((what: any) => what.kind === 'param');
 
           const params = sig
             .getParameters()
@@ -60,56 +54,49 @@ const transform = (meta: any) => {
               const prefix = param
                 .getNamedElements()
                 .map((p) => {
-                  const defaultVal =
-                    p.getDefault() != null ? " = " + p.getDefault() : "";
+                  const defaultVal = p.getDefault() != null ? ' = ' + p.getDefault() : '';
 
                   return `${p.getName()}${defaultVal}`;
                 })
-                .join("; ");
+                .join('; ');
 
               const suffix = serialized.type.properties
                 .map((p) => {
-                  const comment = paramDocs.find(
-                    (what) => what.value.name === p.name,
-                  );
-                  const desc = (comment?.value.description || "").replace(
-                    /\\@/gi,
-                    "@",
-                  );
+                  const comment = paramDocs.find((what) => what.value.name === p.name);
+                  const desc = (comment?.value.description || '').replace(/\\@/gi, '@');
 
                   return `\n/**\n${desc}\n */\n ${p.name}: ${p.type.text}`;
                 })
-                .join("; ");
+                .join('; ');
 
               return `{${prefix}}: {${suffix}}`;
             })
-            .join(", ");
+            .join(', ');
 
           const retVal = sig
             .serialize()
-            .return.type.text.replace(/^Promise</, "")
-            .replace(/>$/, "");
+            .return.type.text.replace(/^Promise</, '')
+            .replace(/>$/, '');
 
           return `
 /**
- * ${desc || ""}
+ * ${desc || ''}
  *
- * ${space || ""}
- * ${eg || ""}
+ * ${space || ''}
+ * ${eg || ''}
  **/    
 declare function ${member.getName()}(${params}): ${retVal};
       `;
         })
-        .join("\n");
+        .join('\n');
     })
-    .join("");
+    .join('');
 
-  return { text, methods: Object.keys(methods) };
+  return {text, methods: Object.keys(methods)};
 };
 
 export default async (path: string) => {
   const parsed = await parseFromFiles([path]);
-  if (parsed.errors?.length)
-    throw new Error(path + " " + JSON.stringify(parsed.errors));
+  if (parsed.errors?.length) throw new Error(path + ' ' + JSON.stringify(parsed.errors));
   return transform(parsed.project?.getModules() || []);
 };

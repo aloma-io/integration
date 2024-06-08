@@ -1,41 +1,39 @@
-import fs from "node:fs";
-import ChildProcess from "node:child_process";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import util from "node:util";
+import fs from 'node:fs';
+import ChildProcess from 'node:child_process';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import util from 'node:util';
 
 const exec = util.promisify(ChildProcess.exec);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const files = [
-  { name: "greeting done.mts", dir: "src/steps/and-done/" },
-  { name: "hello world.mts", dir: "src/steps/" },
-  { name: "package.json", dir: "" },
-  { name: "tsconfig.json", dir: "" },
+  {name: 'greeting done.mts', dir: 'src/steps/and-done/'},
+  {name: 'hello world.mts', dir: 'src/steps/'},
+  {name: 'package.json', dir: ''},
+  {name: 'tsconfig.json', dir: ''},
 ];
 
-const extract = ({ target, name, connectorId }) => {
+const extract = ({target, name, connectorId}) => {
   const source = `${__dirname}/../../template/workspace/`;
 
   if (!fs.existsSync(source)) {
     throw new Error(`source ${source} does not exist`);
   }
 
-  files.forEach(({ name, dir }) => {
+  files.forEach(({name, dir}) => {
     if (dir) {
-      fs.mkdirSync(`${target}/${dir}`, { recursive: true });
+      fs.mkdirSync(`${target}/${dir}`, {recursive: true});
     }
 
     const content = fs.readFileSync(`${source}/${dir}/${name}`, {
-      encoding: "utf-8",
+      encoding: 'utf-8',
     });
     fs.writeFileSync(`${target}/${dir}/${name}`, content);
   });
 
-  const content = JSON.parse(
-    fs.readFileSync(`${target}/package.json`, { encoding: "utf-8" }),
-  );
+  const content = JSON.parse(fs.readFileSync(`${target}/package.json`, {encoding: 'utf-8'}));
 
   content.name = name;
 
@@ -46,25 +44,25 @@ const extract = ({ target, name, connectorId }) => {
 node_modules
 build
 .env
-yarn-error.log`,
+yarn-error.log`
   );
 };
 
 export const create = async (name, options) => {
-  name = name.replace(/[\/\.]/gi, "");
-  if (!name) throw new Error("name is empty");
+  name = name.replace(/[\/\.]/gi, '');
+  if (!name) throw new Error('name is empty');
 
   const target = `${process.cwd()}/${name}`;
 
   fs.mkdirSync(target);
 
-  console.log("Creating workspace ...");
-  extract({ ...options, target, name });
+  console.log('Creating workspace ...');
+  extract({...options, target, name});
 
-  console.log("Installing dependencies ...");
+  console.log('Installing dependencies ...');
   await exec(`cd ${target}; yarn`);
 
-  console.log("Building ...");
+  console.log('Building ...');
   await exec(`cd ${target}; yarn build`);
 
   console.log(`

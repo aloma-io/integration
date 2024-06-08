@@ -1,4 +1,4 @@
-import Fetcher from "../internal/fetcher/fetcher.mjs";
+import Fetcher from '../internal/fetcher/fetcher.mjs';
 
 export abstract class AbstractController {
   protected config: {[key: string]: any} = {};
@@ -17,15 +17,15 @@ export abstract class AbstractController {
   }
 
   protected fallback(arg: any): Promise<any> {
-    throw new Error("method not found");
+    throw new Error('method not found');
   }
 
   protected async endpoint(arg: any): Promise<any> {
-    throw new Error("method not found");
+    throw new Error('method not found');
   }
 
   protected async newTask(name: string, data: any): Promise<string> {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected getClient({
@@ -37,11 +37,11 @@ export abstract class AbstractController {
     onResponse?: (response: any) => void;
     customize?: (request: any) => void;
   }): Fetcher {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected async updateTask(name: string, data: any): Promise<string> {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected async createBlob({
@@ -59,7 +59,7 @@ export abstract class AbstractController {
     meta?: any;
     taskId?: string;
   }): Promise<string> {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected async getBlob(id: string): Promise<{
@@ -69,11 +69,11 @@ export abstract class AbstractController {
     mimetype?: string;
     meta?: any;
   }> {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected async getBlobContent(id: string): Promise<string> {
-    throw new Error("not implemented");
+    throw new Error('not implemented');
   }
 
   protected async healthCheck(): Promise<any> {
@@ -108,7 +108,7 @@ export abstract class AbstractController {
     getClient: any,
     getBlob: any,
     getBlobContent: any,
-    createBlob: any,
+    createBlob: any
   ): Promise<void> {
     this.config = config;
     this.client = client;

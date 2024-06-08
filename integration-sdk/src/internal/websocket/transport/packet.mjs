@@ -1,5 +1,5 @@
-import { init } from "@paralleldrive/cuid2";
-const cuid = init({ length: 32 });
+import {init} from '@paralleldrive/cuid2';
+const cuid = init({length: 32});
 
 class Packet {
   constructor(data = {}) {
@@ -45,10 +45,10 @@ class Packet {
 }
 
 class Callback {
-  constructor({ cb }) {
+  constructor({cb}) {
     this.cb = cb;
     this.created = Date.now();
   }
 }
 
-export { Callback, Packet };
+export {Callback, Packet};

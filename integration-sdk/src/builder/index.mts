@@ -1,11 +1,11 @@
-import "dotenv/config";
-import fs from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { notEmpty } from "../internal/util/index.mjs";
-import RuntimeContext from "./runtime-context.mjs";
+import 'dotenv/config';
+import fs from 'node:fs';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {notEmpty} from '../internal/util/index.mjs';
+import RuntimeContext from './runtime-context.mjs';
 
-const DIR_OFFSET = "/../../../../../";
+const DIR_OFFSET = '/../../../../../';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -14,50 +14,51 @@ export const TARGET_DIR = `${__dirname}${DIR_OFFSET}`;
 /**
  * a configuration field
  */
-export type ConfigField = {
-  /**
-   * the name of the field
-   */
-  name: string;
-  /**
-   * a description about the field
-   *
-   * supports markdown
-   */
-  description?: string;
-  /**
-   * a placeholder for the field
-   */
-  placeholder?: string;
-  /**
-   * the type of the field
-   */
-  type:
-  /**
-   * a multiline text field
-   */
-  "multiline"
-  /**
-   * a single line text field
-   */
-  | "line"
-  /**
-   * a number field
-   */
-  | "number"
-  /**
-   * a boolean text field
-   */
-  | "boolean";
-  /**
-   * if true, the field is optional, otherwise a value is required
-   */
-  optional?: boolean;
-  /**
-   * if true, the field will NOT be encrypted
-   */
-  plain?: boolean;
-} | undefined;
+export type ConfigField =
+  | {
+      /**
+       * the name of the field
+       */
+      name: string;
+      /**
+       * a description about the field
+       *
+       * supports markdown
+       */
+      description?: string;
+      /**
+       * a placeholder for the field
+       */
+      placeholder?: string;
+      /**
+       * the type of the field
+       */
+      type: /**
+       * a multiline text field
+       */
+      | 'multiline'
+        /**
+         * a single line text field
+         */
+        | 'line'
+        /**
+         * a number field
+         */
+        | 'number'
+        /**
+         * a boolean text field
+         */
+        | 'boolean';
+      /**
+       * if true, the field is optional, otherwise a value is required
+       */
+      optional?: boolean;
+      /**
+       * if true, the field will NOT be encrypted
+       */
+      plain?: boolean;
+    }
+  | undefined;
 
 /**
  * connector configuration
@@ -83,7 +84,7 @@ declare type Config = {
     scope?: ConfigField;
     clientId?: ConfigField;
     clientSecret?: ConfigField;
-    [key: string]: ConfigField
+    [key: string]: ConfigField;
   };
 };
 
@@ -98,11 +99,11 @@ declare type Options = {
     /**
      * if the endpoint is enabled
      */
-    enabled: boolean,
+    enabled: boolean;
     /**
      * if true, the endpoint is required to operate the connector and not visible in the ui
      */
-    required?: boolean
+    required?: boolean;
   };
 };
 
@@ -145,7 +146,7 @@ declare type OAuth = {
   /**
    * milliseconds to automatically refresh the token, if a refresh_token is available
    *
-  * @default 4 * 60 * 60 * 1000 // 4 hours
+   * @default 4 * 60 * 60 * 1000 // 4 hours
    */
   tokenRefreshPeriod?: number;
 
@@ -161,8 +162,8 @@ declare type OAuth = {
     /**
      * oauth2 grant type
      */
-    grant_type?: string
-  }
+    grant_type?: string;
+  };
 };
 
 /**
@@ -170,7 +171,7 @@ declare type OAuth = {
  */
 export class Builder {
   private data: any = {
-    controller: "./build/.controller.json",
+    controller: './build/.controller.json',
   };
 
   /**
@@ -214,8 +215,7 @@ export class Builder {
     await this.checkIcon();
 
     // @ts-ignore
-    const Controller = (await import(TARGET_DIR + "build/controller/index.mjs"))
-      .default;
+    const Controller = (await import(TARGET_DIR + 'build/controller/index.mjs')).default;
 
     return new RuntimeContext(new Controller(), this.data);
   }
@@ -223,21 +223,21 @@ export class Builder {
   private async checkIcon() {
     const data = this.data;
 
-    data.icon = TARGET_DIR + "build/logo.png";
+    data.icon = TARGET_DIR + 'build/logo.png';
   }
 
   private async loadDescriptor() {
-    notEmpty(this.data.controller, "controller");
+    notEmpty(this.data.controller, 'controller');
 
     const content = fs.readFileSync(this.data.controller, {
-      encoding: "utf-8",
+      encoding: 'utf-8',
     });
-    const { text, methods, connectorId, version } = JSON.parse(content);
+    const {text, methods, connectorId, version} = JSON.parse(content);
 
     this.data.types = text;
     this.data.methods = methods;
 
-    notEmpty((this.data.id = connectorId), "id");
-    notEmpty((this.data.version = version), "version");
+    notEmpty((this.data.id = connectorId), 'id');
+    notEmpty((this.data.version = version), 'version');
   }
 }
