@@ -37,7 +37,7 @@ export default class RuntimeContext {
     const configuration = connector.configure().config(data.config || {});
 
     const resolvers: any = {};
-    const methods: string[] = [...data.methods, '__autocomplete', '__endpoint', '__configQuery', '__default'];
+    const methods: string[] = [...data.methods, '__autocomplete', '__endpoint', '__default'];
 
     methods.forEach((method) => {
       resolvers[method] = async (args) => {

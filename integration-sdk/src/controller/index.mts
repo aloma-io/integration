@@ -1,5 +1,6 @@
+import { ConfigField } from '../index.mjs';
 import Fetcher from '../internal/fetcher/fetcher.mjs';
-import {OAuth} from '../internal/fetcher/oauth-fetcher.mjs';
+import { OAuth } from '../internal/fetcher/oauth-fetcher.mjs';
 
 export abstract class AbstractController {
   /**
@@ -27,10 +28,6 @@ export abstract class AbstractController {
    * @param isShutdown true if the controller is stopped due to shutdown
    */
   protected async stop(isShutdown: boolean = false): Promise<void> {}
-
-  protected configQuery(arg: any): Promise<any> {
-    return Promise.resolve({});
-  }
 
   /**
    * autocomplete configuration options
@@ -144,16 +141,12 @@ export abstract class AbstractController {
    *
    * @param configSchema the schema of the config
    */
-  protected async configCheck(configSchema: any): Promise<any> {
+  protected async configCheck(configSchema: {[key: string]: ConfigField}): Promise<void> {
     // blank, throw an error if the config is not valid
   }
 
   async __endpoint(arg: any): Promise<any | null> {
     return this.endpoint(arg);
-  }
-
-  async __configQuery(arg: any): Promise<any | null> {
-    return this.configQuery(arg);
   }
 
   async __autocomplete(arg: any): Promise<any | null> {
@@ -164,9 +157,49 @@ export abstract class AbstractController {
     return this.fallback(arg);
   }
 
-  async __healthCheck(configSchema: any): Promise<any> {
-    await this.healthCheck();
-    await this.configCheck(configSchema);
+  async __healthCheck(configSchema: () => {[key: string]: ConfigField}): Promise<void> {
+    const errors: string[] = [];
+    const schema = configSchema();
+
+    try {
+      await this.healthCheck();
+    } catch (e: any) {
+      errors.push(e.message);
+    }
+
+    try {
+      await this.defaultConfigCheck(schema);
+    } catch (e: any) {
+      errors.push(e.message);
+    }
+
+    try {
+      await this.configCheck(schema);
+    } catch (e: any) {
+      errors.push(e.message);
+    }
+
+    if (errors.length) {
+      throw new Error(errors.join('\n'));
+    }
+  }
+
+  private async defaultConfigCheck(configSchema: {[key: string]: ConfigField}): Promise<void> {
+    const config = this.config;
+
+    const missing = Object.entries(configSchema)
+      .map(([key, field]) => {
+        if (!field) return;
+
+        if (!field.optional && config[key] == null) {
+          return `Configuration: ${field.name} is required`;
+        }
+      })
+      .filter((what) => !!what);
+
+    if (missing.length) {
+      throw new Error(missing.join('\n'));
+    }
   }
 
   async _doStart(
