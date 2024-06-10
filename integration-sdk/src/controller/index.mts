@@ -2,6 +2,10 @@ import { ConfigField } from '../index.mjs';
 import Fetcher from '../internal/fetcher/fetcher.mjs';
 import { OAuth } from '../internal/fetcher/oauth-fetcher.mjs';
 
+/**
+ * Abstract controller class
+ * this needs to be used in a connector
+ */
 export abstract class AbstractController {
   /**
    * connector configuration
@@ -52,6 +56,11 @@ export abstract class AbstractController {
     throw new Error('method not found');
   }
 
+  /**
+   * will be invoked, when the connector has an endpoint enabled
+   * will receive the data and can e.g. create a new task from it
+   * @param arg
+   */
   protected async endpoint(arg: any): Promise<any> {
     throw new Error('method not found');
   }
@@ -65,6 +74,12 @@ export abstract class AbstractController {
     throw new Error('not implemented');
   }
 
+  /**
+   * get a client to make requests
+   * @param baseUrl base url of the client
+   * @param onResponse callback to be invoked on response
+   * @param customize callback to customize the request
+   */
   protected getClient({
     baseUrl,
     onResponse,
@@ -87,6 +102,15 @@ export abstract class AbstractController {
     throw new Error('not implemented');
   }
 
+  /**
+   * create a blob
+   * @param content content of the blob in base64
+   * @param name name of the blob
+   * @param size size of the blob
+   * @param mimetype mimetype of the blob
+   * @param meta meta data of the blob
+   * @param taskId id of the task
+   */
   protected async createBlob({
     content,
     name,
@@ -145,21 +169,34 @@ export abstract class AbstractController {
     // blank, throw an error if the config is not valid
   }
 
+  /**
+   * @ignore
+   **/
   async __endpoint(arg: any): Promise<any | null> {
     return this.endpoint(arg);
   }
 
+  /**
+   * @ignore
+   **/
   async __autocomplete(arg: any): Promise<any | null> {
     return this.autocomplete(arg);
   }
 
+  /**
+   * @ignore
+   **/
   async __default(arg: any): Promise<any | null> {
     return this.fallback(arg);
   }
 
+  /**
+   * @ignore
+   **/
   async __healthCheck(configSchema: () => {[key: string]: ConfigField}): Promise<void> {
     const errors: string[] = [];
     const schema = configSchema();
+    const fields: any = schema.fields;
 
     try {
       await this.healthCheck();
@@ -168,13 +205,13 @@ export abstract class AbstractController {
     }
 
     try {
-      await this.defaultConfigCheck(schema);
+      await this.defaultConfigCheck(fields);
     } catch (e: any) {
       errors.push(e.message);
     }
 
     try {
-      await this.configCheck(schema);
+      await this.configCheck(fields);
     } catch (e: any) {
       errors.push(e.message);
     }
@@ -184,6 +221,9 @@ export abstract class AbstractController {
     }
   }
 
+  /**
+   * @ignore
+   **/
   private async defaultConfigCheck(configSchema: {[key: string]: ConfigField}): Promise<void> {
     const config = this.config;
 
@@ -192,7 +232,7 @@ export abstract class AbstractController {
         if (!field) return;
 
         if (!field.optional && config[key] == null) {
-          return `Configuration: ${field.name} is required`;
+          return `Configuration: ${field.name || key} is required`;
         }
       })
       .filter((what) => !!what);
@@ -202,6 +242,9 @@ export abstract class AbstractController {
     }
   }
 
+  /**
+   * @ignore
+   **/
   async _doStart(
     config: any,
     oauth: any,
@@ -225,6 +268,9 @@ export abstract class AbstractController {
     await this.start();
   }
 
+  /**
+   * @ignore
+   **/
   async _doStop(isShutdown: boolean = false): Promise<void> {
     await this.stop(isShutdown);
   }

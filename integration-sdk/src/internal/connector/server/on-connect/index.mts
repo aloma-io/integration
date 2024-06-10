@@ -28,6 +28,10 @@ export const onConnect = ({
         secrets,
         config,
       });
+      
+      if (decrypted?.oauthResult?.scope) {
+        console.log(`Scope: ${decrypted.oauthResult.scope}`)
+      }
 
       await patchStartOAuth({dispatcher, decrypted});
       await patchFinishOAuth({dispatcher, decrypted, config, transport});

@@ -1,10 +1,10 @@
-import {init} from '@paralleldrive/cuid2';
+import { init } from '@paralleldrive/cuid2';
 import C from '../connection/constants.mjs';
 const cuid = init({length: 32});
 
 import WebSocket from 'ws';
-import {DurableWebsocket} from './durable.mjs';
-import {Callback, Packet} from './packet.mjs';
+import { DurableWebsocket } from './durable.mjs';
+import { Callback, Packet } from './packet.mjs';
 
 const cleanInterval = 45 * 1000;
 const pingInterval = 30 * 1000;
@@ -67,8 +67,7 @@ class Transport {
     ws.onPing = function () {
       clearTimeout(this.pingTimeout);
       this.pingTimeout = setTimeout(() => {
-        console.log('terminating ws');
-        if (local.running) this.terminate();
+        if (local.running) ws.terminate();
       }, 30000 + 15000);
     };
 
@@ -192,4 +191,5 @@ class Transport {
   }
 }
 
-export {Transport};
+export { Transport };
+

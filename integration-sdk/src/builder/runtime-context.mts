@@ -1,13 +1,19 @@
 import fs from 'node:fs';
-import {AbstractController} from '../controller/index.mjs';
-import {Connector} from '../internal/index.mjs';
+import { AbstractController } from '../controller/index.mjs';
+import { Connector } from '../internal/index.mjs';
 
+/**
+ * Runtime context to manage the lifecycle of the connector
+ */
 export default class RuntimeContext {
   constructor(
     private controller: AbstractController,
     private data: any
   ) {}
 
+  /**
+   * start the connector
+   */
   async start(): Promise<void> {
     const controller = this.controller;
 
