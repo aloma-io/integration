@@ -1,4 +1,4 @@
-import {unwrap} from '../util/index.mjs';
+import { unwrap } from '../util/index.mjs';
 
 /**
  * http request fetcher
@@ -60,7 +60,7 @@ export default class Fetcher {
    */
   async fetch(
     url: string,
-    options: {
+    options?: {
       /**
        * request method like GET, POST, PUT, DELETE
        */
@@ -73,12 +73,13 @@ export default class Fetcher {
        * request body like "hello world" or {hello: "world"}
        */
       body?: any;
-    } = {},
+    },
     retries?: number,
     args: any = {}
   ) {
     var local = this,
       baseUrl = local.baseUrl;
+    options ||= {};
 
     const options0: any = {...options};
 

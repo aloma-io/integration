@@ -44,7 +44,7 @@ export abstract class AbstractController {
    * @param arg
    * @returns
    */
-  protected autocomplete(arg: any): Promise<any> {
+  protected async autocomplete(arg: any): Promise<any> {
     return Promise.resolve({});
   }
 
