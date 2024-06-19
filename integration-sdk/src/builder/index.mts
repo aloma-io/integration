@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
-import {fileURLToPath} from 'node:url';
-import {notEmpty} from '../internal/util/index.mjs';
+import { fileURLToPath } from 'node:url';
+import { notEmpty } from '../internal/util/index.mjs';
 import RuntimeContext from './runtime-context.mjs';
 
 const DIR_OFFSET = '/../../../../../';
@@ -154,6 +154,13 @@ declare type OAuth = {
    * if true, the clientId and clientSecret are sent to the tokenURL as basic auth header
    */
   useAuthHeader?: boolean;
+
+  /**
+   * whether to enable pkce code verification
+   *
+   * the oauth authorization url then must contain `code_challenge_method=S256&code_challenge={{codeChallenge}}` in order to work
+   */
+  useCodeChallenge?: boolean;
 
   /**
    * additional token arguments
