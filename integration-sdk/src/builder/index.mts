@@ -31,6 +31,10 @@ export type ConfigField =
        */
       placeholder?: string;
       /**
+       * minimum height of the field
+       */
+      height?: number
+      /**
        * the type of the field
        */
       type: /**
@@ -161,6 +165,26 @@ declare type OAuth = {
    * the oauth authorization url then must contain `code_challenge_method=S256&code_challenge={{codeChallenge}}` in order to work
    */
   useCodeChallenge?: boolean;
+
+  /**
+   * if true, the client can be configured by the user
+   */
+  configurableClient?: boolean;
+
+  /**
+   * if true, the configurable client is optional
+   */
+  configurableClientOptional?: boolean;
+
+  /**
+   * if true, the connection is optional
+   */
+  connectionOptional?: boolean;
+
+  /**
+   * oauth2 configurable client scope
+   */
+  configurableClientScope?: string;
 
   /**
    * additional token arguments
