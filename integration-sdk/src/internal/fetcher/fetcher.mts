@@ -17,7 +17,7 @@ export default class Fetcher {
     retry?: number;
     baseUrl?: string;
     onResponse?: (response: Response) => void;
-    customize?: (request: {[key: string]: any}) => void;
+    customize?: (request: { [key: string]: any }) => void;
   } = {}) {
     this.retry = retry;
     this.baseUrl = baseUrl;
@@ -68,7 +68,7 @@ export default class Fetcher {
       /**
        * request headers like Accept, Content-type
        */
-      headers?: {[key: string]: any};
+      headers?: { [key: string]: any };
       /**
        * request body like "hello world" or {hello: "world"}
        */
@@ -81,7 +81,7 @@ export default class Fetcher {
       baseUrl = local.baseUrl;
     options ||= {};
 
-    const options0: any = {...options};
+    const options0: any = { ...options };
 
     if (retries == null) retries = local.retry;
 
@@ -103,7 +103,7 @@ export default class Fetcher {
         };
       }
 
-      if (!options0?.headers || !options0?.headers?.['Content-type']) {
+      if ((!options0?.headers || !options0?.headers?.['Content-type']) && !(options0?.body instanceof FormData)) {
         options0.headers = {
           ...options0.headers,
           'Content-type': 'application/json',
@@ -139,7 +139,7 @@ export default class Fetcher {
       }
 
       if (status === 204) {
-        return {ok: true};
+        return { ok: true };
       }
 
       return unwrap(ret, options0);
