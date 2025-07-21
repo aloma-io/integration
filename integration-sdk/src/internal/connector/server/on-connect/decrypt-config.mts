@@ -17,7 +17,8 @@ export const decryptConfig = async ({configSchema, config, secrets}) => {
       try {
         decrypted[key] = await jwe.decrypt(value, config.id());
       } catch (e) {
-        console.log('failed to decrypt key', key, config.id(), e);
+        const errorMsg = String(e).replaceAll(value, '***');
+        console.log('failed to decrypt key', key, config.id(), errorMsg);
       }
     }
   }
