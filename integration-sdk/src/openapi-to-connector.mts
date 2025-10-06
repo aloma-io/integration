@@ -122,7 +122,30 @@ export class OpenAPIToConnector {
    */
   private generateMethodName(operation: OperationInfo): string {
     if (operation.operationId) {
-      return this.toValidIdentifier(operation.operationId);
+      // Clean up HubSpot-style operationIds like "get-/crm/v3/objects/companies_getPage"
+      let cleaned = operation.operationId;
+      
+      // Extract the last part after underscore if it exists
+      const parts = cleaned.split('_');
+      if (parts.length > 1) {
+        const lastPart = parts[parts.length - 1];
+        // If the last part looks like a method name (camelCase), use it
+        if (lastPart && /^[a-z][a-zA-Z0-9]*$/.test(lastPart)) {
+          cleaned = lastPart;
+        }
+      }
+      
+      // Remove any remaining special characters and clean up
+      cleaned = cleaned
+        .replace(/^(get|post|put|patch|delete|head|options)-/i, '') // Remove HTTP method prefix
+        .replace(/[^a-zA-Z0-9_]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      
+      // If we still have a valid identifier, use it
+      if (cleaned && /^[a-zA-Z]/.test(cleaned)) {
+        return cleaned;
+      }
     }
 
     // Generate from method + path
@@ -149,25 +172,52 @@ export class OpenAPIToConnector {
     }
 
     if (operation.description) {
-      lines.push(` * ${operation.description}`);
+      lines.push(` *`);
+      // Split long descriptions into multiple lines
+      const descLines = operation.description.split('\n');
+      descLines.forEach(line => {
+        if (line.trim()) {
+          lines.push(` * ${line.trim()}`);
+        }
+      });
     }
 
+    // Document parameters with full details
     if (operation.parameters && operation.parameters.length > 0) {
       lines.push(' *');
-      lines.push(' * @param args - Request arguments');
+      lines.push(' * @param {Object} args - Request arguments');
+      
       for (const param of operation.parameters) {
-        if (typeof param === 'object' && 'name' in param && 'description' in param) {
-          lines.push(` * @param args.${param.name} - ${param.description || 'Parameter'}`);
+        if (typeof param === 'object' && 'name' in param) {
+          const paramName = param.name;
+          const paramDesc = param.description || '';
+          const paramRequired = param.required ? '(required)' : '(optional)';
+          const paramType = param.schema?.type || 'any';
+          const paramIn = param.in || '';
+          
+          let paramDoc = ` * @param {${paramType}} args.${paramName} ${paramRequired}`;
+          if (paramDesc) {
+            paramDoc += ` - ${paramDesc}`;
+          }
+          if (paramIn) {
+            paramDoc += ` [${paramIn}]`;
+          }
+          lines.push(paramDoc);
         }
       }
     }
 
+    // Document request body
     if (operation.requestBody) {
       lines.push(' *');
-      lines.push(' * @param args.body - Request body');
+      const bodyDesc = operation.requestBody.description || 'Request body';
+      const required = operation.requestBody.required ? '(required)' : '(optional)';
+      lines.push(` * @param {Object} args.body ${required} - ${bodyDesc}`);
     }
 
-    lines.push(' * @returns Response data');
+    // Document response
+    lines.push(' *');
+    lines.push(` * @returns {Promise<Object>} ${operation.method} ${operation.path} response`);
 
     return lines.join('\n');
   }
