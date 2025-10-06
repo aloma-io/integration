@@ -1,0 +1,39 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Simple API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/products": {
+      "get": {
+        "operationId": "getProducts",
+        "summary": "Get all products",
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createProduct",
+        "summary": "Create product",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    }
+  }
+}

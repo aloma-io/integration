@@ -1,12 +1,12 @@
-import { init } from '@paralleldrive/cuid2';
-import { AbstractController } from '../../../../index.mjs';
+import {init} from '@paralleldrive/cuid2';
+import {AbstractController} from '../../../../index.mjs';
 import Dispatcher from '../../../dispatcher/index.mjs';
 import Fetcher from '../../../fetcher/fetcher.mjs';
-import { Config } from '../../../websocket/config.mjs';
-import { decryptConfig } from './decrypt-config.mjs';
-import { patchFinishOAuth } from './finish-oauth.mjs';
-import { makeOAuth } from './make-oauth.mjs';
-import { patchStartOAuth } from './start-oauth.mjs';
+import {Config} from '../../../websocket/config.mjs';
+import {decryptConfig} from './decrypt-config.mjs';
+import {patchFinishOAuth} from './finish-oauth.mjs';
+import {makeOAuth} from './make-oauth.mjs';
+import {patchStartOAuth} from './start-oauth.mjs';
 
 const cuid = init({length: 32});
 
@@ -28,9 +28,9 @@ export const onConnect = ({
         secrets,
         config,
       });
-      
+
       if (decrypted?.oauthResult?.scope) {
-        console.log(`Scope: ${decrypted.oauthResult.scope}`)
+        console.log(`Scope: ${decrypted.oauthResult.scope}`);
       }
 
       await patchStartOAuth({dispatcher, decrypted});

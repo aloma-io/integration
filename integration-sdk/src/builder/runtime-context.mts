@@ -1,6 +1,6 @@
 import fs from 'node:fs';
-import { AbstractController } from '../controller/index.mjs';
-import { Connector } from '../internal/index.mjs';
+import {AbstractController} from '../controller/index.mjs';
+import {Connector} from '../internal/index.mjs';
 
 /**
  * Runtime context to manage the lifecycle of the connector
