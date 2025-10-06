@@ -1,6 +1,6 @@
 {
   "name": "@aloma.io/integration-sdk",
-  "version": "3.8.50",
+  "version": "3.8.51",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
@@ -11,8 +11,9 @@
   "scripts": {
     "dev": "./node_modules/typescript/bin/tsc --watch",
     "build": "./node_modules/typescript/bin/tsc",
-    "test": "./node_modules/mocha/bin/_mocha --recursive",
-    "format": "yarn prettier --write src/"
+    "test": "./node_modules/mocha/bin/_mocha --recursive test/ --loader ts-node/esm",
+    "format": "yarn prettier --write src/",
+    "openapi-to-connector": "node ./build/openapi-to-connector.mjs"
   },
   "main": "./build/index.js",
   "exports": {
@@ -32,6 +33,8 @@
     "dotenv": "^16",
     "express": "^4",
     "jose": "^5",
+    "js-yaml": "^4.1.0",
+    "openapi-types": "^12.1.3",
     "prom-client": "^15",
     "typescript": "^5",
     "ws": "^8",
@@ -42,7 +45,11 @@
     "utf-8-validate": "^6"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/mocha": "^10.0.6",
+    "chai": "^4.3.10",
     "mocha": "^10",
-    "prettier": "^3"
+    "prettier": "^3",
+    "ts-node": "^10.9.2"
   }
 }

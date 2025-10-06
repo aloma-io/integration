@@ -10,6 +10,7 @@ import {TARGET_DIR} from './builder/index.mjs';
 import {notEmpty} from './internal/util/index.mjs';
 import JWE from './internal/util/jwe/index.mjs';
 import parseTypes from './transform/index.mjs';
+import {OpenAPIToConnector} from './openapi-to-connector.mjs';
 
 const exec = util.promisify(ChildProcess.exec);
 
@@ -101,7 +102,7 @@ program
     await generateKeys({target});
 
     console.log('Installing dependencies ...');
-    await exec(`cd ${target}; yarn`);
+    await exec(`cd ${target}; yarn --ignore-engines`);
 
     console.log('Building ...');
     await exec(`cd ${target}; yarn build`);
@@ -129,6 +130,69 @@ program
     if (stdout) console.log(stdout);
 
     new Extractor().extract('./src/controller/index.mts', './build/.controller.json');
+  });
+
+program
+  .command('from-openapi')
+  .description('Generate a connector controller from an OpenAPI specification')
+  .argument('<name>', 'name of the connector project')
+  .requiredOption('--connector-id <id>', 'id of the connector')
+  .requiredOption('--spec <file>', 'OpenAPI specification file (JSON or YAML)')
+  .option('--out <file>', 'output file path for the controller', 'src/controller/index.mts')
+  .action(async (name, options) => {
+    name = name.replace(/[\/\.]/gi, '');
+    if (!name) throw new Error('name is empty');
+
+    const target = `${process.cwd()}/${name}`;
+
+    try {
+      // Read and parse the OpenAPI spec
+      const specContent = fs.readFileSync(options.spec, 'utf-8');
+      const spec = OpenAPIToConnector.parseSpec(specContent);
+
+      // Create the connector project structure
+      fs.mkdirSync(target);
+      console.log('Creating connector project...');
+      extract({...options, target, name});
+
+      // Generate the controller from OpenAPI spec
+      console.log('Generating controller from OpenAPI specification...');
+      const generator = new OpenAPIToConnector(spec, name);
+      const controllerCode = generator.generateController();
+
+      // Write the generated controller
+      const controllerPath = `${target}/${options.out}`;
+      fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
+      fs.writeFileSync(controllerPath, controllerCode);
+
+      console.log('Generating keys...');
+      await generateKeys({target});
+
+      console.log('Installing dependencies...');
+      await exec(`cd ${target}; yarn --ignore-engines`);
+
+      console.log('Building...');
+      await exec(`cd ${target}; yarn build`);
+
+      console.log(`
+✅ Success! Generated connector from OpenAPI specification
+📝 Connector name: ${name}
+📊 Found ${generator.getOperationsCount()} operations
+📄 Controller generated: ${options.out}
+      
+Next steps:
+1.) Add the connector to a workspace
+2.) Edit ./${name}/.env and insert the registration token
+3.) Implement the actual API calls in each method in ${options.out}
+4.) Start the connector with cd ./${name}/; yarn start`);
+    } catch (error) {
+      console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
+      // Clean up on error
+      if (fs.existsSync(target)) {
+        fs.rmSync(target, {recursive: true, force: true});
+      }
+      process.exit(1);
+    }
   });
 
 class Extractor {

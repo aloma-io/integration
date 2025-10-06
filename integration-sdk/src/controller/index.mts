@@ -1,6 +1,6 @@
-import { ConfigField } from '../index.mjs';
+import {ConfigField} from '../index.mjs';
 import Fetcher from '../internal/fetcher/fetcher.mjs';
-import { OAuth } from '../internal/fetcher/oauth-fetcher.mjs';
+import {OAuth} from '../internal/fetcher/oauth-fetcher.mjs';
 
 /**
  * Abstract controller class

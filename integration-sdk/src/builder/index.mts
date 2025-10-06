@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { notEmpty } from '../internal/util/index.mjs';
+import {fileURLToPath} from 'node:url';
+import {notEmpty} from '../internal/util/index.mjs';
 import RuntimeContext from './runtime-context.mjs';
 
 const DIR_OFFSET = '/../../../../../';
@@ -33,7 +33,7 @@ export type ConfigField =
       /**
        * minimum height of the field
        */
-      height?: number
+      height?: number;
       /**
        * the type of the field
        */
