@@ -225,7 +225,15 @@ export class OpenAPIToConnector {
     } else {
       // Options object documentation
       lines.push(' *');
-      lines.push(` * @param {Object} options (optional) - Request options`);
+
+      // Check if there are any required parameters
+      const hasRequiredParams =
+        pathParams.some((p) => p.required) ||
+        queryParams.some((p) => p.required) ||
+        (operation.requestBody && operation.requestBody.required);
+
+      const optionsRequired = hasRequiredParams ? '(required)' : '(optional)';
+      lines.push(` * @param {Object} options ${optionsRequired} - Request options`);
 
       // Document path parameters
       for (const param of pathParams) {
@@ -272,18 +280,24 @@ export class OpenAPIToConnector {
    * Generate method signature with options object
    */
   private generateMethodSignature(operation: OperationInfo): string {
-    const pathParams: string[] = [];
-    const queryParams: string[] = [];
+    const pathParams: Array<{name: string; required: boolean; type: string}> = [];
+    const queryParams: Array<{name: string; required: boolean; type: string}> = [];
     const hasBody = !!operation.requestBody;
 
-    // Identify path and query parameters
+    // Identify path and query parameters with their types and required status
     if (operation.parameters) {
       for (const param of operation.parameters) {
         if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          const paramInfo = {
+            name: param.name,
+            required: param.required || false,
+            type: this.getParameterType(param),
+          };
+
           if (param.in === 'path') {
-            pathParams.push(param.name);
+            pathParams.push(paramInfo);
           } else if (param.in === 'query') {
-            queryParams.push(param.name);
+            queryParams.push(paramInfo);
           }
         }
       }
@@ -292,22 +306,135 @@ export class OpenAPIToConnector {
     // If there are no query params, no body, and only path params, use simple signature
     if (queryParams.length === 0 && !hasBody && pathParams.length <= 1) {
       const params: string[] = [];
-      for (const paramName of pathParams) {
-        params.push(`${paramName}: string`);
+      for (const paramInfo of pathParams) {
+        params.push(`${paramInfo.name}: ${paramInfo.type}`);
       }
       params.push(`options?: {headers?: {[key: string]: any}}`);
       return `(${params.join(', ')})`;
     }
 
-    // Otherwise, use options object pattern
-    return `(options?: {${[
-      ...pathParams.map((p) => `${p}?: string`),
-      ...queryParams.map((p) => `${p}?: any`),
-      hasBody ? 'body?: any' : '',
-      'headers?: {[key: string]: any}',
-    ]
-      .filter(Boolean)
-      .join(', ')}})`;
+    // Check if there are any required parameters
+    const hasRequiredParams =
+      pathParams.some((p) => p.required) ||
+      queryParams.some((p) => p.required) ||
+      (hasBody && operation.requestBody?.required);
+
+    // Build detailed options object with proper types
+    // Group nested properties into objects (e.g., PrimaryContact.FirstName -> PrimaryContact: {FirstName: string})
+    const nestedObjects: Map<string, Array<{name: string; type: string; required: boolean}>> = new Map();
+    const flatProps: Array<{name: string; type: string; required: boolean}> = [];
+
+    // Process all parameters (path + query)
+    const allParams = [...pathParams, ...queryParams];
+
+    for (const paramInfo of allParams) {
+      if (paramInfo.name.includes('.')) {
+        // This is a nested property like PrimaryContact.FirstName
+        const parts = paramInfo.name.split('.');
+        const objectName = parts[0];
+        const propertyName = parts.slice(1).join('.');
+
+        if (!nestedObjects.has(objectName)) {
+          nestedObjects.set(objectName, []);
+        }
+        nestedObjects.get(objectName)!.push({
+          name: propertyName,
+          type: paramInfo.type,
+          required: paramInfo.required,
+        });
+      } else {
+        // This is a flat property
+        flatProps.push({
+          name: paramInfo.name,
+          type: paramInfo.type,
+          required: paramInfo.required,
+        });
+      }
+    }
+
+    // Build the options properties array
+    const optionProps: string[] = [];
+
+    // Add flat properties
+    for (const prop of flatProps) {
+      const optional = prop.required ? '' : '?';
+      optionProps.push(`${prop.name}${optional}: ${prop.type}`);
+    }
+
+    // Add nested objects
+    for (const [objectName, properties] of nestedObjects) {
+      const nestedProps = properties
+        .map((p) => {
+          const optional = p.required ? '' : '?';
+          return `${p.name}${optional}: ${p.type}`;
+        })
+        .join(', ');
+
+      // Check if all properties are optional
+      const allOptional = properties.every((p) => !p.required);
+      const optional = allOptional ? '?' : '';
+
+      optionProps.push(`${objectName}${optional}: {${nestedProps}}`);
+    }
+
+    // Add request body
+    if (hasBody) {
+      optionProps.push('body?: any');
+    }
+
+    // Add custom headers
+    optionProps.push('headers?: {[key: string]: any}');
+
+    // If there are too many parameters, use simplified signature to avoid parsing issues
+    // Also check if any parameter name is too long (over 100 chars) which can cause issues
+    const hasLongParamNames = optionProps.some((prop) => prop.length > 100);
+    if (optionProps.length > 15 || hasLongParamNames) {
+      const required = hasRequiredParams ? '' : '?';
+      return `(options${required}: {[key: string]: any})`;
+    }
+
+    const required = hasRequiredParams ? '' : '?';
+    return `(options${required}: {${optionProps.join(', ')}})`;
+  }
+
+  /**
+   * Get TypeScript type for a parameter based on its schema
+   */
+  private getParameterType(param: any): string {
+    if (param.schema) {
+      const schema = param.schema;
+
+      // Handle different schema types
+      if (schema.type) {
+        switch (schema.type) {
+          case 'string':
+            return 'string';
+          case 'integer':
+          case 'number':
+            return 'number';
+          case 'boolean':
+            return 'boolean';
+          case 'array':
+            return 'any[]';
+          case 'object':
+            return 'any';
+          default:
+            return 'any';
+        }
+      }
+
+      // Handle enum
+      if (schema.enum) {
+        return 'string';
+      }
+
+      // Handle $ref
+      if (schema.$ref) {
+        return 'any';
+      }
+    }
+
+    return 'any';
   }
 
   /**
