@@ -536,6 +536,173 @@ export class OpenAPIToConnector {
   }
 
   /**
+   * Generate method implementation for resource functions (using this.api instead of this.controller)
+   */
+  private generateResourceFunctionImplementation(operation: OperationInfo): string {
+    const lines: string[] = [];
+    const url = operation.path;
+    const pathParams: string[] = [];
+    const queryParams: string[] = [];
+    const hasBody = !!operation.requestBody;
+
+    // Identify parameters
+    if (operation.parameters) {
+      operation.parameters.forEach((param: any) => {
+        if (param.in === 'path') {
+          pathParams.push(param.name);
+        } else if (param.in === 'query') {
+          queryParams.push(param.name);
+        }
+      });
+    }
+
+    // Simple single parameter pattern for simple operations
+    const isSimple = pathParams.length <= 1 && queryParams.length === 0 && !hasBody;
+    
+    if (isSimple && pathParams.length === 1) {
+      const paramName = pathParams[0];
+      lines.push(`  let url = '${url}';`);
+      lines.push(`  if (${paramName}) {`);
+      lines.push(`    url = url.replace('{${paramName}}', ${paramName});`);
+      lines.push(`  }`);
+      lines.push('');
+      lines.push(`  return this.api.fetch(url, {`);
+      lines.push(`    method: '${operation.method}',`);
+      lines.push(`    headers: options?.headers,`);
+      lines.push(`  });`);
+    } else {
+      // Options object pattern
+      lines.push(`  options = options || {};`);
+      lines.push('');
+
+      // Replace path parameters
+      if (pathParams.length > 0) {
+        lines.push(`  // Build URL with path parameters`);
+        lines.push(`  let url = '${url}';`);
+        for (const paramName of pathParams) {
+          lines.push(`  if (options.${paramName}) {`);
+          lines.push(`    url = url.replace('{${paramName}}', options.${paramName});`);
+          lines.push(`  }`);
+        }
+        lines.push('');
+      } else {
+        lines.push(`  const url = '${url}';`);
+        lines.push('');
+      }
+
+      // Build fetch options
+      lines.push(`  const fetchOptions: any = {`);
+      lines.push(`    method: '${operation.method}',`);
+
+      // Add query parameters
+      if (queryParams.length > 0) {
+        lines.push(`    params: {},`);
+      }
+
+      // Add body if present
+      if (hasBody) {
+        lines.push(`    body: options.body,`);
+      }
+
+      // Add headers if present
+      lines.push(`    headers: options.headers,`);
+
+      lines.push(`  };`);
+      lines.push('');
+
+      // Add query parameters to options
+      if (queryParams.length > 0) {
+        lines.push(`  // Add query parameters`);
+        for (const paramName of queryParams) {
+          lines.push(`  if (options.${paramName} !== undefined) {`);
+          lines.push(`    fetchOptions.params.${paramName} = options.${paramName};`);
+          lines.push(`  }`);
+        }
+        lines.push('');
+      }
+
+      // Make the API call
+      lines.push(`  return this.api.fetch(url, fetchOptions);`);
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate exposed resource methods for API introspection
+   */
+  private generateExposedResourceMethods(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
+    const methods: string[] = [];
+
+    for (const resource of resources) {
+      const resourceName = resource.fileName;
+      
+      // Find the corresponding spec for this resource
+      const resourceSpec = resourceSpecs?.find(rs => rs.fileName === resourceName);
+      
+      if (resourceSpec) {
+        // Create a temporary generator for this resource's spec
+        const resourceGenerator = new OpenAPIToConnector(resourceSpec.spec, resourceName);
+        const operations = resourceGenerator.extractOperations();
+        
+        for (const operation of operations) {
+          const methodName = resourceGenerator.generateMethodName(operation);
+          const jsdoc = resourceGenerator.generateJSDoc(operation);
+          const signature = resourceGenerator.generateMethodSignature(operation);
+          
+          // Generate the exposed method that delegates to the resource
+          const exposedMethodName = `${resourceName}${methodName.charAt(0).toUpperCase() + methodName.slice(1)}`;
+          
+          methods.push(`  /**
+${jsdoc}
+   */
+  async ${exposedMethodName}${signature} {
+    return this.${resourceName}.${methodName}?.(${this.generateParameterCall(signature)});
+  }`);
+        }
+      } else {
+        // Fallback to common CRUD operations if no spec provided
+        const commonOperations = [
+          { name: 'getPage', comment: 'Retrieve items with pagination', signature: 'options?: {limit?: number, after?: string, properties?: any[], archived?: boolean, headers?: {[key: string]: any}}' },
+          { name: 'getById', comment: 'Get item by ID', signature: 'options: {id: string, properties?: any[], headers?: {[key: string]: any}}' },
+          { name: 'create', comment: 'Create a new item', signature: 'options: {body?: any, headers?: {[key: string]: any}}' },
+          { name: 'update', comment: 'Update an item', signature: 'options: {id: string, body?: any, headers?: {[key: string]: any}}' },
+          { name: 'read', comment: 'Retrieve a batch of items', signature: 'options: {body?: any, headers?: {[key: string]: any}}' },
+        ];
+
+        for (const op of commonOperations) {
+          const exposedMethodName = `${resourceName}${op.name.charAt(0).toUpperCase() + op.name.slice(1)}`;
+          methods.push(`  /**
+   * ${op.comment} (${resourceName})
+   */
+  async ${exposedMethodName}(${op.signature}) {
+    return this.${resourceName}.${op.name}?.(options);
+  }`);
+        }
+      }
+    }
+
+    return methods.join('\n\n');
+  }
+
+  /**
+   * Generate parameter call from method signature
+   */
+  private generateParameterCall(signature: string): string {
+    // Extract parameter names from signature like (options: {...}) or (id: string, options?: {...})
+    const paramMatch = signature.match(/\(([^)]+)\)/);
+    if (!paramMatch) return '';
+    
+    const params = paramMatch[1].split(',').map(p => {
+      const paramName = p.trim().split(':')[0].trim();
+      // Remove optional markers like ?, but keep the parameter name
+      return paramName.replace(/[?]/g, '');
+    }).filter(p => p.length > 0);
+    
+    return params.join(', ');
+  }
+
+  /**
    * Generate proper import paths with .mjs extensions for TypeScript module resolution
    */
   private generateImportPath(relativePath: string): string {
@@ -544,7 +711,7 @@ export class OpenAPIToConnector {
   }
 
   /**
-   * Generate a resource class (does NOT extend AbstractController, receives controller reference)
+   * Generate a resource file with exported functions (new pattern for proper introspection)
    */
   generateResourceClass(className: string): string {
     const operations = this.extractOperations();
@@ -553,55 +720,46 @@ export class OpenAPIToConnector {
       throw new Error('No operations found in OpenAPI specification');
     }
 
-    const methods = operations
+    const resourceName = className.replace('Resource', '').toLowerCase();
+    
+    const functions = operations
       .map((operation) => {
         const methodName = this.generateMethodName(operation);
         const jsdoc = this.generateJSDoc(operation);
         const signature = this.generateMethodSignature(operation);
-        const implementation = this.generateMethodImplementation(operation);
+        const implementation = this.generateResourceFunctionImplementation(operation);
 
-        return `  /**\n${jsdoc}\n   */\n  async ${methodName}${signature} {\n${implementation}\n  }`;
+        return `/**\n${jsdoc}\n */\nexport function ${methodName}(this: any, ${signature.replace('(', '').replace(')', '')}) {\n${implementation}\n}`;
       })
       .join('\n\n');
 
-    return `import {AbstractController} from '@aloma.io/integration-sdk';
+    return `// ${className} resource functions
+// These functions will be bound to the controller instance and accessible as ${resourceName}.method()
 
-export default class ${className} {
-  private controller: AbstractController;
-
-  constructor(controller: AbstractController) {
-    this.controller = controller;
-  }
-
-  private get api() {
-    return this.controller['api'];
-  }
-
-${methods}
-}`;
+${functions}`;
   }
 
   /**
-   * Generate a main controller that composes multiple resources
+   * Generate a main controller that composes multiple resources using function binding
    */
-  generateMainController(resources: Array<{className: string; fileName: string}>): string {
+  generateMainController(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
     // Get base URL from servers if available
-    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'API_BASE_URL';
+    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
 
     const imports = resources
-      .map((resource) => `import ${resource.className} from '../resources/${resource.fileName}.mjs';`)
+      .map((resource) => `import * as ${resource.fileName}Functions from '../resources/${resource.fileName}.mjs';`)
       .join('\n');
 
     const properties = resources
-      .map((resource) => `  ${resource.className.toLowerCase().replace('resource', '')}!: ${resource.className};`)
+      .map((resource) => `  ${resource.fileName}: any = {};`)
       .join('\n');
 
-    const initializations = resources
-      .map(
-        (resource) =>
-          `    this.${resource.className.toLowerCase().replace('resource', '')} = new ${resource.className}(this);`
-      )
+    const bindings = resources
+      .map((resource) => `    this.bindResourceFunctions('${resource.fileName}', ${resource.fileName}Functions);`)
       .join('\n');
+
+    // Generate exposed methods for each resource to enable API introspection
+    const exposedMethods = this.generateExposedResourceMethods(resources, resourceSpecs);
 
     return `import {AbstractController} from '@aloma.io/integration-sdk';
 ${imports}
@@ -612,13 +770,40 @@ ${properties}
   private api: any;
 
   protected async start(): Promise<void> {
+    const config = this.config;
+    
     this.api = this.getClient({
       baseUrl: '${baseUrl}',
+      customize(request) {
+        request.headers ||= {};
+        // Add authentication headers based on your API requirements
+        // Example: request.headers["Authorization"] = \`Bearer \${config.apiToken}\`;
+      },
     });
     
-    // Initialize each resource - they receive 'this' controller reference
-${initializations}
+    // Bind resource functions to this controller context
+    // This allows using this.resourceName.method() syntax
+${bindings}
   }
+
+  private bindResourceFunctions(resourceName: string, functions: any) {
+    for (const [functionName, func] of Object.entries(functions)) {
+      if (typeof func === 'function') {
+        this[resourceName][functionName] = func.bind(this);
+      }
+    }
+  }
+
+  /**
+   * Generic API request method
+   * @param url - API endpoint
+   * @param options - Request options
+   */
+  async request({ url, options }: { url: string; options?: any }) {
+    return this.api.fetch(url, options);
+  }
+
+${exposedMethods}
 }`;
   }
 

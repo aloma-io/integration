@@ -283,6 +283,7 @@ program
 
       // Generate each resource
       const resources: Array<{className: string; fileName: string}> = [];
+      const parsedResourceSpecs: Array<{fileName: string; spec: any}> = [];
       let baseUrl = options.baseUrl;
 
       for (const {className, specFile} of resourceSpecs) {
@@ -308,13 +309,14 @@ program
         fs.writeFileSync(resourcePath, resourceCode);
 
         resources.push({className, fileName});
+        parsedResourceSpecs.push({fileName, spec});
       }
 
       // Generate the main controller
       console.log('Generating main controller...');
       const firstSpec = OpenAPIToConnector.parseSpec(fs.readFileSync(resourceSpecs[0].specFile, 'utf-8'));
       const mainGenerator = new OpenAPIToConnector(firstSpec, name);
-      const mainControllerCode = mainGenerator.generateMainController(resources);
+      const mainControllerCode = mainGenerator.generateMainController(resources, parsedResourceSpecs);
 
       // Write the main controller
       const controllerPath = `${target}/src/controller/index.mts`;
