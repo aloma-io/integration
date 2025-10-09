@@ -124,7 +124,7 @@ export class OpenAPIToConnector {
     if (operation.operationId) {
       // Clean up HubSpot-style operationIds like "get-/crm/v3/objects/companies_getPage"
       let cleaned = operation.operationId;
-      
+
       // Extract the last part after underscore if it exists
       const parts = cleaned.split('_');
       if (parts.length > 1) {
@@ -134,14 +134,14 @@ export class OpenAPIToConnector {
           cleaned = lastPart;
         }
       }
-      
+
       // Remove any remaining special characters and clean up
       cleaned = cleaned
         .replace(/^(get|post|put|patch|delete|head|options)-/i, '') // Remove HTTP method prefix
         .replace(/[^a-zA-Z0-9_]/g, '_')
         .replace(/_+/g, '_')
         .replace(/^_|_$/g, '');
-      
+
       // If we still have a valid identifier, use it
       if (cleaned && /^[a-zA-Z]/.test(cleaned)) {
         return cleaned;
@@ -166,6 +166,9 @@ export class OpenAPIToConnector {
    */
   private generateJSDoc(operation: OperationInfo): string {
     const lines: string[] = [];
+    const pathParams: any[] = [];
+    const queryParams: any[] = [];
+    const hasBody = !!operation.requestBody;
 
     if (operation.summary) {
       lines.push(` * ${operation.summary}`);
@@ -175,44 +178,68 @@ export class OpenAPIToConnector {
       lines.push(` *`);
       // Split long descriptions into multiple lines
       const descLines = operation.description.split('\n');
-      descLines.forEach(line => {
+      descLines.forEach((line) => {
         if (line.trim()) {
           lines.push(` * ${line.trim()}`);
         }
       });
     }
 
-    // Document parameters with full details
-    if (operation.parameters && operation.parameters.length > 0) {
-      lines.push(' *');
-      lines.push(' * @param {Object} args - Request arguments');
-      
+    // Identify path and query parameters
+    if (operation.parameters) {
       for (const param of operation.parameters) {
-        if (typeof param === 'object' && 'name' in param) {
-          const paramName = param.name;
-          const paramDesc = param.description || '';
-          const paramRequired = param.required ? '(required)' : '(optional)';
-          const paramType = param.schema?.type || 'any';
-          const paramIn = param.in || '';
-          
-          let paramDoc = ` * @param {${paramType}} args.${paramName} ${paramRequired}`;
-          if (paramDesc) {
-            paramDoc += ` - ${paramDesc}`;
+        if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          if (param.in === 'path') {
+            pathParams.push(param);
+          } else if (param.in === 'query') {
+            queryParams.push(param);
           }
-          if (paramIn) {
-            paramDoc += ` [${paramIn}]`;
-          }
-          lines.push(paramDoc);
         }
       }
     }
 
-    // Document request body
-    if (operation.requestBody) {
+    // Check if using simple signature
+    const useSimpleSignature = queryParams.length === 0 && !hasBody && pathParams.length <= 1;
+
+    if (useSimpleSignature && pathParams.length === 1) {
+      // Simple signature documentation
+      const param = pathParams[0];
+      const paramType = param.schema?.type || 'string';
+      const paramDesc = param.description || '';
       lines.push(' *');
-      const bodyDesc = operation.requestBody.description || 'Request body';
-      const required = operation.requestBody.required ? '(required)' : '(optional)';
-      lines.push(` * @param {Object} args.body ${required} - ${bodyDesc}`);
+      lines.push(` * @param {${paramType}} ${param.name} ${paramDesc}`);
+      lines.push(` * @param {Object} options (optional) - Request options`);
+      lines.push(` * @param {Object} options.headers - Custom headers`);
+    } else {
+      // Options object documentation
+      lines.push(' *');
+      lines.push(` * @param {Object} options (optional) - Request options`);
+
+      // Document path parameters
+      for (const param of pathParams) {
+        const paramType = param.schema?.type || 'string';
+        const paramDesc = param.description || '';
+        const paramRequired = param.required ? '(required)' : '(optional)';
+        lines.push(` * @param {${paramType}} options.${param.name} ${paramRequired} - ${paramDesc} [path]`);
+      }
+
+      // Document query parameters
+      for (const param of queryParams) {
+        const paramType = param.schema?.type || 'any';
+        const paramDesc = param.description || '';
+        const paramRequired = param.required ? '(required)' : '(optional)';
+        lines.push(` * @param {${paramType}} options.${param.name} ${paramRequired} - ${paramDesc} [query]`);
+      }
+
+      // Document request body
+      if (operation.requestBody) {
+        const bodyDesc = operation.requestBody.description || 'Request body';
+        const required = operation.requestBody.required ? '(required)' : '(optional)';
+        lines.push(` * @param {Object} options.body ${required} - ${bodyDesc}`);
+      }
+
+      // Document headers
+      lines.push(` * @param {Object} options.headers (optional) - Custom headers to include in the request`);
     }
 
     // Document response
@@ -230,6 +257,233 @@ export class OpenAPIToConnector {
   }
 
   /**
+   * Generate method signature with options object
+   */
+  private generateMethodSignature(operation: OperationInfo): string {
+    const pathParams: string[] = [];
+    const queryParams: string[] = [];
+    const hasBody = !!operation.requestBody;
+
+    // Identify path and query parameters
+    if (operation.parameters) {
+      for (const param of operation.parameters) {
+        if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          if (param.in === 'path') {
+            pathParams.push(param.name);
+          } else if (param.in === 'query') {
+            queryParams.push(param.name);
+          }
+        }
+      }
+    }
+
+    // If there are no query params, no body, and only path params, use simple signature
+    if (queryParams.length === 0 && !hasBody && pathParams.length <= 1) {
+      const params: string[] = [];
+      for (const paramName of pathParams) {
+        params.push(`${paramName}: string`);
+      }
+      params.push(`options?: {headers?: {[key: string]: any}}`);
+      return `(${params.join(', ')})`;
+    }
+
+    // Otherwise, use options object pattern
+    return `(options?: {${[
+      ...pathParams.map((p) => `${p}?: string`),
+      ...queryParams.map((p) => `${p}?: any`),
+      hasBody ? 'body?: any' : '',
+      'headers?: {[key: string]: any}',
+    ]
+      .filter(Boolean)
+      .join(', ')}})`;
+  }
+
+  /**
+   * Generate method implementation code
+   */
+  private generateMethodImplementation(operation: OperationInfo): string {
+    const lines: string[] = [];
+
+    // Build URL with path parameters
+    let url = operation.path;
+    const pathParams: string[] = [];
+    const queryParams: string[] = [];
+    const hasBody = !!operation.requestBody;
+
+    // Identify path and query parameters
+    if (operation.parameters) {
+      for (const param of operation.parameters) {
+        if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          if (param.in === 'path') {
+            pathParams.push(param.name);
+          } else if (param.in === 'query') {
+            queryParams.push(param.name);
+          }
+        }
+      }
+    }
+
+    // Check if using simple signature (single path param, no query/body)
+    const useSimpleSignature = queryParams.length === 0 && !hasBody && pathParams.length <= 1;
+
+    if (useSimpleSignature && pathParams.length === 1) {
+      // Simple signature: (pathParam: string, options?: {headers?: ...})
+      const paramName = pathParams[0];
+      lines.push(`    let url = '${url}';`);
+      lines.push(`    if (${paramName}) {`);
+      lines.push(`      url = url.replace('{${paramName}}', ${paramName});`);
+      lines.push(`    }`);
+      lines.push('');
+      lines.push(`    return this.api.fetch(url, {`);
+      lines.push(`      method: '${operation.method}',`);
+      lines.push(`      headers: options?.headers,`);
+      lines.push(`    });`);
+    } else {
+      // Options object pattern
+      lines.push(`    options = options || {};`);
+      lines.push('');
+
+      // Replace path parameters
+      if (pathParams.length > 0) {
+        lines.push(`    // Build URL with path parameters`);
+        lines.push(`    let url = '${url}';`);
+        for (const paramName of pathParams) {
+          lines.push(`    if (options.${paramName}) {`);
+          lines.push(`      url = url.replace('{${paramName}}', options.${paramName});`);
+          lines.push(`    }`);
+        }
+        lines.push('');
+      } else {
+        lines.push(`    const url = '${url}';`);
+        lines.push('');
+      }
+
+      // Build fetch options
+      lines.push(`    const fetchOptions: any = {`);
+      lines.push(`      method: '${operation.method}',`);
+
+      // Add query parameters
+      if (queryParams.length > 0) {
+        lines.push(`      params: {},`);
+      }
+
+      // Add body if present
+      if (hasBody) {
+        lines.push(`      body: options.body,`);
+      }
+
+      // Add headers if present
+      lines.push(`      headers: options.headers,`);
+
+      lines.push(`    };`);
+      lines.push('');
+
+      // Add query parameters to options
+      if (queryParams.length > 0) {
+        lines.push(`    // Add query parameters`);
+        for (const paramName of queryParams) {
+          lines.push(`    if (options.${paramName} !== undefined) {`);
+          lines.push(`      fetchOptions.params.${paramName} = options.${paramName};`);
+          lines.push(`    }`);
+        }
+        lines.push('');
+      }
+
+      // Make the API call
+      lines.push(`    return this.api.fetch(url, fetchOptions);`);
+    }
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate proper import paths with .mjs extensions for TypeScript module resolution
+   */
+  private generateImportPath(relativePath: string): string {
+    // For resource classes, we need to reference the compiled .mjs files
+    return relativePath.endsWith('.mjs') ? relativePath : `${relativePath}.mjs`;
+  }
+
+  /**
+   * Generate a resource class (does NOT extend AbstractController, receives controller reference)
+   */
+  generateResourceClass(className: string): string {
+    const operations = this.extractOperations();
+
+    if (operations.length === 0) {
+      throw new Error('No operations found in OpenAPI specification');
+    }
+
+    const methods = operations
+      .map((operation) => {
+        const methodName = this.generateMethodName(operation);
+        const jsdoc = this.generateJSDoc(operation);
+        const signature = this.generateMethodSignature(operation);
+        const implementation = this.generateMethodImplementation(operation);
+
+        return `  /**\n${jsdoc}\n   */\n  async ${methodName}${signature} {\n${implementation}\n  }`;
+      })
+      .join('\n\n');
+
+    return `import {AbstractController} from '@aloma.io/integration-sdk';
+
+export default class ${className} {
+  private controller: AbstractController;
+
+  constructor(controller: AbstractController) {
+    this.controller = controller;
+  }
+
+  private get api() {
+    return this.controller['api'];
+  }
+
+${methods}
+}`;
+  }
+
+  /**
+   * Generate a main controller that composes multiple resources
+   */
+  generateMainController(resources: Array<{className: string; fileName: string}>): string {
+    // Get base URL from servers if available
+    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'API_BASE_URL';
+
+    const imports = resources
+      .map((resource) => `import ${resource.className} from '../resources/${resource.fileName}.mjs';`)
+      .join('\n');
+
+    const properties = resources
+      .map((resource) => `  ${resource.className.toLowerCase().replace('resource', '')}!: ${resource.className};`)
+      .join('\n');
+
+    const initializations = resources
+      .map(
+        (resource) =>
+          `    this.${resource.className.toLowerCase().replace('resource', '')} = new ${resource.className}(this);`
+      )
+      .join('\n');
+
+    return `import {AbstractController} from '@aloma.io/integration-sdk';
+${imports}
+
+export default class Controller extends AbstractController {
+${properties}
+
+  private api: any;
+
+  protected async start(): Promise<void> {
+    this.api = this.getClient({
+      baseUrl: '${baseUrl}',
+    });
+    
+    // Initialize each resource - they receive 'this' controller reference
+${initializations}
+  }
+}`;
+  }
+
+  /**
    * Generate the connector controller code
    */
   generateController(): string {
@@ -243,15 +497,30 @@ export class OpenAPIToConnector {
       .map((operation) => {
         const methodName = this.generateMethodName(operation);
         const jsdoc = this.generateJSDoc(operation);
+        const signature = this.generateMethodSignature(operation);
+        const implementation = this.generateMethodImplementation(operation);
 
-        return `  /**\n${jsdoc}\n   */\n  async ${methodName}(args: any) {\n    // TODO: Implement ${operation.method} ${operation.path}\n    throw new Error('Method not implemented');\n  }`;
+        return `  /**\n${jsdoc}\n   */\n  async ${methodName}${signature} {\n${implementation}\n  }`;
       })
       .join('\n\n');
+
+    // Get base URL from servers if available
+    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'API_BASE_URL';
+
+    const startMethod = `  private api: any;
+
+  protected async start(): Promise<void> {
+    this.api = this.getClient({
+      baseUrl: '${baseUrl}',
+    });
+  }`;
 
     return `import {AbstractController} from '@aloma.io/integration-sdk';
 
 export default class Controller extends AbstractController {
   
+${startMethod}
+
 ${methods}
 }`;
   }
