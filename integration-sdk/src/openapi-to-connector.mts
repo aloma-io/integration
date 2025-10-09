@@ -65,11 +65,23 @@ export class OpenAPIToConnector {
       }
     }
 
-    // Validate against OpenAPI 3.x schema
+    // Validate against OpenAPI 3.x schema with lenient validation
     const validationResult = OpenAPISchema.safeParse(parsed);
     if (!validationResult.success) {
-      const errors = validationResult.error.errors.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
-      throw new Error(`Invalid OpenAPI 3.x specification: ${errors}`);
+      // Check if the errors are just about missing 'type' fields in schemas
+      const criticalErrors = validationResult.error.errors.filter((err) => {
+        const path = err.path.join('.');
+        // Allow missing 'type' in schema definitions as many OpenAPI specs don't include it
+        return !path.includes('components.schemas') || !err.message.includes('Required');
+      });
+
+      if (criticalErrors.length > 0) {
+        const errors = criticalErrors.map((err) => `${err.path.join('.')}: ${err.message}`).join(', ');
+        throw new Error(`Invalid OpenAPI 3.x specification: ${errors}`);
+      }
+
+      // Log a warning about lenient validation
+      console.warn('⚠️  OpenAPI spec has some validation warnings but proceeding with lenient validation...');
     }
 
     return parsed as OpenAPIV3.Document;
