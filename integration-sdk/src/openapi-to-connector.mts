@@ -2,7 +2,6 @@
 
 import {Command} from 'commander';
 import fs from 'node:fs';
-import path from 'node:path';
 import yaml from 'js-yaml';
 import {OpenAPIV3} from 'openapi-types';
 import {z} from 'zod';
@@ -173,101 +172,6 @@ export class OpenAPIToConnector {
     return `${methodPrefix}_${pathSuffix}`;
   }
 
-  /**
-   * Generate JSDoc comment for an operation
-   */
-  private generateJSDoc(operation: OperationInfo): string {
-    const lines: string[] = [];
-    const pathParams: any[] = [];
-    const queryParams: any[] = [];
-    const hasBody = !!operation.requestBody;
-
-    if (operation.summary) {
-      lines.push(` * ${operation.summary}`);
-    }
-
-    if (operation.description) {
-      lines.push(` *`);
-      // Split long descriptions into multiple lines
-      const descLines = operation.description.split('\n');
-      descLines.forEach((line) => {
-        if (line.trim()) {
-          lines.push(` * ${line.trim()}`);
-        }
-      });
-    }
-
-    // Identify path and query parameters
-    if (operation.parameters) {
-      for (const param of operation.parameters) {
-        if (typeof param === 'object' && 'name' in param && 'in' in param) {
-          if (param.in === 'path') {
-            pathParams.push(param);
-          } else if (param.in === 'query') {
-            queryParams.push(param);
-          }
-        }
-      }
-    }
-
-    // Check if using simple signature
-    const useSimpleSignature = queryParams.length === 0 && !hasBody && pathParams.length <= 1;
-
-    if (useSimpleSignature && pathParams.length === 1) {
-      // Simple signature documentation
-      const param = pathParams[0];
-      const paramType = param.schema?.type || 'string';
-      const paramDesc = param.description || '';
-      lines.push(' *');
-      lines.push(` * @param {${paramType}} ${param.name} ${paramDesc}`);
-      lines.push(` * @param {Object} options (optional) - Request options`);
-      lines.push(` * @param {Object} options.headers - Custom headers`);
-    } else {
-      // Options object documentation
-      lines.push(' *');
-
-      // Check if there are any required parameters
-      const hasRequiredParams =
-        pathParams.some((p) => p.required) ||
-        queryParams.some((p) => p.required) ||
-        (operation.requestBody && operation.requestBody.required);
-
-      const optionsRequired = hasRequiredParams ? '(required)' : '(optional)';
-      lines.push(` * @param {Object} options ${optionsRequired} - Request options`);
-
-      // Document path parameters
-      for (const param of pathParams) {
-        const paramType = param.schema?.type || 'string';
-        const paramDesc = param.description || '';
-        const paramRequired = param.required ? '(required)' : '(optional)';
-        lines.push(` * @param {${paramType}} options.${param.name} ${paramRequired} - ${paramDesc} [path]`);
-      }
-
-      // Document query parameters
-      for (const param of queryParams) {
-        const paramType = param.schema?.type || 'any';
-        const paramDesc = param.description || '';
-        const paramRequired = param.required ? '(required)' : '(optional)';
-        lines.push(` * @param {${paramType}} options.${param.name} ${paramRequired} - ${paramDesc} [query]`);
-      }
-
-      // Document request body
-      if (operation.requestBody) {
-        const bodyDesc = operation.requestBody.description || 'Request body';
-        const required = operation.requestBody.required ? '(required)' : '(optional)';
-        lines.push(` * @param {Object} options.body ${required} - ${bodyDesc}`);
-      }
-
-      // Document headers
-      lines.push(` * @param {Object} options.headers (optional) - Custom headers to include in the request`);
-    }
-
-    // Document response
-    lines.push(' *');
-    lines.push(` * @returns {Promise<Object>} ${operation.method} ${operation.path} response`);
-
-    return lines.join('\n');
-  }
 
   /**
    * Get the number of operations in the OpenAPI spec
@@ -303,13 +207,36 @@ export class OpenAPIToConnector {
       }
     }
 
-    // If there are no query params, no body, and only path params, use simple signature
-    if (queryParams.length === 0 && !hasBody && pathParams.length <= 1) {
+    // Always extract path parameters as discrete parameters when they exist
+    if (pathParams.length > 0) {
       const params: string[] = [];
       for (const paramInfo of pathParams) {
         params.push(`${paramInfo.name}: ${paramInfo.type}`);
       }
-      params.push(`options?: {headers?: {[key: string]: any}}`);
+      
+      // Build options object for query params and body
+      const optionProps: string[] = [];
+      
+      // Add query parameters to options
+      for (const prop of queryParams) {
+        const optional = prop.required ? '' : '?';
+        optionProps.push(`${prop.name}${optional}: ${prop.type}`);
+      }
+      
+      // Add request body properties directly (flattened)
+      if (hasBody) {
+        this.addRequestBodyProperties(operation.requestBody, optionProps);
+      }
+      
+      // Check if options parameter is required (has required query params or required body)
+      const hasRequiredNonPathParams = queryParams.some(p => p.required) || (hasBody && operation.requestBody?.required);
+      const optionsRequired = hasRequiredNonPathParams ? '' : '?';
+      
+      // Only add options parameter if there are actual options
+      if (optionProps.length > 0) {
+        params.push(`options${optionsRequired}: {${optionProps.join(', ')}}`);
+      }
+      
       return `(${params.join(', ')})`;
     }
 
@@ -377,14 +304,11 @@ export class OpenAPIToConnector {
       optionProps.push(`${objectName}${optional}: {${nestedProps}}`);
     }
 
-    // Add request body
+    // Add request body properties directly (flattened)
     if (hasBody) {
-      optionProps.push('body?: any');
+      this.addRequestBodyProperties(operation.requestBody, optionProps);
     }
-
-    // Add custom headers
-    optionProps.push('headers?: {[key: string]: any}');
-
+    
     // If there are too many parameters, use simplified signature to avoid parsing issues
     // Also check if any parameter name is too long (over 100 chars) which can cause issues
     const hasLongParamNames = optionProps.some((prop) => prop.length > 100);
@@ -393,44 +317,134 @@ export class OpenAPIToConnector {
       return `(options${required}: {[key: string]: any})`;
     }
 
-    const required = hasRequiredParams ? '' : '?';
-    return `(options${required}: {${optionProps.join(', ')}})`;
+    // Only add options if there are actual options
+    if (optionProps.length > 0) {
+      const required = hasRequiredParams ? '' : '?';
+      return `(options${required}: {${optionProps.join(', ')}})`;
+    } else {
+      return '()';
+    }
   }
 
   /**
-   * Get TypeScript type for a parameter based on its schema
+   * Resolve a schema reference to a TypeScript type name
    */
-  private getParameterType(param: any): string {
-    if (param.schema) {
-      const schema = param.schema;
+  private resolveSchemaRef(ref: string): string {
+    // Extract the component name from the reference
+    // e.g., "#/components/schemas/Company" -> "Company"
+    const parts = ref.split('/');
+    if (parts.length >= 2) {
+      const componentName = parts[parts.length - 1];
+      return this.sanitizeTypeName(componentName);
+    }
+    return 'any';
+  }
 
-      // Handle different schema types
-      if (schema.type) {
-        switch (schema.type) {
-          case 'string':
-            return 'string';
-          case 'integer':
-          case 'number':
-            return 'number';
-          case 'boolean':
-            return 'boolean';
-          case 'array':
-            return 'any[]';
-          case 'object':
-            return 'any';
-          default:
-            return 'any';
-        }
+  /**
+   * Sanitize a name to be a valid TypeScript identifier
+   */
+  private sanitizeTypeName(name: string): string {
+    return name
+      // Replace dots with underscores
+      .replace(/\./g, '_')
+      // Replace + with _Plus (common in OpenAPI for enums)
+      .replace(/\+/g, '_Plus')
+      // Replace other invalid characters with underscores
+      .replace(/[^a-zA-Z0-9_$]/g, '_')
+      // Ensure it starts with a letter or underscore
+      .replace(/^[0-9]/, '_$&')
+      // Remove multiple consecutive underscores
+      .replace(/_+/g, '_')
+      // Remove trailing/leading underscores
+      .replace(/^_+|_+$/g, '')
+      // Ensure it's not empty
+      || 'UnknownType';
+  }
+
+  /**
+   * Get TypeScript type from schema object
+   */
+  private getTypeFromSchema(schema: any): string {
+    if (!schema) return 'any';
+
+    // Handle $ref
+    if (schema.$ref) {
+      return this.resolveSchemaRef(schema.$ref);
+    }
+
+    // Handle arrays
+    if (schema.type === 'array') {
+      if (schema.items) {
+        const itemType = this.getTypeFromSchema(schema.items);
+        return `${itemType}[]`;
       }
+      return 'any[]';
+    }
 
-      // Handle enum
-      if (schema.enum) {
-        return 'string';
+    // Handle objects with properties
+    if (schema.type === 'object' && schema.properties) {
+      const propNames = Object.keys(schema.properties);
+      
+      // For response objects, generate inline type definitions
+      if (propNames.length <= 5) { // Reasonable limit for inline types
+        const propTypes = Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+          const propType = this.getTypeFromSchema(prop);
+          return `${key}: ${propType}`;
+        });
+        return `{${propTypes.join('; ')}}`;
       }
+      
+      // For complex objects, return a generic object type
+      return 'any';
+    }
+    
+    // Handle other primitive types
+    if (schema.type) {
+      switch (schema.type) {
+        case 'string':
+          return 'string';
+        case 'integer':
+        case 'number':
+          return 'number';
+        case 'boolean':
+          return 'boolean';
+        case 'object':
+          return 'any';
+        default:
+          return 'any';
+      }
+    }
 
-      // Handle $ref
-      if (schema.$ref) {
-        return 'any';
+    // Handle enum
+    if (schema.enum) {
+      return 'string'; // Could be expanded to union types
+    }
+
+    // Handle allOf, oneOf, anyOf
+    if (schema.allOf || schema.oneOf || schema.anyOf) {
+      return 'any'; // Could be expanded to intersection/union types
+    }
+
+    return 'any';
+  }
+
+  /**
+   * Get TypeScript type for request body
+   */
+  private getRequestBodyType(requestBody: any): string {
+    if (!requestBody) return 'any';
+
+    // Handle content types
+    if (requestBody.content) {
+      // Prefer application/json
+      if (requestBody.content['application/json']?.schema) {
+        return this.getTypeFromSchema(requestBody.content['application/json'].schema);
+      }
+      
+      // Fall back to first available content type
+      const firstContentType = Object.keys(requestBody.content)[0];
+      if (requestBody.content[firstContentType]?.schema) {
+        return this.getTypeFromSchema(requestBody.content[firstContentType].schema);
       }
     }
 
@@ -438,62 +452,154 @@ export class OpenAPIToConnector {
   }
 
   /**
-   * Generate method implementation code
+   * Add request body properties directly to options array (flatten the body)
    */
-  private generateMethodImplementation(operation: OperationInfo): string {
-    const lines: string[] = [];
+  private addRequestBodyProperties(requestBody: any, optionProps: string[]): void {
+    if (!requestBody) return;
 
-    // Build URL with path parameters
-    let url = operation.path;
-    const pathParams: string[] = [];
-    const queryParams: string[] = [];
-    const hasBody = !!operation.requestBody;
+    let schema: any = null;
+    
+    // Get the schema from the request body
+    if (requestBody.content) {
+      // Prefer application/json
+      if (requestBody.content['application/json']?.schema) {
+        schema = requestBody.content['application/json'].schema;
+      } else {
+        // Fall back to first available content type
+        const firstContentType = Object.keys(requestBody.content)[0];
+        if (requestBody.content[firstContentType]?.schema) {
+          schema = requestBody.content[firstContentType].schema;
+        }
+      }
+    }
 
-    // Identify path and query parameters
-    if (operation.parameters) {
-      for (const param of operation.parameters) {
-        if (typeof param === 'object' && 'name' in param && 'in' in param) {
-          if (param.in === 'path') {
-            pathParams.push(param.name);
-          } else if (param.in === 'query') {
-            queryParams.push(param.name);
+    if (!schema) return;
+
+    // Handle $ref in schema
+    if (schema.$ref) {
+      const refType = this.resolveSchemaRef(schema.$ref);
+      const referencedSchema = this.spec.components?.schemas?.[refType];
+      if (referencedSchema && !('$ref' in referencedSchema)) {
+        schema = referencedSchema;
+      } else {
+        // If we can't resolve the reference, fall back to the original type
+        const bodyType = this.getRequestBodyType(requestBody);
+        optionProps.push(`body?: ${bodyType}`);
+        return;
+      }
+    }
+
+    // If schema has properties, add them individually
+    if (schema.properties) {
+      for (const [propName, propSchema] of Object.entries(schema.properties)) {
+        const propType = this.getTypeFromSchema(propSchema as any);
+        const required = (schema.required && schema.required.includes(propName)) || (requestBody.required);
+        const optional = required ? '' : '?';
+        
+        // Add description as comment if available
+        const description = (propSchema as any)?.description;
+        if (description) {
+          // Clean up description for inline use
+          const cleanDesc = description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+          if (cleanDesc.length < 100) { // Only add short descriptions inline
+            optionProps.push(`${propName}${optional}: ${propType} /** ${cleanDesc} */`);
+          } else {
+            optionProps.push(`${propName}${optional}: ${propType}`);
+          }
+        } else {
+          optionProps.push(`${propName}${optional}: ${propType}`);
+        }
+      }
+    } else {
+      // If we can't extract individual properties, fall back to body wrapper
+      const bodyType = this.getRequestBodyType(requestBody);
+      optionProps.push(`body?: ${bodyType}`);
+    }
+  }
+
+  /**
+   * Get TypeScript type for response
+   */
+  private getResponseType(operation: OperationInfo): string {
+    if (!operation.responses) return 'any';
+
+    // Try success responses first (200, 201, etc.)
+    const successCodes = ['200', '201', '202', '204'];
+    for (const code of successCodes) {
+      if (operation.responses[code]) {
+        const response = operation.responses[code];
+        if (response.content) {
+          // Prefer application/json
+          if (response.content['application/json']?.schema) {
+            return this.getTypeFromSchema(response.content['application/json'].schema);
+          }
+          
+          // Fall back to first available content type
+          const firstContentType = Object.keys(response.content)[0];
+          if (response.content[firstContentType]?.schema) {
+            return this.getTypeFromSchema(response.content[firstContentType].schema);
           }
         }
       }
     }
 
-    // Check if using simple signature (single path param, no query/body)
-    const useSimpleSignature = queryParams.length === 0 && !hasBody && pathParams.length <= 1;
+    return 'any';
+  }
 
-    if (useSimpleSignature && pathParams.length === 1) {
-      // Simple signature: (pathParam: string, options?: {headers?: ...})
-      const paramName = pathParams[0];
-      lines.push(`    let url = '${url}';`);
-      lines.push(`    if (${paramName}) {`);
-      lines.push(`      url = url.replace('{${paramName}}', ${paramName});`);
-      lines.push(`    }`);
-      lines.push('');
-      lines.push(`    return this.api.fetch(url, {`);
-      lines.push(`      method: '${operation.method}',`);
-      lines.push(`      headers: options?.headers,`);
-      lines.push(`    });`);
-    } else {
-      // Options object pattern
-      lines.push(`    options = options || {};`);
-      lines.push('');
+  /**
+   * Get TypeScript type for a parameter based on its schema
+   */
+  private getParameterType(param: any): string {
+    if (param.schema) {
+      return this.getTypeFromSchema(param.schema);
+    }
+    return 'any';
+  }
 
-      // Replace path parameters
-      if (pathParams.length > 0) {
-        lines.push(`    // Build URL with path parameters`);
-        lines.push(`    let url = '${url}';`);
-        for (const paramName of pathParams) {
-          lines.push(`    if (options.${paramName}) {`);
-          lines.push(`      url = url.replace('{${paramName}}', options.${paramName});`);
-          lines.push(`    }`);
+  /**
+   * Generate method implementation code for controller methods with discrete path parameters
+   */
+  private generateControllerMethodImplementation(operation: OperationInfo): string {
+    const lines: string[] = [];
+    const url = operation.path;
+    const pathParams: string[] = [];
+    const queryParams: string[] = [];
+    const hasBody = !!operation.requestBody;
+    
+    // Check if method has any options (query params, body, or headers)
+    const hasOptions = queryParams.length > 0 || hasBody;
+
+    // Identify parameters
+    if (operation.parameters) {
+      operation.parameters.forEach((param: any) => {
+        if (param.in === 'path') {
+          pathParams.push(param.name);
+        } else if (param.in === 'query') {
+          queryParams.push(param.name);
         }
-        lines.push('');
-      } else {
-        lines.push(`    const url = '${url}';`);
+      });
+    }
+    
+    // Update hasOptions after we know about query params
+    const actuallyHasOptions = queryParams.length > 0 || hasBody;
+
+    // Always extract path parameters as discrete parameters when they exist
+    if (pathParams.length > 0) {
+      // Handle path parameters as discrete function parameters
+      lines.push(`    let url = '${url}';`);
+      for (const paramName of pathParams) {
+        lines.push(`    if (${paramName}) {`);
+        lines.push(`      url = url.replace('{${paramName}}', ${paramName});`);
+        lines.push(`    }`);
+      }
+      lines.push('');
+
+      // Build request body by excluding query parameters and headers (only if we have options)
+      if (hasBody && actuallyHasOptions) {
+        const excludedParams = ['headers', ...queryParams];
+        const destructureList = excludedParams.join(', ');
+        lines.push(`    const { ${destructureList}, ...bodyData } = options;`);
+        lines.push(`    const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;`);
         lines.push('');
       }
 
@@ -506,13 +612,73 @@ export class OpenAPIToConnector {
         lines.push(`      params: {},`);
       }
 
-      // Add body if present
+      // Add body
       if (hasBody) {
-        lines.push(`      body: options.body,`);
+        if (actuallyHasOptions) {
+          lines.push(`      body: requestBody,`);
+        } else {
+          lines.push(`      body: undefined,`);
+        }
       }
 
-      // Add headers if present
-      lines.push(`      headers: options.headers,`);
+      // Add headers only if we have options
+      if (actuallyHasOptions) {
+        lines.push(`      headers: options?.headers,`);
+      }
+
+      lines.push(`    };`);
+      lines.push('');
+
+      // Add query parameters to options
+      if (queryParams.length > 0) {
+        lines.push(`    // Add query parameters`);
+        for (const paramName of queryParams) {
+          lines.push(`    if (options?.${paramName} !== undefined) {`);
+          lines.push(`      fetchOptions.params.${paramName} = options.${paramName};`);
+          lines.push(`    }`);
+        }
+        lines.push('');
+      }
+    } else {
+      // No path parameters - check if we have options
+      if (actuallyHasOptions) {
+        lines.push(`    options = options || {};`);
+        lines.push('');
+      }
+      lines.push(`    const url = '${url}';`);
+      lines.push('');
+
+      // Build request body by excluding query parameters and headers (only if we have options)
+      if (hasBody && actuallyHasOptions) {
+        const excludedParams = ['headers', ...queryParams];
+        const destructureList = excludedParams.join(', ');
+        lines.push(`    const { ${destructureList}, ...bodyData } = options;`);
+        lines.push(`    const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;`);
+        lines.push('');
+      }
+
+      // Build fetch options
+      lines.push(`    const fetchOptions: any = {`);
+      lines.push(`      method: '${operation.method}',`);
+
+      // Add query parameters
+      if (queryParams.length > 0) {
+        lines.push(`      params: {},`);
+      }
+
+      // Add body
+      if (hasBody) {
+        if (actuallyHasOptions) {
+          lines.push(`      body: requestBody,`);
+        } else {
+          lines.push(`      body: undefined,`);
+        }
+      }
+
+      // Add headers only if we have options
+      if (actuallyHasOptions) {
+        lines.push(`      headers: options.headers,`);
+      }
 
       lines.push(`    };`);
       lines.push('');
@@ -528,12 +694,13 @@ export class OpenAPIToConnector {
         lines.push('');
       }
 
-      // Make the API call
-      lines.push(`    return this.api.fetch(url, fetchOptions);`);
     }
+    // Make the API call
+    lines.push(`    return this.api.fetch(url, fetchOptions);`);
 
     return lines.join('\n');
   }
+
 
   /**
    * Generate method implementation for resource functions (using this.api instead of this.controller)
@@ -556,37 +723,47 @@ export class OpenAPIToConnector {
       });
     }
 
-    // Simple single parameter pattern for simple operations
-    const isSimple = pathParams.length <= 1 && queryParams.length === 0 && !hasBody;
+    // Extract path parameters as discrete parameters when no query params or body
+    const isSimple = queryParams.length === 0 && !hasBody;
     
-    if (isSimple && pathParams.length === 1) {
-      const paramName = pathParams[0];
+    if (isSimple && pathParams.length > 0) {
+      // Handle path parameters as discrete function parameters
       lines.push(`  let url = '${url}';`);
-      lines.push(`  if (${paramName}) {`);
-      lines.push(`    url = url.replace('{${paramName}}', ${paramName});`);
-      lines.push(`  }`);
+      for (const paramName of pathParams) {
+        lines.push(`  if (${paramName}) {`);
+        lines.push(`    url = url.replace('{${paramName}}', ${paramName});`);
+        lines.push(`  }`);
+      }
       lines.push('');
       lines.push(`  return this.api.fetch(url, {`);
       lines.push(`    method: '${operation.method}',`);
-      lines.push(`    headers: options?.headers,`);
       lines.push(`  });`);
     } else {
       // Options object pattern
       lines.push(`  options = options || {};`);
       lines.push('');
 
-      // Replace path parameters
+      // Replace path parameters - use discrete parameters, not options
       if (pathParams.length > 0) {
         lines.push(`  // Build URL with path parameters`);
         lines.push(`  let url = '${url}';`);
         for (const paramName of pathParams) {
-          lines.push(`  if (options.${paramName}) {`);
-          lines.push(`    url = url.replace('{${paramName}}', options.${paramName});`);
+          lines.push(`  if (${paramName}) {`);
+          lines.push(`    url = url.replace('{${paramName}}', ${paramName});`);
           lines.push(`  }`);
         }
         lines.push('');
       } else {
         lines.push(`  const url = '${url}';`);
+        lines.push('');
+      }
+
+      // Build request body by excluding query parameters and headers
+      if (hasBody) {
+        const excludedParams = ['headers', ...queryParams];
+        const destructureList = excludedParams.join(', ');
+        lines.push(`  const { ${destructureList}, ...bodyData } = options;`);
+        lines.push(`  const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;`);
         lines.push('');
       }
 
@@ -599,12 +776,12 @@ export class OpenAPIToConnector {
         lines.push(`    params: {},`);
       }
 
-      // Add body if present
+      // Add body
       if (hasBody) {
-        lines.push(`    body: options.body,`);
+        lines.push(`    body: requestBody,`);
       }
 
-      // Add headers if present
+      // Add headers
       lines.push(`    headers: options.headers,`);
 
       lines.push(`  };`);
@@ -620,10 +797,9 @@ export class OpenAPIToConnector {
         }
         lines.push('');
       }
-
-      // Make the API call
-      lines.push(`  return this.api.fetch(url, fetchOptions);`);
     }
+    // Make the API call
+    lines.push(`    return this.api.fetch(url, fetchOptions);`);
 
     return lines.join('\n');
   }
@@ -631,7 +807,7 @@ export class OpenAPIToConnector {
   /**
    * Generate exposed resource methods for API introspection
    */
-  private generateExposedResourceMethods(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
+  generateExposedResourceMethods(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
     const methods: string[] = [];
 
     for (const resource of resources) {
@@ -647,67 +823,464 @@ export class OpenAPIToConnector {
         
         for (const operation of operations) {
           const methodName = resourceGenerator.generateMethodName(operation);
-          const jsdoc = resourceGenerator.generateJSDoc(operation);
+          const jsdoc = resourceGenerator.generateDetailedJSDoc(operation);
           const signature = resourceGenerator.generateMethodSignature(operation);
           
           // Generate the exposed method that delegates to the resource
           const exposedMethodName = `${resourceName}${methodName.charAt(0).toUpperCase() + methodName.slice(1)}`;
           
+          // Generate parameter call based on operation details
+          const parameterCall = this.generateParameterCallForOperation(operation, signature);
+          
           methods.push(`  /**
 ${jsdoc}
    */
   async ${exposedMethodName}${signature} {
-    return this.${resourceName}.${methodName}?.(${this.generateParameterCall(signature)});
+    return this.${resourceName}.${methodName}(${parameterCall});
   }`);
         }
-      } else {
-        // Fallback to common CRUD operations if no spec provided
-        const commonOperations = [
-          { name: 'getPage', comment: 'Retrieve items with pagination', signature: 'options?: {limit?: number, after?: string, properties?: any[], archived?: boolean, headers?: {[key: string]: any}}' },
-          { name: 'getById', comment: 'Get item by ID', signature: 'options: {id: string, properties?: any[], headers?: {[key: string]: any}}' },
-          { name: 'create', comment: 'Create a new item', signature: 'options: {body?: any, headers?: {[key: string]: any}}' },
-          { name: 'update', comment: 'Update an item', signature: 'options: {id: string, body?: any, headers?: {[key: string]: any}}' },
-          { name: 'read', comment: 'Retrieve a batch of items', signature: 'options: {body?: any, headers?: {[key: string]: any}}' },
-        ];
-
-        for (const op of commonOperations) {
-          const exposedMethodName = `${resourceName}${op.name.charAt(0).toUpperCase() + op.name.slice(1)}`;
-          methods.push(`  /**
-   * ${op.comment} (${resourceName})
-   */
-  async ${exposedMethodName}(${op.signature}) {
-    return this.${resourceName}.${op.name}?.(options);
-  }`);
-        }
-      }
+      } 
     }
 
     return methods.join('\n\n');
   }
 
   /**
-   * Generate parameter call from method signature
+   * Generate parameter call for a specific operation based on path parameters
    */
-  private generateParameterCall(signature: string): string {
-    // Extract parameter names from signature like (options: {...}) or (id: string, options?: {...})
+  private generateParameterCallForOperation(operation: OperationInfo, signature: string): string {
+    const pathParams: string[] = [];
+    const queryParams: string[] = [];
+    const hasBody = !!operation.requestBody;
+
+    // Identify path and query parameters
+    if (operation.parameters) {
+      for (const param of operation.parameters) {
+        if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          if (param.in === 'path') {
+            pathParams.push(param.name);
+          } else if (param.in === 'query') {
+            queryParams.push(param.name);
+          }
+        }
+      }
+    }
+
+    // Extract parameter names from controller signature
     const paramMatch = signature.match(/\(([^)]+)\)/);
-    if (!paramMatch) return '';
+    if (!paramMatch || paramMatch[1].trim() === '') return '';
     
-    const params = paramMatch[1].split(',').map(p => {
+    const allParams = paramMatch[1].split(',').map(p => {
       const paramName = p.trim().split(':')[0].trim();
-      // Remove optional markers like ?, but keep the parameter name
       return paramName.replace(/[?]/g, '');
     }).filter(p => p.length > 0);
     
-    return params.join(', ');
+    // Check if signature actually has options parameter
+    const hasOptionsParam = allParams.includes('options');
+    
+    // Always extract path parameters as discrete parameters when they exist
+    if (pathParams.length > 0) {
+      // Path parameters are discrete, options is the last parameter (if it exists)
+      const pathParamNames = pathParams;
+      if (hasOptionsParam) {
+        return [...pathParamNames, 'options'].join(', ');
+      } else {
+        return pathParamNames.join(', ');
+      }
+    } else {
+      // No path parameters, everything goes in options object (if options exists)
+      if (hasOptionsParam) {
+        return allParams[0] || 'options';
+      } else {
+        return '';
+      }
+    }
   }
 
   /**
-   * Generate proper import paths with .mjs extensions for TypeScript module resolution
+   * Generate TypeScript interface from OpenAPI schema
    */
-  private generateImportPath(relativePath: string): string {
-    // For resource classes, we need to reference the compiled .mjs files
-    return relativePath.endsWith('.mjs') ? relativePath : `${relativePath}.mjs`;
+  private generateInterfaceFromSchema(name: string, schema: any): string {
+    if (!schema) return '';
+
+    const sanitizedName = this.sanitizeTypeName(name);
+    const lines: string[] = [];
+    lines.push(`export interface ${sanitizedName} {`);
+
+    if (schema.properties) {
+      for (const [propName, propSchema] of Object.entries(schema.properties)) {
+        const propType = this.getTypeFromSchema(propSchema as any);
+        const required = schema.required && schema.required.includes(propName);
+        const optional = required ? '' : '?';
+        
+        // Add description as comment if available
+        const description = (propSchema as any)?.description;
+        if (description) {
+          lines.push(`  /** ${description} */`);
+        }
+        
+        lines.push(`  ${propName}${optional}: ${propType};`);
+      }
+    }
+
+    // Handle allOf, oneOf, anyOf
+    if (schema.allOf) {
+      lines.push(`  // Inherits from: ${schema.allOf.map((s: any) => s.$ref ? this.resolveSchemaRef(s.$ref) : 'unknown').join(', ')}`);
+    }
+
+    lines.push('}');
+    return lines.join('\n');
+  }
+
+  /**
+   * Generate all TypeScript interfaces from OpenAPI components
+   */
+  private generateAllInterfaces(): string {
+    if (!this.spec.components?.schemas) {
+      return '';
+    }
+
+    const interfaces: string[] = [];
+    const usedTypes = this.collectUsedSchemaTypes();
+
+    for (const [schemaName, schema] of Object.entries(this.spec.components.schemas)) {
+      const sanitizedSchemaName = this.sanitizeTypeName(schemaName);
+      if (usedTypes.has(sanitizedSchemaName)) {
+        const interfaceCode = this.generateInterfaceFromSchema(schemaName, schema);
+        if (interfaceCode) {
+          interfaces.push(interfaceCode);
+        }
+      }
+    }
+
+    if (interfaces.length === 0) {
+      return '';
+    }
+
+    return `// Generated TypeScript interfaces from OpenAPI schemas\n\n${interfaces.join('\n\n')}\n`;
+  }
+
+  /**
+   * Generate detailed JSDoc with schema field information
+   */
+  private generateDetailedJSDoc(operation: OperationInfo): string {
+    const lines: string[] = [];
+    lines.push(` * ${operation.summary || operation.operationId || 'API Operation'}`);
+    
+    if (operation.description) {
+      lines.push(' *');
+      // Split long descriptions into multiple lines
+      const descLines = operation.description.split('\n');
+      descLines.forEach(line => {
+        lines.push(` * ${line}`);
+      });
+    }
+
+    lines.push(' *');
+
+    // Document path parameters with details
+    const pathParams: any[] = [];
+    const queryParams: any[] = [];
+    
+    if (operation.parameters) {
+      for (const param of operation.parameters) {
+        if (typeof param === 'object' && 'name' in param && 'in' in param) {
+          if (param.in === 'path') {
+            pathParams.push(param);
+          } else if (param.in === 'query') {
+            queryParams.push(param);
+          }
+        }
+      }
+    }
+
+    // Document discrete path parameters
+    pathParams.forEach(param => {
+      const paramType = this.getParameterType(param);
+      const paramDesc = param.description || '';
+      lines.push(` * @param {${paramType}} ${param.name} ${paramDesc}`);
+    });
+
+    // Document options parameter with detailed schema information
+    if (queryParams.length > 0 || operation.requestBody) {
+      lines.push(' * @param {Object} options - Request options');
+      
+      // Document query parameters
+      queryParams.forEach(param => {
+        const paramType = this.getParameterType(param);
+        const paramDesc = param.description || '';
+        const required = param.required ? '(required)' : '(optional)';
+        lines.push(` * @param {${paramType}} options.${param.name} ${required} - ${paramDesc} [query]`);
+      });
+
+      // Document request body with detailed schema info (now flattened)
+      if (operation.requestBody) {
+        this.addFlattenedBodyDocumentation(lines, operation.requestBody);
+      }
+    } else if (pathParams.length > 0) {
+      lines.push(` * @param {Object} options (optional) - Request options`);
+    }
+
+    // Document response with detailed schema information
+    lines.push(' *');
+    const returnType = this.getResponseType(operation);
+    lines.push(` * @returns {Promise<${returnType}>} ${operation.method.toUpperCase()} ${operation.path} response`);
+    
+    // Add detailed schema information for the return type
+    this.addSchemaDetails(lines, returnType, 'response');
+
+    return lines.join('\n');
+  }
+
+  /**
+   * Add flattened request body documentation to JSDoc
+   */
+  private addFlattenedBodyDocumentation(lines: string[], requestBody: any): void {
+    if (!requestBody) return;
+
+    let schema: any = null;
+    
+    // Get the schema from the request body
+    if (requestBody.content) {
+      if (requestBody.content['application/json']?.schema) {
+        schema = requestBody.content['application/json'].schema;
+      } else {
+        const firstContentType = Object.keys(requestBody.content)[0];
+        if (requestBody.content[firstContentType]?.schema) {
+          schema = requestBody.content[firstContentType].schema;
+        }
+      }
+    }
+    
+    if (!schema) return;
+    
+    // Handle $ref in schema
+    if (schema.$ref) {
+      const refType = this.resolveSchemaRef(schema.$ref);
+      const referencedSchema = this.spec.components?.schemas?.[refType];
+      if (referencedSchema && !('$ref' in referencedSchema)) {
+        schema = referencedSchema;
+      } else {
+        // Fallback to original format if we can't resolve
+        const bodyType = this.getRequestBodyType(requestBody);
+        const bodyDesc = requestBody.description || 'Request body';
+        const required = requestBody.required ? '(required)' : '(optional)';
+        lines.push(` * @param {${bodyType}} options.body ${required} - ${bodyDesc}`);
+        return;
+      }
+    }
+    
+    // Document individual properties from the body schema
+    if (schema.properties) {
+      for (const [propName, propSchema] of Object.entries(schema.properties)) {
+        const propType = this.getTypeFromSchema(propSchema as any);
+        const propRequired = (schema.required && schema.required.includes(propName)) || (requestBody.required);
+        const requiredText = propRequired ? '(required)' : '(optional)';
+        const propDesc = (propSchema as any)?.description || '';
+        
+        lines.push(` * @param {${propType}} options.${propName} ${requiredText} - ${propDesc} [body property]`);
+      }
+    } else {
+      // Fallback to original format if no properties
+      const bodyType = this.getRequestBodyType(requestBody);
+      const bodyDesc = requestBody.description || 'Request body';
+      const required = requestBody.required ? '(required)' : '(optional)';
+      lines.push(` * @param {${bodyType}} options.body ${required} - ${bodyDesc}`);
+    }
+  }
+
+  /**
+   * Add detailed schema field information to JSDoc
+   */
+  private addSchemaDetails(lines: string[], typeName: string, context: string): void {
+    // Remove array notation to get base type
+    const baseType = typeName.replace(/\[\]$/, '');
+    const isArray = typeName.endsWith('[]');
+    
+    if (['string', 'number', 'boolean', 'any'].includes(baseType)) {
+      return; // Skip primitive types
+    }
+
+    const schema = this.spec.components?.schemas?.[baseType];
+    if (!schema) {
+      return;
+    }
+
+    // Type guard to check if schema has properties (is not a ReferenceObject)
+    if ('$ref' in schema) {
+      return; // Skip reference objects
+    }
+
+    if (!schema.properties) {
+      return;
+    }
+
+    lines.push(' *');
+    lines.push(` * ${context}${isArray ? '[]' : ''} fields:`);
+    
+    const maxFields = 10; // Limit to avoid too much clutter
+    const properties = Object.entries(schema.properties).slice(0, maxFields);
+    
+    for (const [propName, propSchema] of properties) {
+      const propType = this.getTypeFromSchema(propSchema as any);
+      const required = schema.required && schema.required.includes(propName);
+      const requiredText = required ? '' : '?';
+      const description = (propSchema as any)?.description;
+      
+      if (description) {
+        lines.push(` * - ${propName}${requiredText}: ${propType} - ${description}`);
+      } else {
+        lines.push(` * - ${propName}${requiredText}: ${propType}`);
+      }
+    }
+    
+    const totalFields = Object.keys(schema.properties).length;
+    if (totalFields > maxFields) {
+      lines.push(` * - ... and ${totalFields - maxFields} more fields`);
+    }
+  }
+
+  /**
+   * Collect all schema types used in operations (including nested references)
+   */
+  private collectUsedSchemaTypes(): Set<string> {
+    const usedTypes = new Set<string>();
+    const visitedSchemas = new Set<string>(); // Track visited schemas to prevent infinite recursion
+    const operations = this.extractOperations();
+
+    for (const operation of operations) {
+      // Collect from request body schemas
+      if (operation.requestBody) {
+        this.collectTypesFromRequestBody(operation.requestBody, usedTypes, visitedSchemas);
+      }
+
+      // Collect from response schemas
+      if (operation.responses) {
+        this.collectTypesFromResponses(operation.responses, usedTypes, visitedSchemas);
+      }
+
+      // Collect from parameter schemas
+      if (operation.parameters) {
+        for (const param of operation.parameters) {
+          if (typeof param === 'object' && 'schema' in param && param.schema) {
+            this.collectTypesFromSchema(param.schema, usedTypes, visitedSchemas);
+          }
+        }
+      }
+    }
+
+    return usedTypes;
+  }
+
+  /**
+   * Collect types from request body schema
+   */
+  private collectTypesFromRequestBody(requestBody: any, usedTypes: Set<string>, visitedSchemas: Set<string>): void {
+    if (!requestBody || !requestBody.content) return;
+    
+    // Check all content types
+    for (const contentType of Object.keys(requestBody.content)) {
+      const content = requestBody.content[contentType];
+      if (content.schema) {
+        this.collectTypesFromSchema(content.schema, usedTypes, visitedSchemas);
+      }
+    }
+  }
+
+  /**
+   * Collect types from response schemas
+   */
+  private collectTypesFromResponses(responses: any, usedTypes: Set<string>, visitedSchemas: Set<string>): void {
+    if (!responses) return;
+    
+    // Check success responses
+    const successCodes = ['200', '201', '202', '204'];
+    for (const code of successCodes) {
+      const response = responses[code];
+      if (response && response.content) {
+        for (const contentType of Object.keys(response.content)) {
+          const content = response.content[contentType];
+          if (content.schema) {
+            this.collectTypesFromSchema(content.schema, usedTypes, visitedSchemas);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Collect types from a schema object
+   */
+  private collectTypesFromSchema(schema: any, usedTypes: Set<string>, visitedSchemas: Set<string>): void {
+    if (!schema) return;
+
+    // Handle $ref
+    if (schema.$ref) {
+      const parts = schema.$ref.split('/');
+      const originalSchemaName = parts[parts.length - 1];
+      const sanitizedRefType = this.resolveSchemaRef(schema.$ref);
+      
+      if (sanitizedRefType !== 'any' && !['string', 'number', 'boolean'].includes(sanitizedRefType)) {
+        // Add the sanitized type name to used types
+        usedTypes.add(sanitizedRefType);
+        
+        // Only recurse if we haven't visited this schema before (use original name for lookup)
+        if (!visitedSchemas.has(originalSchemaName)) {
+          visitedSchemas.add(originalSchemaName);
+          const referencedSchema = this.spec.components?.schemas?.[originalSchemaName];
+          if (referencedSchema) {
+            this.collectTypesFromSchema(referencedSchema, usedTypes, visitedSchemas);
+          }
+        }
+      }
+      return;
+    }
+
+    // Handle arrays
+    if (schema.type === 'array' && schema.items) {
+      this.collectTypesFromSchema(schema.items, usedTypes, visitedSchemas);
+      return;
+    }
+
+    // Handle objects with properties
+    if (schema.type === 'object' && schema.properties) {
+      for (const propSchema of Object.values(schema.properties)) {
+        this.collectTypesFromSchema(propSchema, usedTypes, visitedSchemas);
+      }
+      return;
+    }
+
+    // Handle allOf, oneOf, anyOf
+    if (schema.allOf) {
+      for (const subSchema of schema.allOf) {
+        this.collectTypesFromSchema(subSchema, usedTypes, visitedSchemas);
+      }
+    }
+
+    if (schema.oneOf) {
+      for (const subSchema of schema.oneOf) {
+        this.collectTypesFromSchema(subSchema, usedTypes, visitedSchemas);
+      }
+    }
+
+    if (schema.anyOf) {
+      for (const subSchema of schema.anyOf) {
+        this.collectTypesFromSchema(subSchema, usedTypes, visitedSchemas);
+      }
+    }
+  }
+
+  /**
+   * Generate type imports for used schema types
+   */
+  private generateTypeImports(): string {
+    const usedTypes = this.collectUsedSchemaTypes();
+    if (usedTypes.size === 0) {
+      return '';
+    }
+
+    const typeList = Array.from(usedTypes).sort().join(', ');
+    return `// Type imports (you may need to adjust the import path)\n// import type { ${typeList} } from './types';\n\n`;
   }
 
   /**
@@ -725,7 +1298,7 @@ ${jsdoc}
     const functions = operations
       .map((operation) => {
         const methodName = this.generateMethodName(operation);
-        const jsdoc = this.generateJSDoc(operation);
+        const jsdoc = this.generateDetailedJSDoc(operation);
         const signature = this.generateMethodSignature(operation);
         const implementation = this.generateResourceFunctionImplementation(operation);
 
@@ -733,8 +1306,13 @@ ${jsdoc}
       })
       .join('\n\n');
 
+    // Generate actual TypeScript interfaces
+    const interfaces = this.generateAllInterfaces();
+
     return `// ${className} resource functions
 // These functions will be bound to the controller instance and accessible as ${resourceName}.method()
+
+${interfaces}
 
 ${functions}`;
   }
@@ -808,7 +1386,7 @@ ${exposedMethods}
   }
 
   /**
-   * Generate the connector controller code
+   * Generate the connector controller code with improved pattern
    */
   generateController(): string {
     const operations = this.extractOperations();
@@ -820,28 +1398,41 @@ ${exposedMethods}
     const methods = operations
       .map((operation) => {
         const methodName = this.generateMethodName(operation);
-        const jsdoc = this.generateJSDoc(operation);
+        const jsdoc = this.generateDetailedJSDoc(operation); // Use detailed JSDoc like multi-resource
         const signature = this.generateMethodSignature(operation);
-        const implementation = this.generateMethodImplementation(operation);
+        const implementation = this.generateControllerMethodImplementation(operation); // Use improved implementation
 
         return `  /**\n${jsdoc}\n   */\n  async ${methodName}${signature} {\n${implementation}\n  }`;
       })
       .join('\n\n');
 
     // Get base URL from servers if available
-    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'API_BASE_URL';
+    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
+
+    // Generate TypeScript interfaces
+    const interfaces = this.generateAllInterfaces();
+    
+    // Generate type imports
+    const typeImports = this.generateTypeImports();
 
     const startMethod = `  private api: any;
 
   protected async start(): Promise<void> {
+    const config = this.config;
+    
     this.api = this.getClient({
       baseUrl: '${baseUrl}',
+      customize(request) {
+        request.headers ||= {};
+        // Add authentication headers based on your API requirements
+        // Example: request.headers["Authorization"] = \`Bearer \${config.apiToken}\`;
+      },
     });
   }`;
 
     return `import {AbstractController} from '@aloma.io/integration-sdk';
 
-export default class Controller extends AbstractController {
+${typeImports}${interfaces}export default class Controller extends AbstractController {
   
 ${startMethod}
 

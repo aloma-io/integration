@@ -12,6 +12,8 @@
     "dev": "./node_modules/typescript/bin/tsc --watch",
     "build": "./node_modules/typescript/bin/tsc",
     "test": "./node_modules/mocha/bin/_mocha --recursive test/ --loader ts-node/esm",
+    "test:scenarios": "node test/verify-scenarios.mjs",
+    "test:all": "npm run test:scenarios",
     "format": "yarn prettier --write src/",
     "openapi-to-connector": "node ./build/openapi-to-connector.mjs"
   },

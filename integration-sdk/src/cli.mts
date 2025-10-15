@@ -144,22 +144,16 @@ program
     'Generate as a resource class with the specified class name (e.g., CompaniesResource)'
   )
   .option('--multi-resource', 'Generate multiple resource files + main controller (requires multiple --spec files)')
+  .option('--controller-only', 'Generate only the controller file, do not create full project structure')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
     name = name.replace(/[\/\.]/gi, '');
     if (!name) throw new Error('name is empty');
 
-    const target = `${process.cwd()}/${name}`;
-
     try {
       // Read and parse the OpenAPI spec
       const specContent = fs.readFileSync(options.spec, 'utf-8');
       const spec = OpenAPIToConnector.parseSpec(specContent);
-
-      // Create the connector project structure
-      fs.mkdirSync(target);
-      console.log('Creating connector project...');
-      extract({...options, target, name});
 
       // Generate the controller from OpenAPI spec
       const generator = new OpenAPIToConnector(spec, name);
@@ -173,30 +167,51 @@ program
         controllerCode = generator.generateController();
       }
 
-      // Write the generated controller
-      const controllerPath = `${target}/${options.out}`;
-      fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
-      fs.writeFileSync(controllerPath, controllerCode);
+      if (options.controllerOnly) {
+        // Controller-only mode: just generate the controller file
+        const controllerPath = path.resolve(options.out);
+        fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
+        fs.writeFileSync(controllerPath, controllerCode);
 
-      console.log('Generating keys...');
-      await generateKeys({target});
+        console.log(`\n✅ Success! Generated controller from OpenAPI specification
+📝 Connector name: ${name}
+📊 Found ${generator.getOperationsCount()} operations
+📄 Controller file: ${controllerPath}
+      
+Controller file generated successfully! You can now use it in your existing project.`);
+      } else {
+        // Full project mode: create complete project structure
+        const target = `${process.cwd()}/${name}`;
 
-      if (options.build !== false) {
-        console.log('Installing dependencies...');
-        await exec(`cd ${target}; yarn --ignore-engines`);
+        // Create the connector project structure
+        fs.mkdirSync(target);
+        console.log('Creating connector project...');
+        extract({...options, target, name});
 
-        console.log('Building...');
-        await exec(`cd ${target}; yarn build`);
-      }
+        // Write the generated controller
+        const controllerPath = `${target}/${options.out}`;
+        fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
+        fs.writeFileSync(controllerPath, controllerCode);
 
-      const nextSteps =
-        options.build !== false
-          ? `Next steps:
+        console.log('Generating keys...');
+        await generateKeys({target});
+
+        if (options.build !== false) {
+          console.log('Installing dependencies...');
+          await exec(`cd ${target}; yarn --ignore-engines`);
+
+          console.log('Building...');
+          await exec(`cd ${target}; yarn build`);
+        }
+
+        const nextSteps =
+          options.build !== false
+            ? `Next steps:
 1.) Add the connector to a workspace
 2.) Edit ./${name}/.env and insert the registration token
 3.) Implement the actual API calls in each method in ${options.out}
 4.) Start the connector with cd ./${name}/; yarn start`
-          : `Next steps:
+            : `Next steps:
 1.) Install dependencies: cd ./${name}/ && yarn --ignore-engines
 2.) Implement the actual API calls in each method in ${options.out}
 3.) Build the project: yarn build
@@ -204,19 +219,24 @@ program
 5.) Edit ./${name}/.env and insert the registration token
 6.) Start the connector: yarn start`;
 
-      console.log(`
-✅ Success! Generated connector from OpenAPI specification
+        console.log(`\n✅ Success! Generated connector from OpenAPI specification
 📝 Connector name: ${name}
 📊 Found ${generator.getOperationsCount()} operations
 📄 Controller generated: ${options.out}
       
 ${nextSteps}`);
+      }
     } catch (error) {
       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
-      // Clean up on error
-      if (fs.existsSync(target)) {
-        fs.rmSync(target, {recursive: true, force: true});
+      
+      // Clean up on error (only if we created a project directory)
+      if (!options.controllerOnly) {
+        const target = `${process.cwd()}/${name}`;
+        if (fs.existsSync(target)) {
+          fs.rmSync(target, {recursive: true, force: true});
+        }
       }
+      
       process.exit(1);
     }
   });
@@ -374,6 +394,11 @@ program
       throw new Error(`Project path does not exist: ${target}`);
     }
 
+    const controllerPath = `${target}/src/controller/index.mts`;
+    if (!fs.existsSync(controllerPath)) {
+      throw new Error(`Controller file not found: ${controllerPath}. This might not be a multi-resource connector project.`);
+    }
+
     try {
       console.log(`Adding ${options.className} resource to existing project...`);
 
@@ -381,7 +406,7 @@ program
       const specContent = fs.readFileSync(options.spec, 'utf-8');
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
-      // Generate the resource class
+      // Generate the resource functions file (new function-based pattern)
       const generator = new OpenAPIToConnector(spec, 'Resource');
       const resourceCode = generator.generateResourceClass(options.className);
 
@@ -391,18 +416,92 @@ program
       fs.mkdirSync(path.dirname(resourcePath), {recursive: true});
       fs.writeFileSync(resourcePath, resourceCode);
 
-      console.log(`✅ Resource ${options.className} added successfully at ${resourcePath}`);
-      console.log('\n⚠️  You need to manually update the main controller to include this new resource:');
-      console.log(`1.) Add import: import ${options.className} from '../resources/${fileName}.mjs';`);
-      console.log(`2.) Add property: ${fileName}!: ${options.className};`);
-      console.log(`3.) Add initialization in start(): this.${fileName} = new ${options.className}(this);`);
+      // Update the main controller to include the new resource
+      console.log('Updating main controller...');
+      let controllerContent = fs.readFileSync(controllerPath, 'utf-8');
+      
+      // Add import
+      const importStatement = `import * as ${fileName}Functions from '../resources/${fileName}.mjs';`;
+      if (!controllerContent.includes(importStatement)) {
+        // Find the last import and add after it
+        const importRegex = /^import.*from.*?;$/gm;
+        const imports = controllerContent.match(importRegex);
+        if (imports && imports.length > 0) {
+          const lastImport = imports[imports.length - 1];
+          controllerContent = controllerContent.replace(lastImport, `${lastImport}\n${importStatement}`);
+        } else {
+          // If no imports found, add at the beginning
+          controllerContent = `${importStatement}\n\n${controllerContent}`;
+        }
+      }
+      
+      // Add property declaration
+      const propertyDeclaration = `  ${fileName}: any = {};`;
+      if (!controllerContent.includes(propertyDeclaration)) {
+        // Find the existing properties and add the new one
+        const propertyRegex = /^  \w+: any = \{\};$/gm;
+        const properties = controllerContent.match(propertyRegex);
+        if (properties && properties.length > 0) {
+          const lastProperty = properties[properties.length - 1];
+          controllerContent = controllerContent.replace(lastProperty, `${lastProperty}\n${propertyDeclaration}`);
+        } else {
+          // Add after class declaration
+          controllerContent = controllerContent.replace(
+            /^export default class Controller extends AbstractController \{$/gm,
+            `export default class Controller extends AbstractController {\n${propertyDeclaration}`
+          );
+        }
+      }
+      
+      // Add binding in start() method
+      const bindingStatement = `    this.bindResourceFunctions('${fileName}', ${fileName}Functions);`;
+      if (!controllerContent.includes(bindingStatement)) {
+        // Find the existing bindings and add the new one
+        const bindingRegex = /^    this\.bindResourceFunctions\(.*?\);$/gm;
+        const bindings = controllerContent.match(bindingRegex);
+        if (bindings && bindings.length > 0) {
+          const lastBinding = bindings[bindings.length - 1];
+          controllerContent = controllerContent.replace(lastBinding, `${lastBinding}\n${bindingStatement}`);
+        }
+      }
+      
+      // Write the updated controller
+      fs.writeFileSync(controllerPath, controllerContent);
+
+      // Generate exposed methods for the new resource
+      console.log('Generating exposed methods for the new resource...');
+      const resources = [{className: options.className, fileName}];
+      const resourceSpecs = [{fileName, spec}];
+      
+      // Create a temporary generator to generate just the exposed methods for this resource
+      const tempGenerator = new OpenAPIToConnector(spec, 'temp');
+      const exposedMethods = tempGenerator.generateExposedResourceMethods(resources, resourceSpecs);
+      
+      // Add the exposed methods to the controller before the closing brace
+      if (exposedMethods.trim()) {
+        controllerContent = fs.readFileSync(controllerPath, 'utf-8');
+        // Find the last method and add the new exposed methods
+        const lastBrace = controllerContent.lastIndexOf('}');
+        if (lastBrace !== -1) {
+          const beforeBrace = controllerContent.substring(0, lastBrace);
+          const afterBrace = controllerContent.substring(lastBrace);
+          const updatedContent = `${beforeBrace}\n${exposedMethods}\n${afterBrace}`;
+          fs.writeFileSync(controllerPath, updatedContent);
+        }
+      }
+
+      console.log(`✅ Resource ${options.className} added successfully!`);
+      console.log(`📄 Resource functions: ${resourcePath}`);
+      console.log(`🎛️  Controller updated: ${controllerPath}`);
+      console.log(`\n🎉 The new resource is fully integrated and ready to use!`);
 
       if (options.build !== false) {
-        console.log('\nBuilding project...');
+        console.log('\n🔨 Building project...');
         await exec(`cd "${target}"; yarn build`);
+        console.log('✅ Build complete!');
       }
     } catch (error) {
-      console.error('Error adding resource:', (error as Error).message);
+      console.error('❌ Error adding resource:', (error as Error).message);
       process.exit(1);
     }
   });

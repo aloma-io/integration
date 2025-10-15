@@ -13,26 +13,27 @@ src/
 ├── controller/
 │   └── index.mts          # Main controller (extends AbstractController)
 └── resources/
-    ├── companies.mts      # CompaniesResource (plain class)
-    ├── contacts.mts       # ContactsResource (plain class)
-    └── lists.mts          # ListsResource (plain class)
+    ├── companies.mts      # Companies resource functions
+    ├── contacts.mts       # Contacts resource functions
+    └── lists.mts          # Lists resource functions
 ```
 
 ### Main Controller
 - Extends `AbstractController`
 - Has `private api: any` and `protected async start()`
-- Composes all resources
-- Initializes API client once
+- Binds resource functions to controller context with `function.bind(this)`
+- Initializes API client once and provides context to bound functions
 
-### Resource Classes
-- Plain TypeScript classes (no inheritance)
-- Receive controller reference in constructor
-- Access `api` via getter: `this.controller['api']`
+### Resource Functions (New Pattern!)
+- Plain TypeScript exported functions (no classes)
+- Bound to controller context using `function.bind(this)`
+- Access `api` directly via `this.api` (bound context)
 - Focus on their specific domain
+- Enable proper API introspection by the framework
 
 ## Creating Multi-Resource Connectors
 
-### 1. Create from Multiple OpenAPI Specs
+### 1. Generate Base Controller (Functions Pattern)
 
 ```bash
 npx @aloma.io/integration-sdk@latest create-multi-resource "MyConnector" \
@@ -42,7 +43,7 @@ npx @aloma.io/integration-sdk@latest create-multi-resource "MyConnector" \
 ```
 
 **Parameters:**
-- `--resources`: Comma-separated list of `ClassName:specFile` pairs
+- `--resources`: Comma-separated list of `ResourceName:specFile` pairs
 - `--base-url`: API base URL (optional, extracted from first spec if not provided)
 - `--no-build`: Skip dependency installation and building
 
@@ -72,12 +73,13 @@ The `--resources` parameter accepts a comma-separated list in this format:
 ```bash
 npx @aloma.io/integration-sdk@latest add-resource ./existing-project \
   --className "DealsResource" \
-  --spec "deals.json"
+  --spec "deals.json" \
+  --no-build
 ```
 
 This will:
-- Generate the new resource class
-- Save it to `src/resources/deals.mts`
+- Generate the new resource functions
+- Save them to `src/resources/deals.mts`
 - Provide instructions for updating the main controller
 
 ### 2. Update Main Controller Manually
@@ -86,13 +88,13 @@ After adding a resource, you need to update the main controller:
 
 ```typescript
 // 1. Add import
-import DealsResource from '../resources/deals.mjs';
+import * as dealsResource from '../resources/deals.mjs';
 
 // 2. Add property
-deals!: DealsResource;
+deals!: typeof dealsResource;
 
 // 3. Add initialization in start()
-this.deals = new DealsResource(this);
+this.deals = this.bindResourceFunctions(dealsResource);
 ```
 
 ## Usage Examples
@@ -147,9 +149,9 @@ await controller.companies.getPage({
 ## Best Practices
 
 ### 1. Resource Naming
-- Use descriptive class names: `CompaniesResource`, `ContactsResource`
+- Use descriptive resource names: `CompaniesResource`, `ContactsResource`
 - File names are auto-generated: `companies.mts`, `contacts.mts`
-- Property names in controller: `companies`, `contacts`
+- Property names in controller (bound functions): `companies`, `contacts`
 
 ### 2. OpenAPI Specifications
 - Each resource should have its own focused OpenAPI spec
@@ -193,9 +195,10 @@ If you see TypeScript errors about missing file extensions:
 - Ensure you're using `.mjs` extensions in imports
 - The generator handles this automatically in new projects
 
-### Resource Not Found
+### Resource Functions Not Found
 If a resource property is undefined:
-- Check that the resource is properly initialized in `start()`
+- Check that the resource functions are properly bound in `start()`
+- Ensure `bindResourceFunctions()` was called correctly
 - Verify the import path in the main controller
 - Ensure the resource file was generated correctly
 
