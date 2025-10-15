@@ -172,7 +172,6 @@ export class OpenAPIToConnector {
     return `${methodPrefix}_${pathSuffix}`;
   }
 
-
   /**
    * Get the number of operations in the OpenAPI spec
    */
@@ -213,30 +212,31 @@ export class OpenAPIToConnector {
       for (const paramInfo of pathParams) {
         params.push(`${paramInfo.name}: ${paramInfo.type}`);
       }
-      
+
       // Build options object for query params and body
       const optionProps: string[] = [];
-      
+
       // Add query parameters to options
       for (const prop of queryParams) {
         const optional = prop.required ? '' : '?';
         optionProps.push(`${prop.name}${optional}: ${prop.type}`);
       }
-      
+
       // Add request body properties directly (flattened)
       if (hasBody) {
         this.addRequestBodyProperties(operation.requestBody, optionProps);
       }
-      
+
       // Check if options parameter is required (has required query params or required body)
-      const hasRequiredNonPathParams = queryParams.some(p => p.required) || (hasBody && operation.requestBody?.required);
+      const hasRequiredNonPathParams =
+        queryParams.some((p) => p.required) || (hasBody && operation.requestBody?.required);
       const optionsRequired = hasRequiredNonPathParams ? '' : '?';
-      
+
       // Only add options parameter if there are actual options
       if (optionProps.length > 0) {
         params.push(`options${optionsRequired}: {${optionProps.join(', ')}}`);
       }
-      
+
       return `(${params.join(', ')})`;
     }
 
@@ -308,7 +308,7 @@ export class OpenAPIToConnector {
     if (hasBody) {
       this.addRequestBodyProperties(operation.requestBody, optionProps);
     }
-    
+
     // If there are too many parameters, use simplified signature to avoid parsing issues
     // Also check if any parameter name is too long (over 100 chars) which can cause issues
     const hasLongParamNames = optionProps.some((prop) => prop.length > 100);
@@ -344,21 +344,23 @@ export class OpenAPIToConnector {
    * Sanitize a name to be a valid TypeScript identifier
    */
   private sanitizeTypeName(name: string): string {
-    return name
-      // Replace dots with underscores
-      .replace(/\./g, '_')
-      // Replace + with _Plus (common in OpenAPI for enums)
-      .replace(/\+/g, '_Plus')
-      // Replace other invalid characters with underscores
-      .replace(/[^a-zA-Z0-9_$]/g, '_')
-      // Ensure it starts with a letter or underscore
-      .replace(/^[0-9]/, '_$&')
-      // Remove multiple consecutive underscores
-      .replace(/_+/g, '_')
-      // Remove trailing/leading underscores
-      .replace(/^_+|_+$/g, '')
+    return (
+      name
+        // Replace dots with underscores
+        .replace(/\./g, '_')
+        // Replace + with _Plus (common in OpenAPI for enums)
+        .replace(/\+/g, '_Plus')
+        // Replace other invalid characters with underscores
+        .replace(/[^a-zA-Z0-9_$]/g, '_')
+        // Ensure it starts with a letter or underscore
+        .replace(/^[0-9]/, '_$&')
+        // Remove multiple consecutive underscores
+        .replace(/_+/g, '_')
+        // Remove trailing/leading underscores
+        .replace(/^_+|_+$/g, '') ||
       // Ensure it's not empty
-      || 'UnknownType';
+      'UnknownType'
+    );
   }
 
   /**
@@ -384,20 +386,21 @@ export class OpenAPIToConnector {
     // Handle objects with properties
     if (schema.type === 'object' && schema.properties) {
       const propNames = Object.keys(schema.properties);
-      
+
       // For response objects, generate inline type definitions
-      if (propNames.length <= 5) { // Reasonable limit for inline types
+      if (propNames.length <= 5) {
+        // Reasonable limit for inline types
         const propTypes = Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
           const propType = this.getTypeFromSchema(prop);
           return `${key}: ${propType}`;
         });
         return `{${propTypes.join('; ')}}`;
       }
-      
+
       // For complex objects, return a generic object type
       return 'any';
     }
-    
+
     // Handle other primitive types
     if (schema.type) {
       switch (schema.type) {
@@ -440,7 +443,7 @@ export class OpenAPIToConnector {
       if (requestBody.content['application/json']?.schema) {
         return this.getTypeFromSchema(requestBody.content['application/json'].schema);
       }
-      
+
       // Fall back to first available content type
       const firstContentType = Object.keys(requestBody.content)[0];
       if (requestBody.content[firstContentType]?.schema) {
@@ -458,7 +461,7 @@ export class OpenAPIToConnector {
     if (!requestBody) return;
 
     let schema: any = null;
-    
+
     // Get the schema from the request body
     if (requestBody.content) {
       // Prefer application/json
@@ -493,15 +496,16 @@ export class OpenAPIToConnector {
     if (schema.properties) {
       for (const [propName, propSchema] of Object.entries(schema.properties)) {
         const propType = this.getTypeFromSchema(propSchema as any);
-        const required = (schema.required && schema.required.includes(propName)) || (requestBody.required);
+        const required = (schema.required && schema.required.includes(propName)) || requestBody.required;
         const optional = required ? '' : '?';
-        
+
         // Add description as comment if available
         const description = (propSchema as any)?.description;
         if (description) {
           // Clean up description for inline use
           const cleanDesc = description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-          if (cleanDesc.length < 100) { // Only add short descriptions inline
+          if (cleanDesc.length < 100) {
+            // Only add short descriptions inline
             optionProps.push(`${propName}${optional}: ${propType} /** ${cleanDesc} */`);
           } else {
             optionProps.push(`${propName}${optional}: ${propType}`);
@@ -533,7 +537,7 @@ export class OpenAPIToConnector {
           if (response.content['application/json']?.schema) {
             return this.getTypeFromSchema(response.content['application/json'].schema);
           }
-          
+
           // Fall back to first available content type
           const firstContentType = Object.keys(response.content)[0];
           if (response.content[firstContentType]?.schema) {
@@ -565,7 +569,7 @@ export class OpenAPIToConnector {
     const pathParams: string[] = [];
     const queryParams: string[] = [];
     const hasBody = !!operation.requestBody;
-    
+
     // Check if method has any options (query params, body, or headers)
     const hasOptions = queryParams.length > 0 || hasBody;
 
@@ -579,7 +583,7 @@ export class OpenAPIToConnector {
         }
       });
     }
-    
+
     // Update hasOptions after we know about query params
     const actuallyHasOptions = queryParams.length > 0 || hasBody;
 
@@ -693,14 +697,12 @@ export class OpenAPIToConnector {
         }
         lines.push('');
       }
-
     }
     // Make the API call
     lines.push(`    return this.api.fetch(url, fetchOptions);`);
 
     return lines.join('\n');
   }
-
 
   /**
    * Generate method implementation for resource functions (using this.api instead of this.controller)
@@ -725,7 +727,7 @@ export class OpenAPIToConnector {
 
     // Extract path parameters as discrete parameters when no query params or body
     const isSimple = queryParams.length === 0 && !hasBody;
-    
+
     if (isSimple && pathParams.length > 0) {
       // Handle path parameters as discrete function parameters
       lines.push(`  let url = '${url}';`);
@@ -807,31 +809,34 @@ export class OpenAPIToConnector {
   /**
    * Generate exposed resource methods for API introspection
    */
-  generateExposedResourceMethods(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
+  generateExposedResourceMethods(
+    resources: Array<{className: string; fileName: string}>,
+    resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>
+  ): string {
     const methods: string[] = [];
 
     for (const resource of resources) {
       const resourceName = resource.fileName;
-      
+
       // Find the corresponding spec for this resource
-      const resourceSpec = resourceSpecs?.find(rs => rs.fileName === resourceName);
-      
+      const resourceSpec = resourceSpecs?.find((rs) => rs.fileName === resourceName);
+
       if (resourceSpec) {
         // Create a temporary generator for this resource's spec
         const resourceGenerator = new OpenAPIToConnector(resourceSpec.spec, resourceName);
         const operations = resourceGenerator.extractOperations();
-        
+
         for (const operation of operations) {
           const methodName = resourceGenerator.generateMethodName(operation);
           const jsdoc = resourceGenerator.generateDetailedJSDoc(operation);
           const signature = resourceGenerator.generateMethodSignature(operation);
-          
+
           // Generate the exposed method that delegates to the resource
           const exposedMethodName = `${resourceName}${methodName.charAt(0).toUpperCase() + methodName.slice(1)}`;
-          
+
           // Generate parameter call based on operation details
           const parameterCall = this.generateParameterCallForOperation(operation, signature);
-          
+
           methods.push(`  /**
 ${jsdoc}
    */
@@ -839,7 +844,7 @@ ${jsdoc}
     return this.${resourceName}.${methodName}(${parameterCall});
   }`);
         }
-      } 
+      }
     }
 
     return methods.join('\n\n');
@@ -869,15 +874,18 @@ ${jsdoc}
     // Extract parameter names from controller signature
     const paramMatch = signature.match(/\(([^)]+)\)/);
     if (!paramMatch || paramMatch[1].trim() === '') return '';
-    
-    const allParams = paramMatch[1].split(',').map(p => {
-      const paramName = p.trim().split(':')[0].trim();
-      return paramName.replace(/[?]/g, '');
-    }).filter(p => p.length > 0);
-    
+
+    const allParams = paramMatch[1]
+      .split(',')
+      .map((p) => {
+        const paramName = p.trim().split(':')[0].trim();
+        return paramName.replace(/[?]/g, '');
+      })
+      .filter((p) => p.length > 0);
+
     // Check if signature actually has options parameter
     const hasOptionsParam = allParams.includes('options');
-    
+
     // Always extract path parameters as discrete parameters when they exist
     if (pathParams.length > 0) {
       // Path parameters are discrete, options is the last parameter (if it exists)
@@ -912,20 +920,22 @@ ${jsdoc}
         const propType = this.getTypeFromSchema(propSchema as any);
         const required = schema.required && schema.required.includes(propName);
         const optional = required ? '' : '?';
-        
+
         // Add description as comment if available
         const description = (propSchema as any)?.description;
         if (description) {
           lines.push(`  /** ${description} */`);
         }
-        
+
         lines.push(`  ${propName}${optional}: ${propType};`);
       }
     }
 
     // Handle allOf, oneOf, anyOf
     if (schema.allOf) {
-      lines.push(`  // Inherits from: ${schema.allOf.map((s: any) => s.$ref ? this.resolveSchemaRef(s.$ref) : 'unknown').join(', ')}`);
+      lines.push(
+        `  // Inherits from: ${schema.allOf.map((s: any) => (s.$ref ? this.resolveSchemaRef(s.$ref) : 'unknown')).join(', ')}`
+      );
     }
 
     lines.push('}');
@@ -966,12 +976,12 @@ ${jsdoc}
   private generateDetailedJSDoc(operation: OperationInfo): string {
     const lines: string[] = [];
     lines.push(` * ${operation.summary || operation.operationId || 'API Operation'}`);
-    
+
     if (operation.description) {
       lines.push(' *');
       // Split long descriptions into multiple lines
       const descLines = operation.description.split('\n');
-      descLines.forEach(line => {
+      descLines.forEach((line) => {
         lines.push(` * ${line}`);
       });
     }
@@ -981,7 +991,7 @@ ${jsdoc}
     // Document path parameters with details
     const pathParams: any[] = [];
     const queryParams: any[] = [];
-    
+
     if (operation.parameters) {
       for (const param of operation.parameters) {
         if (typeof param === 'object' && 'name' in param && 'in' in param) {
@@ -995,7 +1005,7 @@ ${jsdoc}
     }
 
     // Document discrete path parameters
-    pathParams.forEach(param => {
+    pathParams.forEach((param) => {
       const paramType = this.getParameterType(param);
       const paramDesc = param.description || '';
       lines.push(` * @param {${paramType}} ${param.name} ${paramDesc}`);
@@ -1004,9 +1014,9 @@ ${jsdoc}
     // Document options parameter with detailed schema information
     if (queryParams.length > 0 || operation.requestBody) {
       lines.push(' * @param {Object} options - Request options');
-      
+
       // Document query parameters
-      queryParams.forEach(param => {
+      queryParams.forEach((param) => {
         const paramType = this.getParameterType(param);
         const paramDesc = param.description || '';
         const required = param.required ? '(required)' : '(optional)';
@@ -1025,7 +1035,7 @@ ${jsdoc}
     lines.push(' *');
     const returnType = this.getResponseType(operation);
     lines.push(` * @returns {Promise<${returnType}>} ${operation.method.toUpperCase()} ${operation.path} response`);
-    
+
     // Add detailed schema information for the return type
     this.addSchemaDetails(lines, returnType, 'response');
 
@@ -1039,7 +1049,7 @@ ${jsdoc}
     if (!requestBody) return;
 
     let schema: any = null;
-    
+
     // Get the schema from the request body
     if (requestBody.content) {
       if (requestBody.content['application/json']?.schema) {
@@ -1051,9 +1061,9 @@ ${jsdoc}
         }
       }
     }
-    
+
     if (!schema) return;
-    
+
     // Handle $ref in schema
     if (schema.$ref) {
       const refType = this.resolveSchemaRef(schema.$ref);
@@ -1069,15 +1079,15 @@ ${jsdoc}
         return;
       }
     }
-    
+
     // Document individual properties from the body schema
     if (schema.properties) {
       for (const [propName, propSchema] of Object.entries(schema.properties)) {
         const propType = this.getTypeFromSchema(propSchema as any);
-        const propRequired = (schema.required && schema.required.includes(propName)) || (requestBody.required);
+        const propRequired = (schema.required && schema.required.includes(propName)) || requestBody.required;
         const requiredText = propRequired ? '(required)' : '(optional)';
         const propDesc = (propSchema as any)?.description || '';
-        
+
         lines.push(` * @param {${propType}} options.${propName} ${requiredText} - ${propDesc} [body property]`);
       }
     } else {
@@ -1096,7 +1106,7 @@ ${jsdoc}
     // Remove array notation to get base type
     const baseType = typeName.replace(/\[\]$/, '');
     const isArray = typeName.endsWith('[]');
-    
+
     if (['string', 'number', 'boolean', 'any'].includes(baseType)) {
       return; // Skip primitive types
     }
@@ -1117,23 +1127,23 @@ ${jsdoc}
 
     lines.push(' *');
     lines.push(` * ${context}${isArray ? '[]' : ''} fields:`);
-    
+
     const maxFields = 10; // Limit to avoid too much clutter
     const properties = Object.entries(schema.properties).slice(0, maxFields);
-    
+
     for (const [propName, propSchema] of properties) {
       const propType = this.getTypeFromSchema(propSchema as any);
       const required = schema.required && schema.required.includes(propName);
       const requiredText = required ? '' : '?';
       const description = (propSchema as any)?.description;
-      
+
       if (description) {
         lines.push(` * - ${propName}${requiredText}: ${propType} - ${description}`);
       } else {
         lines.push(` * - ${propName}${requiredText}: ${propType}`);
       }
     }
-    
+
     const totalFields = Object.keys(schema.properties).length;
     if (totalFields > maxFields) {
       lines.push(` * - ... and ${totalFields - maxFields} more fields`);
@@ -1177,7 +1187,7 @@ ${jsdoc}
    */
   private collectTypesFromRequestBody(requestBody: any, usedTypes: Set<string>, visitedSchemas: Set<string>): void {
     if (!requestBody || !requestBody.content) return;
-    
+
     // Check all content types
     for (const contentType of Object.keys(requestBody.content)) {
       const content = requestBody.content[contentType];
@@ -1192,7 +1202,7 @@ ${jsdoc}
    */
   private collectTypesFromResponses(responses: any, usedTypes: Set<string>, visitedSchemas: Set<string>): void {
     if (!responses) return;
-    
+
     // Check success responses
     const successCodes = ['200', '201', '202', '204'];
     for (const code of successCodes) {
@@ -1219,11 +1229,11 @@ ${jsdoc}
       const parts = schema.$ref.split('/');
       const originalSchemaName = parts[parts.length - 1];
       const sanitizedRefType = this.resolveSchemaRef(schema.$ref);
-      
+
       if (sanitizedRefType !== 'any' && !['string', 'number', 'boolean'].includes(sanitizedRefType)) {
         // Add the sanitized type name to used types
         usedTypes.add(sanitizedRefType);
-        
+
         // Only recurse if we haven't visited this schema before (use original name for lookup)
         if (!visitedSchemas.has(originalSchemaName)) {
           visitedSchemas.add(originalSchemaName);
@@ -1294,7 +1304,7 @@ ${jsdoc}
     }
 
     const resourceName = className.replace('Resource', '').toLowerCase();
-    
+
     const functions = operations
       .map((operation) => {
         const methodName = this.generateMethodName(operation);
@@ -1320,17 +1330,19 @@ ${functions}`;
   /**
    * Generate a main controller that composes multiple resources using function binding
    */
-  generateMainController(resources: Array<{className: string; fileName: string}>, resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>): string {
+  generateMainController(
+    resources: Array<{className: string; fileName: string}>,
+    resourceSpecs?: Array<{fileName: string; spec: OpenAPIV3.Document}>
+  ): string {
     // Get base URL from servers if available
-    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
+    const baseUrl =
+      this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
 
     const imports = resources
       .map((resource) => `import * as ${resource.fileName}Functions from '../resources/${resource.fileName}.mjs';`)
       .join('\n');
 
-    const properties = resources
-      .map((resource) => `  ${resource.fileName}: any = {};`)
-      .join('\n');
+    const properties = resources.map((resource) => `  ${resource.fileName}: any = {};`).join('\n');
 
     const bindings = resources
       .map((resource) => `    this.bindResourceFunctions('${resource.fileName}', ${resource.fileName}Functions);`)
@@ -1407,11 +1419,12 @@ ${exposedMethods}
       .join('\n\n');
 
     // Get base URL from servers if available
-    const baseUrl = this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
+    const baseUrl =
+      this.spec.servers && this.spec.servers.length > 0 ? this.spec.servers[0].url : 'https://api.example.com';
 
     // Generate TypeScript interfaces
     const interfaces = this.generateAllInterfaces();
-    
+
     // Generate type imports
     const typeImports = this.generateTypeImports();
 

@@ -228,7 +228,7 @@ ${nextSteps}`);
       }
     } catch (error) {
       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
-      
+
       // Clean up on error (only if we created a project directory)
       if (!options.controllerOnly) {
         const target = `${process.cwd()}/${name}`;
@@ -236,7 +236,7 @@ ${nextSteps}`);
           fs.rmSync(target, {recursive: true, force: true});
         }
       }
-      
+
       process.exit(1);
     }
   });
@@ -396,7 +396,9 @@ program
 
     const controllerPath = `${target}/src/controller/index.mts`;
     if (!fs.existsSync(controllerPath)) {
-      throw new Error(`Controller file not found: ${controllerPath}. This might not be a multi-resource connector project.`);
+      throw new Error(
+        `Controller file not found: ${controllerPath}. This might not be a multi-resource connector project.`
+      );
     }
 
     try {
@@ -419,7 +421,7 @@ program
       // Update the main controller to include the new resource
       console.log('Updating main controller...');
       let controllerContent = fs.readFileSync(controllerPath, 'utf-8');
-      
+
       // Add import
       const importStatement = `import * as ${fileName}Functions from '../resources/${fileName}.mjs';`;
       if (!controllerContent.includes(importStatement)) {
@@ -434,7 +436,7 @@ program
           controllerContent = `${importStatement}\n\n${controllerContent}`;
         }
       }
-      
+
       // Add property declaration
       const propertyDeclaration = `  ${fileName}: any = {};`;
       if (!controllerContent.includes(propertyDeclaration)) {
@@ -452,7 +454,7 @@ program
           );
         }
       }
-      
+
       // Add binding in start() method
       const bindingStatement = `    this.bindResourceFunctions('${fileName}', ${fileName}Functions);`;
       if (!controllerContent.includes(bindingStatement)) {
@@ -464,7 +466,7 @@ program
           controllerContent = controllerContent.replace(lastBinding, `${lastBinding}\n${bindingStatement}`);
         }
       }
-      
+
       // Write the updated controller
       fs.writeFileSync(controllerPath, controllerContent);
 
@@ -472,11 +474,11 @@ program
       console.log('Generating exposed methods for the new resource...');
       const resources = [{className: options.className, fileName}];
       const resourceSpecs = [{fileName, spec}];
-      
+
       // Create a temporary generator to generate just the exposed methods for this resource
       const tempGenerator = new OpenAPIToConnector(spec, 'temp');
       const exposedMethods = tempGenerator.generateExposedResourceMethods(resources, resourceSpecs);
-      
+
       // Add the exposed methods to the controller before the closing brace
       if (exposedMethods.trim()) {
         controllerContent = fs.readFileSync(controllerPath, 'utf-8');
