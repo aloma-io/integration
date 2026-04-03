@@ -28,11 +28,16 @@
     "@types/node": "^20",
     "commander": "^12",
     "jshint": "^2",
+    "lodash": "4.18.0",
     "typescript": "^5",
     "yaml": "^2"
   },
   "devDependencies": {
     "mocha": "^10",
     "prettier": "^3"
+  },
+  "resolutions": {
+    "lodash": "4.18.0",
+    "brace-expansion": "1.1.13"
   }
 }
