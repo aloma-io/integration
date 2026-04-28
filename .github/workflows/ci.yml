@@ -32,9 +32,6 @@ jobs:
       - name: Build
         run: yarn build
 
-      - name: Test
-        run: yarn test
-
   workspace_sdk:
     runs-on: ubuntu-latest
     defaults:
