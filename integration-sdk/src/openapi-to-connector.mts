@@ -197,7 +197,9 @@ export class OpenAPIToConnector {
       // Extract the last part after underscore if it exists
       const parts = cleaned.split('_');
       if (parts.length > 1) {
-        const lastPart = parts[parts.length - 1];
+        let lastPart = parts[parts.length - 1];
+        // Convert hyphens to camelCase before testing
+        lastPart = lastPart.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
         // If the last part looks like a method name (camelCase), use it
         if (lastPart && /^[a-z][a-zA-Z0-9]*$/.test(lastPart)) {
           cleaned = lastPart;
@@ -244,7 +246,7 @@ export class OpenAPIToConnector {
 
     // Use the last path segment before the method name as a distinguishing prefix
     if (pathParts.length > 0) {
-      const prefix = pathParts[pathParts.length - 1];
+      const prefix = pathParts[pathParts.length - 1].replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
       const capitalizedBase = baseName.charAt(0).toUpperCase() + baseName.slice(1);
       return `${prefix}${capitalizedBase}`;
     }
