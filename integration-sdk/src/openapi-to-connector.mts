@@ -37,13 +37,51 @@ interface OperationInfo {
   responses?: any;
 }
 
+export interface OpenAPIToConnectorOptions {
+  nestedPaths?: boolean;
+}
+
 export class OpenAPIToConnector {
   private spec: OpenAPIV3.Document;
   private connectorName: string;
+  private options: OpenAPIToConnectorOptions;
 
-  constructor(spec: OpenAPIV3.Document, connectorName: string) {
+  constructor(spec: OpenAPIV3.Document, connectorName: string, options?: OpenAPIToConnectorOptions) {
     this.spec = spec;
     this.connectorName = connectorName;
+    this.options = options || {};
+  }
+
+  /**
+   * Derive a dotted method path from URL path and operationId.
+   * When nestedPaths is enabled, builds a namespace from the URL segments.
+   * When disabled (default), falls back to the existing flat method name.
+   */
+  deriveMethodPath(httpMethod: string, urlPath: string, operationId: string): string {
+    if (!this.options.nestedPaths) {
+      return this.generateMethodName({method: httpMethod, path: urlPath, operationId});
+    }
+
+    const VERSION_RE = /^v\d+$/;
+    const STRIP = new Set(['objects', 'items']);
+
+    // Build namespace parts from the URL path
+    const parts = urlPath
+      .replace(/\{[^}]+\}/g, '')
+      .split('/')
+      .filter(Boolean)
+      .filter((p) => !VERSION_RE.test(p))
+      .filter((p) => !STRIP.has(p));
+
+    // Extract the leaf action from operationId suffix
+    const suffix = operationId.includes('_')
+      ? operationId.split('_').pop()!
+      : httpMethod.toLowerCase();
+
+    // Dedup: if suffix equals last path segment, don't repeat it
+    const last = parts[parts.length - 1];
+    if (suffix === last) return parts.join('.');
+    return [...parts, suffix].join('.');
   }
 
   /**
@@ -823,7 +861,7 @@ export class OpenAPIToConnector {
 
       if (resourceSpec) {
         // Create a temporary generator for this resource's spec
-        const resourceGenerator = new OpenAPIToConnector(resourceSpec.spec, resourceName);
+        const resourceGenerator = new OpenAPIToConnector(resourceSpec.spec, resourceName, this.options);
         const operations = resourceGenerator.extractOperations();
 
         for (const operation of operations) {
@@ -832,15 +870,30 @@ export class OpenAPIToConnector {
           const signature = resourceGenerator.generateMethodSignature(operation);
 
           // Generate the exposed method that delegates to the resource
-          const exposedMethodName = `${resourceName}${methodName.charAt(0).toUpperCase() + methodName.slice(1)}`;
+          let exposedMethodName: string;
+          if (this.options.nestedPaths && operation.operationId) {
+            // Use dotted path for nested method names
+            exposedMethodName = resourceGenerator.deriveMethodPath(
+              operation.method,
+              operation.path,
+              operation.operationId
+            );
+          } else {
+            exposedMethodName = `${resourceName}${methodName.charAt(0).toUpperCase() + methodName.slice(1)}`;
+          }
 
           // Generate parameter call based on operation details
           const parameterCall = this.generateParameterCallForOperation(operation, signature);
 
+          // Use quoted method name if it contains dots
+          const methodDecl = exposedMethodName.includes('.')
+            ? `'${exposedMethodName}'`
+            : exposedMethodName;
+
           methods.push(`  /**
 ${jsdoc}
    */
-  async ${exposedMethodName}${signature} {
+  async ${methodDecl}${signature} {
     return this.${resourceName}.${methodName}(${parameterCall});
   }`);
         }
@@ -1409,12 +1462,19 @@ ${exposedMethods}
 
     const methods = operations
       .map((operation) => {
-        const methodName = this.generateMethodName(operation);
+        let methodName: string;
+        if (this.options.nestedPaths && operation.operationId) {
+          methodName = this.deriveMethodPath(operation.method, operation.path, operation.operationId);
+        } else {
+          methodName = this.generateMethodName(operation);
+        }
         const jsdoc = this.generateDetailedJSDoc(operation); // Use detailed JSDoc like multi-resource
         const signature = this.generateMethodSignature(operation);
         const implementation = this.generateControllerMethodImplementation(operation); // Use improved implementation
 
-        return `  /**\n${jsdoc}\n   */\n  async ${methodName}${signature} {\n${implementation}\n  }`;
+        // Use quoted method name if it contains dots
+        const methodDecl = methodName.includes('.') ? `'${methodName}'` : methodName;
+        return `  /**\n${jsdoc}\n   */\n  async ${methodDecl}${signature} {\n${implementation}\n  }`;
       })
       .join('\n\n');
 

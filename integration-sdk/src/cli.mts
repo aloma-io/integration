@@ -145,6 +145,7 @@ program
   )
   .option('--multi-resource', 'Generate multiple resource files + main controller (requires multiple --spec files)')
   .option('--controller-only', 'Generate only the controller file, do not create full project structure')
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
     name = name.replace(/[\/\.]/gi, '');
@@ -156,7 +157,8 @@ program
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
       // Generate the controller from OpenAPI spec
-      const generator = new OpenAPIToConnector(spec, name);
+      const generatorOptions = {nestedPaths: !!options.nestedPaths};
+      const generator = new OpenAPIToConnector(spec, name, generatorOptions);
       let controllerCode: string;
 
       if (options.resource) {
@@ -278,12 +280,14 @@ program
     'comma-separated list of "className:specFile" pairs (e.g., "CompaniesResource:companies.json,ContactsResource:contacts.json")'
   )
   .option('--base-url <url>', 'base URL for the API (if not specified, will be extracted from first OpenAPI spec)')
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
     name = name.replace(/[\/\.]/gi, '');
     if (!name) throw new Error('name is empty');
 
     const target = `${process.cwd()}/${name}`;
+    const generatorOptions = {nestedPaths: !!options.nestedPaths};
 
     try {
       // Parse resources specification
@@ -319,7 +323,7 @@ program
         }
 
         // Generate the resource class
-        const generator = new OpenAPIToConnector(spec, name);
+        const generator = new OpenAPIToConnector(spec, name, generatorOptions);
         const resourceCode = generator.generateResourceClass(className);
 
         // Write the resource file
@@ -335,7 +339,7 @@ program
       // Generate the main controller
       console.log('Generating main controller...');
       const firstSpec = OpenAPIToConnector.parseSpec(fs.readFileSync(resourceSpecs[0].specFile, 'utf-8'));
-      const mainGenerator = new OpenAPIToConnector(firstSpec, name);
+      const mainGenerator = new OpenAPIToConnector(firstSpec, name, generatorOptions);
       const mainControllerCode = mainGenerator.generateMainController(resources, parsedResourceSpecs);
 
       // Write the main controller
@@ -386,6 +390,7 @@ program
   .argument('<projectPath>', 'path to the existing connector project')
   .requiredOption('--className <name>', 'class name for the resource (e.g., DealsResource)')
   .requiredOption('--spec <file>', 'OpenAPI specification file for the new resource')
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
   .option('--no-build', 'Skip building the project after adding the resource')
   .action(async (projectPath, options) => {
     const target = path.resolve(projectPath);
@@ -409,7 +414,8 @@ program
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
       // Generate the resource functions file (new function-based pattern)
-      const generator = new OpenAPIToConnector(spec, 'Resource');
+      const generatorOptions = {nestedPaths: !!options.nestedPaths};
+      const generator = new OpenAPIToConnector(spec, 'Resource', generatorOptions);
       const resourceCode = generator.generateResourceClass(options.className);
 
       // Write the resource file
@@ -476,7 +482,7 @@ program
       const resourceSpecs = [{fileName, spec}];
 
       // Create a temporary generator to generate just the exposed methods for this resource
-      const tempGenerator = new OpenAPIToConnector(spec, 'temp');
+      const tempGenerator = new OpenAPIToConnector(spec, 'temp', generatorOptions);
       const exposedMethods = tempGenerator.generateExposedResourceMethods(resources, resourceSpecs);
 
       // Add the exposed methods to the controller before the closing brace
