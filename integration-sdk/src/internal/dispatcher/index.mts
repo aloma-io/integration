@@ -172,10 +172,12 @@ ${arg.configurableClientScope}
         )
         .slice(0, 20);
 
-      const method = resolveMethod(query);
-      if (!method && !_resolvers.__default) throw new Error(`${query} not found`);
+      const originalQuery = [...query];
 
-      return method ? method(variables) : _resolvers.__default(variables ? {...variables, __method: query} : variables);
+      const method = resolveMethod(query);
+      if (!method && !_resolvers.__default) throw new Error(`${originalQuery} not found`);
+
+      return method ? method(variables) : _resolvers.__default(variables ? {...variables, __method: originalQuery} : variables);
     };
 
     const introspect = () => local._types;
