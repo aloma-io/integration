@@ -1,5 +1,12 @@
 import {parseFromFiles} from '@ts-ast-parser/core';
 
+function stripQuotes(name: string): string {
+  if ((name.startsWith("'") && name.endsWith("'")) || (name.startsWith('"') && name.endsWith('"'))) {
+    return name.slice(1, -1);
+  }
+  return name;
+}
+
 const transform = (meta: any) => {
   if (!meta?.length) throw new Error('metadata is empty');
   meta = meta[0];
@@ -17,13 +24,14 @@ const transform = (meta: any) => {
       member.isInherited() ||
       member.getKind() !== 'Method' ||
       member.getModifier() !== 'public' ||
-      member.getName().startsWith('_')
+      stripQuotes(member.getName()).startsWith('_')
     );
   });
 
   const text = members
     .map((member: any) => {
-      methods[member.getName()] = true;
+      const methodName = stripQuotes(member.getName());
+      methods[methodName] = true;
 
       return member
         .getSignatures()
@@ -85,7 +93,7 @@ const transform = (meta: any) => {
  * ${space || ''}
  * ${eg || ''}
  **/    
-declare function ${member.getName()}(${params}): ${retVal};
+declare function ${methodName}(${params}): ${retVal};
       `;
         })
         .join('\n');

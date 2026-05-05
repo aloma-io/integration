@@ -62,8 +62,12 @@ export class OpenAPIToConnector {
       return this.generateMethodName({method: httpMethod, path: urlPath, operationId});
     }
 
-    const VERSION_RE = /^v\d+$/;
+    const VERSION_RE = /^v\d+$|^\d{4}-\d{2}$/;
     const STRIP = new Set(['objects', 'items']);
+
+    // Convert hyphenated segment to camelCase identifier
+    const toCamel = (s: string): string =>
+      s.replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase());
 
     // Build namespace parts from the URL path
     const parts = urlPath
@@ -71,7 +75,8 @@ export class OpenAPIToConnector {
       .split('/')
       .filter(Boolean)
       .filter((p) => !VERSION_RE.test(p))
-      .filter((p) => !STRIP.has(p));
+      .filter((p) => !STRIP.has(p))
+      .map(toCamel);
 
     // Extract the leaf action from operationId suffix
     let suffix = operationId.includes('_')
@@ -86,9 +91,11 @@ export class OpenAPIToConnector {
         .split('/')
         .filter(Boolean)
         .filter((p) => !VERSION_RE.test(p))
-        .filter((p) => !STRIP.has(p));
-      // Use the last meaningful segment from the URL-like suffix, or fall back to HTTP method
+        .filter((p) => !STRIP.has(p))
+        .map(toCamel);
       suffix = suffixParts.length > 0 ? suffixParts[suffixParts.length - 1] : httpMethod.toLowerCase();
+    } else {
+      suffix = toCamel(suffix);
     }
 
     // Dedup: if suffix equals last path segment, don't repeat it
