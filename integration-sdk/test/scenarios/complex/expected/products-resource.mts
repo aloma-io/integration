@@ -98,7 +98,7 @@ export function getProducts(this: any, options?: {limit?: number, category?: str
     fetchOptions.params.archived = options.archived;
   }
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -138,7 +138,7 @@ export function createProduct(this: any, options: {name: string /** Product name
     headers: options.headers,
   };
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -169,7 +169,6 @@ export function getProduct(this: any, productId: string) {
   return this.api.fetch(url, {
     method: 'GET',
   });
-    return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -215,7 +214,7 @@ export function updateProduct(this: any, productId: string, options: {name: stri
     headers: options.headers,
   };
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -235,5 +234,4 @@ export function deleteProduct(this: any, productId: string) {
   return this.api.fetch(url, {
     method: 'DELETE',
   });
-    return this.api.fetch(url, fetchOptions);
 }

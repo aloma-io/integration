@@ -117,7 +117,7 @@ export function getOrders(this: any, options?: {status?: string, customerId?: st
     fetchOptions.params.limit = options.limit;
   }
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -156,7 +156,7 @@ export function createOrder(this: any, options: {customerId: string /** Customer
     headers: options.headers,
   };
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -187,7 +187,6 @@ export function getOrder(this: any, orderId: string) {
   return this.api.fetch(url, {
     method: 'GET',
   });
-    return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -229,7 +228,7 @@ export function updateOrderStatus(this: any, orderId: string, options: {status: 
     headers: options.headers,
   };
 
-    return this.api.fetch(url, fetchOptions);
+  return this.api.fetch(url, fetchOptions);
 }
 
 /**
@@ -260,5 +259,4 @@ export function cancelOrder(this: any, orderId: string) {
   return this.api.fetch(url, {
     method: 'POST',
   });
-    return this.api.fetch(url, fetchOptions);
 }

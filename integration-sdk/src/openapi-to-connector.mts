@@ -74,9 +74,22 @@ export class OpenAPIToConnector {
       .filter((p) => !STRIP.has(p));
 
     // Extract the leaf action from operationId suffix
-    const suffix = operationId.includes('_')
+    let suffix = operationId.includes('_')
       ? operationId.split('_').pop()!
       : httpMethod.toLowerCase();
+
+    // Bug 3 fix: If the suffix looks like a raw URL path (contains slashes),
+    // clean it by extracting meaningful segments rather than using it literally
+    if (suffix.includes('/')) {
+      const suffixParts = suffix
+        .replace(/\{[^}]+\}/g, '')
+        .split('/')
+        .filter(Boolean)
+        .filter((p) => !VERSION_RE.test(p))
+        .filter((p) => !STRIP.has(p));
+      // Use the last meaningful segment from the URL-like suffix, or fall back to HTTP method
+      suffix = suffixParts.length > 0 ? suffixParts[suffixParts.length - 1] : httpMethod.toLowerCase();
+    }
 
     // Dedup: if suffix equals last path segment, don't repeat it
     const last = parts[parts.length - 1];
@@ -208,6 +221,29 @@ export class OpenAPIToConnector {
     const pathSuffix = pathParts.join('_') || 'root';
 
     return `${methodPrefix}_${pathSuffix}`;
+  }
+
+  /**
+   * Disambiguate a colliding method name by prepending path context.
+   * E.g., "archive" from path "/contacts/batch/archive" becomes "batchArchive".
+   */
+  private disambiguateMethodName(baseName: string, operation: OperationInfo): string {
+    // Extract meaningful path segments excluding parameters and the base name itself
+    const pathParts = operation.path
+      .replace(/\{[^}]+\}/g, '')
+      .split('/')
+      .filter(Boolean)
+      .filter((p) => p.toLowerCase() !== baseName.toLowerCase());
+
+    // Use the last path segment before the method name as a distinguishing prefix
+    if (pathParts.length > 0) {
+      const prefix = pathParts[pathParts.length - 1];
+      const capitalizedBase = baseName.charAt(0).toUpperCase() + baseName.slice(1);
+      return `${prefix}${capitalizedBase}`;
+    }
+
+    // Fallback: prepend the HTTP method
+    return `${operation.method.toLowerCase()}${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
   }
 
   /**
@@ -837,9 +873,10 @@ export class OpenAPIToConnector {
         }
         lines.push('');
       }
+
+      // Make the API call
+      lines.push(`  return this.api.fetch(url, fetchOptions);`);
     }
-    // Make the API call
-    lines.push(`    return this.api.fetch(url, fetchOptions);`);
 
     return lines.join('\n');
   }
@@ -1358,9 +1395,24 @@ ${jsdoc}
 
     const resourceName = className.replace('Resource', '').toLowerCase();
 
+    // Bug 1 fix: Track used method names and disambiguate collisions
+    const usedNames = new Map<string, number>();
     const functions = operations
       .map((operation) => {
-        const methodName = this.generateMethodName(operation);
+        let methodName = this.generateMethodName(operation);
+
+        // Disambiguate duplicate names by prepending path context
+        if (usedNames.has(methodName)) {
+          methodName = this.disambiguateMethodName(methodName, operation);
+          // If still colliding after disambiguation, append a numeric suffix
+          if (usedNames.has(methodName)) {
+            const count = (usedNames.get(methodName) || 1) + 1;
+            usedNames.set(methodName, count);
+            methodName = `${methodName}${count}`;
+          }
+        }
+        usedNames.set(methodName, (usedNames.get(methodName) || 0) + 1);
+
         const jsdoc = this.generateDetailedJSDoc(operation);
         const signature = this.generateMethodSignature(operation);
         const implementation = this.generateResourceFunctionImplementation(operation);
@@ -1460,6 +1512,8 @@ ${exposedMethods}
       throw new Error('No operations found in OpenAPI specification');
     }
 
+    // Bug 1 fix: Track used method names and disambiguate collisions
+    const usedNames = new Map<string, number>();
     const methods = operations
       .map((operation) => {
         let methodName: string;
@@ -1468,6 +1522,18 @@ ${exposedMethods}
         } else {
           methodName = this.generateMethodName(operation);
         }
+
+        // Disambiguate duplicate names
+        if (usedNames.has(methodName)) {
+          methodName = this.disambiguateMethodName(methodName, operation);
+          if (usedNames.has(methodName)) {
+            const count = (usedNames.get(methodName) || 1) + 1;
+            usedNames.set(methodName, count);
+            methodName = `${methodName}${count}`;
+          }
+        }
+        usedNames.set(methodName, (usedNames.get(methodName) || 0) + 1);
+
         const jsdoc = this.generateDetailedJSDoc(operation); // Use detailed JSDoc like multi-resource
         const signature = this.generateMethodSignature(operation);
         const implementation = this.generateControllerMethodImplementation(operation); // Use improved implementation
