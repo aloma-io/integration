@@ -18,5 +18,8 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
       - run: yarn install --frozen-lockfile
+        working-directory: integration-sdk
       - run: yarn build
+        working-directory: integration-sdk
       - run: npm publish --provenance --access public
+        working-directory: integration-sdk
