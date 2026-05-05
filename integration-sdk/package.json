@@ -56,5 +56,14 @@
   },
   "resolutions": {
     "path-to-regexp": "0.1.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aloma-io/integration.git",
+    "directory": "integration-sdk"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
   }
 }
