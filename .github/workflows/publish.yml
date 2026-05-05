@@ -23,5 +23,3 @@ jobs:
         working-directory: integration-sdk
       - run: npm publish --provenance --access public
         working-directory: integration-sdk
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
