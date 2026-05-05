@@ -3,6 +3,43 @@ import {AbstractController} from '../controller/index.mjs';
 import {Connector} from '../internal/index.mjs';
 
 /**
+ * Build a resolvers object from a list of method names and a controller.
+ *
+ * If a method name contains dots (e.g. 'crm.contacts.create'), it is registered
+ * as a nested object tree so that resolveMethod(['crm', 'contacts', 'create'])
+ * finds the handler.
+ *
+ * If a method name has no dots (e.g. 'contactsCreate'), it is registered flat
+ * as before: resolvers.contactsCreate = handler.
+ */
+export function buildResolvers(methods: string[], controller: any): any {
+  const resolvers: any = {};
+
+  methods.forEach((method) => {
+    const handler = async (args: any) => {
+      if (!methods.includes(method)) throw new Error(`${method} not found`);
+      return controller[method](args);
+    };
+
+    if (method.includes('.')) {
+      const parts = method.split('.');
+      let node = resolvers;
+      for (let i = 0; i < parts.length - 1; i++) {
+        if (!node[parts[i]] || typeof node[parts[i]] !== 'object') {
+          node[parts[i]] = {};
+        }
+        node = node[parts[i]];
+      }
+      node[parts[parts.length - 1]] = handler;
+    } else {
+      resolvers[method] = handler;
+    }
+  });
+
+  return resolvers;
+}
+
+/**
  * Runtime context to manage the lifecycle of the connector
  */
 export default class RuntimeContext {
@@ -42,16 +79,8 @@ export default class RuntimeContext {
 
     const configuration = connector.configure().config(data.config || {});
 
-    const resolvers: any = {};
     const methods: string[] = [...data.methods, '__autocomplete', '__endpoint', '__default'];
-
-    methods.forEach((method) => {
-      resolvers[method] = async (args) => {
-        if (!methods.includes(method)) throw new Error(`${method} not found`);
-
-        return controller[method](args);
-      };
-    });
+    const resolvers = buildResolvers(methods, controller);
 
     configuration.types(data.types).resolvers(resolvers);
 
