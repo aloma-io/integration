@@ -23,7 +23,7 @@ export default class Controller extends AbstractController {
  *
  * @returns {Promise<any>} GET /products response
    */
-  async getProducts() {
+  async getProducts(options?: {headers?: Record<string, string>}) {
     const url = '/products';
 
     const fetchOptions: any = {
@@ -41,7 +41,7 @@ export default class Controller extends AbstractController {
  *
  * @returns {Promise<any>} POST /products response
    */
-  async createProduct(options: {body?: any}) {
+  async createProduct(options: {body?: any, headers?: Record<string, string>}) {
     options = options || {};
 
     const url = '/products';

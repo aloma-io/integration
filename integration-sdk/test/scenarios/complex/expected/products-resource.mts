@@ -76,7 +76,7 @@ export interface UpdateProductRequest {
  * - total?: number - Total number of products
  * - hasMore?: boolean - Whether there are more products available
  */
-export function getProducts(this: any, options?: {limit?: number, category?: string, archived?: boolean}) {
+export function getProducts(this: any, options?: {limit?: number, category?: string, archived?: boolean, headers?: Record<string, string>}) {
   options = options || {};
 
   const url = '/products';
@@ -124,7 +124,7 @@ export function getProducts(this: any, options?: {limit?: number, category?: str
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function createProduct(this: any, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */}) {
+export function createProduct(this: any, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
   options = options || {};
 
   const url = '/products';
@@ -160,7 +160,7 @@ export function createProduct(this: any, options: {name: string /** Product name
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function getProduct(this: any, productId: string) {
+export function getProduct(this: any, productId: string, options?: {headers?: Record<string, string>}) {
   let url = '/products/{productId}';
   if (productId) {
     url = url.replace('{productId}', productId);
@@ -196,7 +196,7 @@ export function getProduct(this: any, productId: string) {
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function updateProduct(this: any, productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */}) {
+export function updateProduct(this: any, productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
   options = options || {};
 
   // Build URL with path parameters
@@ -225,7 +225,7 @@ export function updateProduct(this: any, productId: string, options: {name: stri
  *
  * @returns {Promise<any>} DELETE /products/{productId} response
  */
-export function deleteProduct(this: any, productId: string) {
+export function deleteProduct(this: any, productId: string, options?: {headers?: Record<string, string>}) {
   let url = '/products/{productId}';
   if (productId) {
     url = url.replace('{productId}', productId);

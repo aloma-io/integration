@@ -95,7 +95,7 @@ export interface UpdateOrderStatusRequest {
  * - total?: number - Total number of orders
  * - hasMore?: boolean - Whether there are more orders available
  */
-export function getOrders(this: any, options?: {status?: string, customerId?: string, limit?: number}) {
+export function getOrders(this: any, options?: {status?: string, customerId?: string, limit?: number, headers?: Record<string, string>}) {
   options = options || {};
 
   const url = '/orders';
@@ -142,7 +142,7 @@ export function getOrders(this: any, options?: {status?: string, customerId?: st
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function createOrder(this: any, options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address}) {
+export function createOrder(this: any, options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address, headers?: Record<string, string>}) {
   options = options || {};
 
   const url = '/orders';
@@ -178,7 +178,7 @@ export function createOrder(this: any, options: {customerId: string /** Customer
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function getOrder(this: any, orderId: string) {
+export function getOrder(this: any, orderId: string, options?: {headers?: Record<string, string>}) {
   let url = '/orders/{orderId}';
   if (orderId) {
     url = url.replace('{orderId}', orderId);
@@ -210,7 +210,7 @@ export function getOrder(this: any, orderId: string) {
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function updateOrderStatus(this: any, orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status */})) {
+export function updateOrderStatus(this: any, orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status */, headers?: Record<string, string>})) {
   options = options || {};
 
   // Build URL with path parameters
@@ -250,7 +250,7 @@ export function updateOrderStatus(this: any, orderId: string, options: {status: 
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function cancelOrder(this: any, orderId: string) {
+export function cancelOrder(this: any, orderId: string, options?: {headers?: Record<string, string>}) {
   let url = '/orders/{orderId}/cancel';
   if (orderId) {
     url = url.replace('{orderId}', orderId);

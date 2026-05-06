@@ -58,7 +58,7 @@ export default class Controller extends AbstractController {
  * - total?: number - Total number of products
  * - hasMore?: boolean - Whether there are more products available
    */
-  async productsGetProducts(options?: {limit?: number, category?: string, archived?: boolean}) {
+  async productsGetProducts(options?: {limit?: number, category?: string, archived?: boolean, headers?: Record<string, string>}) {
     return this.products.getProducts(options);
   }
 
@@ -85,7 +85,7 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async productsCreateProduct(options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */}) {
+  async productsCreateProduct(options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
     return this.products.createProduct(options);
   }
 
@@ -108,8 +108,8 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async productsGetProduct(productId: string) {
-    return this.products.getProduct(productId);
+  async productsGetProduct(productId: string, options?: {headers?: Record<string, string>}) {
+    return this.products.getProduct(productId, options);
   }
 
   /**
@@ -137,7 +137,7 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async productsUpdateProduct(productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */}) {
+  async productsUpdateProduct(productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
     return this.products.updateProduct(productId, options);
   }
 
@@ -149,8 +149,8 @@ export default class Controller extends AbstractController {
  *
  * @returns {Promise<any>} DELETE /products/{productId} response
    */
-  async productsDeleteProduct(productId: string) {
-    return this.products.deleteProduct(productId);
+  async productsDeleteProduct(productId: string, options?: {headers?: Record<string, string>}) {
+    return this.products.deleteProduct(productId, options);
   }
 
   /**
@@ -168,7 +168,7 @@ export default class Controller extends AbstractController {
  * - total?: number - Total number of orders
  * - hasMore?: boolean - Whether there are more orders available
    */
-  async ordersGetOrders(options?: {status?: string, customerId?: string, limit?: number}) {
+  async ordersGetOrders(options?: {status?: string, customerId?: string, limit?: number, headers?: Record<string, string>}) {
     return this.orders.getOrders(options);
   }
 
@@ -194,7 +194,7 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async ordersCreateOrder(options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address}) {
+  async ordersCreateOrder(options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address, headers?: Record<string, string>}) {
     return this.orders.createOrder(options);
   }
 
@@ -217,8 +217,8 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async ordersGetOrder(orderId: string) {
-    return this.orders.getOrder(orderId);
+  async ordersGetOrder(orderId: string, options?: {headers?: Record<string, string>}) {
+    return this.orders.getOrder(orderId, options);
   }
 
   /**
@@ -242,7 +242,7 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async ordersUpdateOrderStatus(orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status) */}) {
+  async ordersUpdateOrderStatus(orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status) */, headers?: Record<string, string>}) {
     return this.orders.updateOrderStatus(orderId, options);
   }
 
@@ -265,7 +265,7 @@ export default class Controller extends AbstractController {
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
    */
-  async ordersCancelOrder(orderId: string) {
-    return this.orders.cancelOrder(orderId);
+  async ordersCancelOrder(orderId: string, options?: {headers?: Record<string, string>}) {
+    return this.orders.cancelOrder(orderId, options);
   }
 }

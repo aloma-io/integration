@@ -86,7 +86,7 @@ test('Simple Scenario - methods without options should be clean', () => {
   const generator = new OpenAPIToConnector(spec, 'simple-test');
   const actualOutput = generator.generateController();
   
-  expect(actualOutput).toInclude('async getProducts() {');
+  expect(actualOutput).toInclude('async getProducts(options?: {headers?: Record<string, string>}) {');
   expect(actualOutput).toInclude('async createProduct(options:');
 });
 
@@ -173,9 +173,9 @@ test('Path parameters and options should be handled correctly', () => {
   const generator = new OpenAPIToConnector(spec, 'test-shop');
   const actualOutput = generator.generateResourceClass('OrdersResource');
   
-  expect(actualOutput).toInclude('export function getOrder(this: any, orderId: string)');
+  expect(actualOutput).toInclude('export function getOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
   expect(actualOutput).toInclude('export function updateOrderStatus(this: any, orderId: string, options');
-  expect(actualOutput).toInclude('export function cancelOrder(this: any, orderId: string)');
+  expect(actualOutput).toInclude('export function cancelOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
 });
 
 // Test 8: Exposed Methods in Main Controller
@@ -279,7 +279,7 @@ test('Simple methods should not have options parameter', () => {
   const generator = new OpenAPIToConnector(simpleSpec, 'test');
   const output = generator.generateController();
   
-  expect(output).toInclude('async getSimple() {');
+  expect(output).toInclude('async getSimple(options?: {headers?: Record<string, string>}) {');
   expect(output).toNotInclude('options = options || {}');
   expect(output).toNotInclude('headers: options');
 });
