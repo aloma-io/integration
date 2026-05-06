@@ -485,16 +485,32 @@ program
       const tempGenerator = new OpenAPIToConnector(spec, 'temp', generatorOptions);
       const exposedMethods = tempGenerator.generateExposedResourceMethods(resources, resourceSpecs);
 
-      // Add the exposed methods to the controller before the closing brace
+      // Add the exposed methods to the controller, deduplicating by method name
       if (exposedMethods.trim()) {
         controllerContent = fs.readFileSync(controllerPath, 'utf-8');
-        // Find the last method and add the new exposed methods
-        const lastBrace = controllerContent.lastIndexOf('}');
-        if (lastBrace !== -1) {
-          const beforeBrace = controllerContent.substring(0, lastBrace);
-          const afterBrace = controllerContent.substring(lastBrace);
-          const updatedContent = `${beforeBrace}\n${exposedMethods}\n${afterBrace}`;
-          fs.writeFileSync(controllerPath, updatedContent);
+
+        // Extract existing method names from controller (async 'method.name' pattern)
+        const existingNames = new Set(
+          (controllerContent.match(/async\s+['"]([^'"]+)['"]\s*\(/g) || [])
+            .map(m => m.match(/['"]([^'"]+)['"]/)?.[1])
+            .filter(Boolean)
+        );
+
+        // Filter exposed methods to only include new ones
+        const methodBlocks = exposedMethods.split(/(?=\n  async ['"])/);
+        const newMethods = methodBlocks.filter(block => {
+          const nameMatch = block.match(/async\s+['"]([^'"]+)['"]\s*\(/);
+          return !nameMatch || !existingNames.has(nameMatch[1]);
+        }).join('');
+
+        if (newMethods.trim()) {
+          const lastBrace = controllerContent.lastIndexOf('}');
+          if (lastBrace !== -1) {
+            const beforeBrace = controllerContent.substring(0, lastBrace);
+            const afterBrace = controllerContent.substring(lastBrace);
+            const updatedContent = `${beforeBrace}\n${newMethods}\n${afterBrace}`;
+            fs.writeFileSync(controllerPath, updatedContent);
+          }
         }
       }
 

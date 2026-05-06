@@ -310,6 +310,9 @@ export class OpenAPIToConnector {
         this.addRequestBodyProperties(operation.requestBody, optionProps);
       }
 
+      // Always include headers in options type (generated code references options.headers)
+      optionProps.push('headers?: Record<string, string>');
+
       // Check if options parameter is required (has required query params or required body)
       const hasRequiredNonPathParams =
         queryParams.some((p) => p.required) || (hasBody && operation.requestBody?.required);
@@ -392,6 +395,9 @@ export class OpenAPIToConnector {
       this.addRequestBodyProperties(operation.requestBody, optionProps);
     }
 
+    // Always include headers in options type (generated code references options.headers)
+    optionProps.push('headers?: Record<string, string>');
+
     // If there are too many parameters, use simplified signature to avoid parsing issues
     // Also check if any parameter name is too long (over 100 chars) which can cause issues
     const hasLongParamNames = optionProps.some((prop) => prop.length > 100);
@@ -413,11 +419,12 @@ export class OpenAPIToConnector {
    * Resolve a schema reference to a TypeScript type name
    */
   private resolveSchemaRef(ref: string): string {
-    // Extract the component name from the reference
-    // e.g., "#/components/schemas/Company" -> "Company"
     const parts = ref.split('/');
     if (parts.length >= 2) {
       const componentName = parts[parts.length - 1];
+      if (!this.spec.components?.schemas?.[componentName]) {
+        return 'any';
+      }
       return this.sanitizeTypeName(componentName);
     }
     return 'any';
