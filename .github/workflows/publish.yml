@@ -17,13 +17,13 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
       - name: Install dependencies
         working-directory: integration-sdk
-        run: yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile --ignore-engines
 
       - name: Build
         working-directory: integration-sdk
