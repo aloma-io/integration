@@ -22,7 +22,7 @@ jobs:
           package-manager-cache: false
 
       - name: Upgrade npm to support OIDC trusted publishing
-        run: npm install -g npm@latest
+        run: npm install -g npm@latest --force
 
       - name: Install dependencies
         working-directory: integration-sdk
