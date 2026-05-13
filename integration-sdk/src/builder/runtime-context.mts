@@ -16,12 +16,13 @@ export function buildResolvers(methods: string[], controller: any): any {
   const resolvers: any = {};
 
   methods.forEach((method) => {
-    const handler = async (args: any) => {
+    const handler = async (args: any, ctx?: any) => {
       if (!methods.includes(method)) throw new Error(`${method} not found`);
-      return controller[method](args);
+      return controller[method](args, ctx);
     };
 
     if (method.includes('.')) {
+      // Register nested tree for array-based resolution: ["crm", "contacts", "getPage"]
       const parts = method.split('.');
       let node = resolvers;
       for (let i = 0; i < parts.length - 1; i++) {
@@ -31,6 +32,8 @@ export function buildResolvers(methods: string[], controller: any): any {
         node = node[parts[i]];
       }
       node[parts[parts.length - 1]] = handler;
+      // Also register flat dotted key for string-based resolution: ["crm.contacts.getPage"]
+      resolvers[method] = handler;
     } else {
       resolvers[method] = handler;
     }

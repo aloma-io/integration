@@ -51,8 +51,9 @@ export abstract class AbstractController {
   /**
    * called, when the remote public method is not found on the controller
    * @param arg
+   * @param ctx optional invocation context (taskId, namespace, sticky)
    */
-  protected fallback(arg: any): Promise<any> {
+  protected fallback(arg: any, ctx?: any): Promise<any> {
     throw new Error('method not found');
   }
 
@@ -186,8 +187,8 @@ export abstract class AbstractController {
   /**
    * @ignore
    **/
-  async __default(arg: any): Promise<any | null> {
-    return this.fallback(arg);
+  async __default(arg: any, ctx?: any): Promise<any | null> {
+    return this.fallback(arg, ctx);
   }
 
   /**

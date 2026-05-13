@@ -163,7 +163,8 @@ ${arg.configurableClientScope}
       return current;
     };
 
-    const execute = async ({query, variables}) => {
+    const execute = async ({query, variables, taskId, namespace, sticky}: any) => {
+      const ctx = {taskId, namespace, sticky};
       if (!Array.isArray(query)) query = [query];
 
       query = query
@@ -177,7 +178,7 @@ ${arg.configurableClientScope}
       const method = resolveMethod(query);
       if (!method && !_resolvers.__default) throw new Error(`${originalQuery} not found`);
 
-      return method ? method(variables) : _resolvers.__default(variables ? {...variables, __method: originalQuery} : variables);
+      return method ? method(variables, ctx) : _resolvers.__default(variables ? {...variables, __method: originalQuery} : variables, ctx);
     };
 
     const introspect = () => local._types;
