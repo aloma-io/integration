@@ -21,8 +21,17 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
-      - name: Update npm to latest for OIDC trusted publishing
-        run: npm install -g npm@latest
+      - name: Install npm@latest globally via tarball (bypasses self-replace MODULE_NOT_FOUND)
+        run: |
+          set -e
+          NPM_VERSION=$(curl -fsSL https://registry.npmjs.org/npm/latest | python3 -c 'import sys,json; print(json.load(sys.stdin)["version"])')
+          echo "Installing npm $NPM_VERSION via tarball"
+          TARBALL_DIR=$(mktemp -d)
+          curl -fsSL "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" | tar xz -C "$TARBALL_DIR"
+          NPM_GLOBAL_PATH=$(node -p "require('path').resolve(process.execPath, '../../lib/node_modules')")
+          echo "Replacing $NPM_GLOBAL_PATH/npm"
+          rm -rf "$NPM_GLOBAL_PATH/npm"
+          mv "$TARBALL_DIR/package" "$NPM_GLOBAL_PATH/npm"
 
       - name: Print npm version (diagnostic)
         run: npm --version
