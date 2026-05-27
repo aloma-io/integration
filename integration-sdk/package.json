@@ -55,7 +55,9 @@
     "ts-node": "^10.9.2"
   },
   "resolutions": {
-    "path-to-regexp": "0.1.13"
+    "path-to-regexp": "0.1.13",
+    "qs": ">=6.15.2",
+    "serialize-javascript": ">=7.0.5"
   },
   "repository": {
     "type": "git",
