@@ -1,5 +1,7 @@
 // OrdersResource resource functions
 // These functions will be bound to the controller instance and accessible as orders.method()
+import {callOperation} from '@aloma.io/integration-sdk';
+import type {OperationDescriptor} from '@aloma.io/integration-sdk';
 
 // Generated TypeScript interfaces from OpenAPI schemas
 
@@ -79,14 +81,28 @@ export interface UpdateOrderStatusRequest {
   trackingNumber?: string;
 }
 
+const OPERATIONS: {[name: string]: OperationDescriptor} = {
+  "getOrders": {"method":"GET","path":"/orders","pathParams":[],"query":[{"name":"status"},{"name":"customerId"},{"name":"limit"}],"headers":[],"body":null},
+  "createOrder": {"method":"POST","path":"/orders","pathParams":[],"query":[],"headers":[],"body":{"mode":"flat","contentType":"application/json","fields":["customerId","items","shippingAddress","billingAddress"]}},
+  "getOrder": {"method":"GET","path":"/orders/{orderId}","pathParams":["orderId"],"query":[],"headers":[],"body":null},
+  "updateOrderStatus": {"method":"PATCH","path":"/orders/{orderId}","pathParams":["orderId"],"query":[],"headers":[],"body":{"mode":"flat","contentType":"application/json","fields":["status","trackingNumber"]}},
+  "cancelOrder": {"method":"POST","path":"/orders/{orderId}/cancel","pathParams":["orderId"],"query":[],"headers":[],"body":null},
+};
 
 /**
  * List all orders
  *
- * @param {Object} options - Request options
- * @param {string} options.status (optional) - Filter by order status [query]
- * @param {string} options.customerId (optional) - Filter by customer ID [query]
- * @param {number} options.limit (optional) - Maximum number of orders to return [query]
+ * GET /orders
+ *
+ * @param {string} status (optional) - Filter by order status [query]
+ * @param {string} customerId (optional) - Filter by customer ID [query]
+ * @param {number} limit (optional) - Maximum number of orders to return [query]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.ordersGetOrders({})
+ * ```
  *
  * @returns {Promise<OrderList>} GET /orders response
  *
@@ -95,39 +111,25 @@ export interface UpdateOrderStatusRequest {
  * - total?: number - Total number of orders
  * - hasMore?: boolean - Whether there are more orders available
  */
-export function getOrders(this: any, options?: {status?: string, customerId?: string, limit?: number, headers?: Record<string, string>}) {
-  options = options || {};
-
-  const url = '/orders';
-
-  const fetchOptions: any = {
-    method: 'GET',
-    params: {},
-    headers: options.headers,
-  };
-
-  // Add query parameters
-  if (options.status !== undefined) {
-    fetchOptions.params.status = options.status;
-  }
-  if (options.customerId !== undefined) {
-    fetchOptions.params.customerId = options.customerId;
-  }
-  if (options.limit !== undefined) {
-    fetchOptions.params.limit = options.limit;
-  }
-
-  return this.api.fetch(url, fetchOptions);
+export function getOrders(this: any, {status, customerId, limit, headers}: {status?: string; customerId?: string; limit?: number; headers?: Record<string, string>} = {}) {
+  return callOperation(this.api, OPERATIONS.getOrders, {status, customerId, limit, headers});
 }
 
 /**
  * Create a new order
  *
- * @param {Object} options - Request options
- * @param {string} options.customerId (required) - Customer who is placing the order [body property]
- * @param {OrderItemRequest[]} options.items (required) - Items to order [body property]
- * @param {Address} options.shippingAddress (required) -  [body property]
- * @param {Address} options.billingAddress (required) -  [body property]
+ * POST /orders
+ *
+ * @param {string} customerId (required) - Customer who is placing the order [body]
+ * @param {OrderItemRequest[]} items (required) - Items to order [body]
+ * @param {Address} shippingAddress (optional) -  [body]
+ * @param {Address} billingAddress (optional) -  [body]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.ordersCreateOrder({ customerId: "customerId-value", items: [{"productId":"productId-value"}] })
+ * ```
  *
  * @returns {Promise<Order>} POST /orders response
  *
@@ -142,28 +144,22 @@ export function getOrders(this: any, options?: {status?: string, customerId?: st
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function createOrder(this: any, options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address, headers?: Record<string, string>}) {
-  options = options || {};
-
-  const url = '/orders';
-
-  const { headers, ...bodyData } = options;
-  const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;
-
-  const fetchOptions: any = {
-    method: 'POST',
-    body: requestBody,
-    headers: options.headers,
-  };
-
-  return this.api.fetch(url, fetchOptions);
+export function createOrder(this: any, {customerId, items, shippingAddress, billingAddress, headers}: {customerId: string; items: OrderItemRequest[]; shippingAddress?: Address; billingAddress?: Address; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.createOrder, {customerId, items, shippingAddress, billingAddress, headers});
 }
 
 /**
  * Get a specific order
  *
- * @param {string} orderId The order ID
- * @param {Object} options (optional) - Request options
+ * GET /orders/{orderId}
+ *
+ * @param {string} orderId (required) - The order ID [path]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.ordersGetOrder({ orderId: "orderId-1" })
+ * ```
  *
  * @returns {Promise<Order>} GET /orders/{orderId} response
  *
@@ -178,24 +174,24 @@ export function createOrder(this: any, options: {customerId: string /** Customer
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function getOrder(this: any, orderId: string, options?: {headers?: Record<string, string>}) {
-  let url = '/orders/{orderId}';
-  if (orderId) {
-    url = url.replace('{orderId}', orderId);
-  }
-
-  return this.api.fetch(url, {
-    method: 'GET',
-  });
+export function getOrder(this: any, {orderId, headers}: {orderId: string; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.getOrder, {orderId, headers});
 }
 
 /**
  * Update order status
  *
- * @param {string} orderId The order ID
- * @param {Object} options - Request options
- * @param {string} options.status (required) - New order status [body property]
- * @param {string} options.trackingNumber (required) - Tracking number (for shipped status) [body property]
+ * PATCH /orders/{orderId}
+ *
+ * @param {string} orderId (required) - The order ID [path]
+ * @param {string} status (required) - New order status [body]
+ * @param {string} trackingNumber (optional) - Tracking number (for shipped status) [body]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.ordersUpdateOrderStatus({ orderId: "orderId-1", status: "confirmed" })
+ * ```
  *
  * @returns {Promise<Order>} PATCH /orders/{orderId} response
  *
@@ -210,32 +206,22 @@ export function getOrder(this: any, orderId: string, options?: {headers?: Record
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function updateOrderStatus(this: any, orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status */, headers?: Record<string, string>})) {
-  options = options || {};
-
-  // Build URL with path parameters
-  let url = '/orders/{orderId}';
-  if (orderId) {
-    url = url.replace('{orderId}', orderId);
-  }
-
-  const { headers, ...bodyData } = options;
-  const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;
-
-  const fetchOptions: any = {
-    method: 'PATCH',
-    body: requestBody,
-    headers: options.headers,
-  };
-
-  return this.api.fetch(url, fetchOptions);
+export function updateOrderStatus(this: any, {orderId, status, trackingNumber, headers}: {orderId: string; status: string; trackingNumber?: string; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.updateOrderStatus, {orderId, status, trackingNumber, headers});
 }
 
 /**
  * Cancel an order
  *
- * @param {string} orderId The order ID
- * @param {Object} options (optional) - Request options
+ * POST /orders/{orderId}/cancel
+ *
+ * @param {string} orderId (required) - The order ID [path]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.ordersCancelOrder({ orderId: "orderId-1" })
+ * ```
  *
  * @returns {Promise<Order>} POST /orders/{orderId}/cancel response
  *
@@ -250,13 +236,6 @@ export function updateOrderStatus(this: any, orderId: string, options: {status: 
  * - createdAt?: string - Order creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function cancelOrder(this: any, orderId: string, options?: {headers?: Record<string, string>}) {
-  let url = '/orders/{orderId}/cancel';
-  if (orderId) {
-    url = url.replace('{orderId}', orderId);
-  }
-
-  return this.api.fetch(url, {
-    method: 'POST',
-  });
+export function cancelOrder(this: any, {orderId, headers}: {orderId: string; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.cancelOrder, {orderId, headers});
 }

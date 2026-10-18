@@ -1,5 +1,7 @@
 // ProductsResource resource functions
 // These functions will be bound to the controller instance and accessible as products.method()
+import {callOperation} from '@aloma.io/integration-sdk';
+import type {OperationDescriptor} from '@aloma.io/integration-sdk';
 
 // Generated TypeScript interfaces from OpenAPI schemas
 
@@ -60,14 +62,28 @@ export interface UpdateProductRequest {
   tags?: string[];
 }
 
+const OPERATIONS: {[name: string]: OperationDescriptor} = {
+  "getProducts": {"method":"GET","path":"/products","pathParams":[],"query":[{"name":"limit"},{"name":"category"},{"name":"archived"}],"headers":[],"body":null},
+  "createProduct": {"method":"POST","path":"/products","pathParams":[],"query":[],"headers":[],"body":{"mode":"flat","contentType":"application/json","fields":["name","description","price","category","tags"]}},
+  "getProduct": {"method":"GET","path":"/products/{productId}","pathParams":["productId"],"query":[],"headers":[],"body":null},
+  "updateProduct": {"method":"PUT","path":"/products/{productId}","pathParams":["productId"],"query":[],"headers":[],"body":{"mode":"flat","contentType":"application/json","fields":["name","description","price","category","inStock","tags"]}},
+  "deleteProduct": {"method":"DELETE","path":"/products/{productId}","pathParams":["productId"],"query":[],"headers":[],"body":null},
+};
 
 /**
  * List all products
  *
- * @param {Object} options - Request options
- * @param {number} options.limit (optional) - Maximum number of products to return [query]
- * @param {string} options.category (optional) - Filter by category [query]
- * @param {boolean} options.archived (optional) - Include archived products [query]
+ * GET /products
+ *
+ * @param {number} limit (optional) - Maximum number of products to return [query]
+ * @param {string} category (optional) - Filter by category [query]
+ * @param {boolean} archived (optional) - Include archived products [query]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.productsGetProducts({})
+ * ```
  *
  * @returns {Promise<ProductList>} GET /products response
  *
@@ -76,40 +92,26 @@ export interface UpdateProductRequest {
  * - total?: number - Total number of products
  * - hasMore?: boolean - Whether there are more products available
  */
-export function getProducts(this: any, options?: {limit?: number, category?: string, archived?: boolean, headers?: Record<string, string>}) {
-  options = options || {};
-
-  const url = '/products';
-
-  const fetchOptions: any = {
-    method: 'GET',
-    params: {},
-    headers: options.headers,
-  };
-
-  // Add query parameters
-  if (options.limit !== undefined) {
-    fetchOptions.params.limit = options.limit;
-  }
-  if (options.category !== undefined) {
-    fetchOptions.params.category = options.category;
-  }
-  if (options.archived !== undefined) {
-    fetchOptions.params.archived = options.archived;
-  }
-
-  return this.api.fetch(url, fetchOptions);
+export function getProducts(this: any, {limit, category, archived, headers}: {limit?: number; category?: string; archived?: boolean; headers?: Record<string, string>} = {}) {
+  return callOperation(this.api, OPERATIONS.getProducts, {limit, category, archived, headers});
 }
 
 /**
  * Create a new product
  *
- * @param {Object} options - Request options
- * @param {string} options.name (required) - Product name [body property]
- * @param {string} options.description (required) - Product description [body property]
- * @param {number} options.price (required) - Product price [body property]
- * @param {string} options.category (required) - Product category [body property]
- * @param {string[]} options.tags (required) - Product tags [body property]
+ * POST /products
+ *
+ * @param {string} name (required) - Product name [body]
+ * @param {string} description (optional) - Product description [body]
+ * @param {number} price (required) - Product price [body]
+ * @param {string} category (optional) - Product category [body]
+ * @param {string[]} tags (optional) - Product tags [body]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.productsCreateProduct({ name: "name-value", price: 1 })
+ * ```
  *
  * @returns {Promise<Product>} POST /products response
  *
@@ -124,28 +126,22 @@ export function getProducts(this: any, options?: {limit?: number, category?: str
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function createProduct(this: any, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
-  options = options || {};
-
-  const url = '/products';
-
-  const { headers, ...bodyData } = options;
-  const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;
-
-  const fetchOptions: any = {
-    method: 'POST',
-    body: requestBody,
-    headers: options.headers,
-  };
-
-  return this.api.fetch(url, fetchOptions);
+export function createProduct(this: any, {name, description, price, category, tags, headers}: {name: string; description?: string; price: number; category?: string; tags?: string[]; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.createProduct, {name, description, price, category, tags, headers});
 }
 
 /**
  * Get a specific product
  *
- * @param {string} productId The product ID
- * @param {Object} options (optional) - Request options
+ * GET /products/{productId}
+ *
+ * @param {string} productId (required) - The product ID [path]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.productsGetProduct({ productId: "productId-1" })
+ * ```
  *
  * @returns {Promise<Product>} GET /products/{productId} response
  *
@@ -160,28 +156,28 @@ export function createProduct(this: any, options: {name: string /** Product name
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function getProduct(this: any, productId: string, options?: {headers?: Record<string, string>}) {
-  let url = '/products/{productId}';
-  if (productId) {
-    url = url.replace('{productId}', productId);
-  }
-
-  return this.api.fetch(url, {
-    method: 'GET',
-  });
+export function getProduct(this: any, {productId, headers}: {productId: string; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.getProduct, {productId, headers});
 }
 
 /**
  * Update a product
  *
- * @param {string} productId The product ID
- * @param {Object} options - Request options
- * @param {string} options.name (required) - Product name [body property]
- * @param {string} options.description (required) - Product description [body property]
- * @param {number} options.price (required) - Product price [body property]
- * @param {string} options.category (required) - Product category [body property]
- * @param {boolean} options.inStock (required) - Whether product is in stock [body property]
- * @param {string[]} options.tags (required) - Product tags [body property]
+ * PUT /products/{productId}
+ *
+ * @param {string} productId (required) - The product ID [path]
+ * @param {string} name (optional) - Product name [body]
+ * @param {string} description (optional) - Product description [body]
+ * @param {number} price (optional) - Product price [body]
+ * @param {string} category (optional) - Product category [body]
+ * @param {boolean} inStock (optional) - Whether product is in stock [body]
+ * @param {string[]} tags (optional) - Product tags [body]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.productsUpdateProduct({ productId: "productId-1" })
+ * ```
  *
  * @returns {Promise<Product>} PUT /products/{productId} response
  *
@@ -196,42 +192,25 @@ export function getProduct(this: any, productId: string, options?: {headers?: Re
  * - createdAt?: string - Creation timestamp
  * - updatedAt?: string - Last update timestamp
  */
-export function updateProduct(this: any, productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
-  options = options || {};
-
-  // Build URL with path parameters
-  let url = '/products/{productId}';
-  if (productId) {
-    url = url.replace('{productId}', productId);
-  }
-
-  const { headers, ...bodyData } = options;
-  const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;
-
-  const fetchOptions: any = {
-    method: 'PUT',
-    body: requestBody,
-    headers: options.headers,
-  };
-
-  return this.api.fetch(url, fetchOptions);
+export function updateProduct(this: any, {productId, name, description, price, category, inStock, tags, headers}: {productId: string; name?: string; description?: string; price?: number; category?: string; inStock?: boolean; tags?: string[]; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.updateProduct, {productId, name, description, price, category, inStock, tags, headers});
 }
 
 /**
  * Delete a product
  *
- * @param {string} productId The product ID
- * @param {Object} options (optional) - Request options
+ * DELETE /products/{productId}
+ *
+ * @param {string} productId (required) - The product ID [path]
+ * @param {Record<string, string>} headers (optional) - extra request headers
+ *
+ * @example usage
+ * ```
+ * await connectors.testShop.productsDeleteProduct({ productId: "productId-1" })
+ * ```
  *
  * @returns {Promise<any>} DELETE /products/{productId} response
  */
-export function deleteProduct(this: any, productId: string, options?: {headers?: Record<string, string>}) {
-  let url = '/products/{productId}';
-  if (productId) {
-    url = url.replace('{productId}', productId);
-  }
-
-  return this.api.fetch(url, {
-    method: 'DELETE',
-  });
+export function deleteProduct(this: any, {productId, headers}: {productId: string; headers?: Record<string, string>}) {
+  return callOperation(this.api, OPERATIONS.deleteProduct, {productId, headers});
 }

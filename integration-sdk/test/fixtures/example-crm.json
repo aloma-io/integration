@@ -1,0 +1,143 @@
+{
+  "openapi": "3.0.1",
+  "info": {"title": "Example CRM", "version": "v3"},
+  "servers": [{"url": "https://api.example.test"}],
+  "externalDocs": {"url": "https://docs.example.test/reference"},
+  "components": {
+    "parameters": {
+      "Archived": {"name": "archived", "in": "query", "description": "Return archived records only", "schema": {"type": "boolean"}}
+    },
+    "requestBodies": {
+      "AssociationBody": {
+        "required": true,
+        "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/AssociationSpec"}}}}
+      }
+    },
+    "schemas": {
+      "AssociationSpec": {
+        "type": "object",
+        "properties": {"associationCategory": {"type": "string"}, "associationTypeId": {"type": "integer"}}
+      },
+      "SimpleInput": {
+        "type": "object",
+        "required": ["properties"],
+        "properties": {
+          "properties": {"type": "object", "description": "Record properties"},
+          "associations": {"type": "array", "items": {"$ref": "#/components/schemas/AssociationSpec"}}
+        }
+      },
+      "BatchInput": {
+        "type": "object",
+        "required": ["inputs"],
+        "properties": {"inputs": {"type": "array", "items": {"$ref": "#/components/schemas/SimpleInput"}}}
+      }
+    }
+  },
+  "paths": {
+    "/crm/v3/objects/contacts": {
+      "get": {
+        "operationId": "get-/crm/v3/objects/contacts_getPage",
+        "summary": "List contacts",
+        "externalDocs": {"url": "https://docs.example.test/reference/contacts/get-page"},
+        "parameters": [
+          {"name": "limit", "in": "query", "description": "Maximum results per page", "schema": {"type": "integer"}},
+          {"name": "after", "in": "query", "description": "Paging cursor", "schema": {"type": "string"}},
+          {"name": "properties", "in": "query", "style": "form", "explode": true, "schema": {"type": "array", "items": {"type": "string"}}},
+          {"$ref": "#/components/parameters/Archived"}
+        ],
+        "responses": {"200": {"description": "OK"}}
+      },
+      "post": {
+        "operationId": "post-/crm/v3/objects/contacts_create",
+        "summary": "Create a contact",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SimpleInput"}}}},
+        "responses": {"201": {"description": "Created"}}
+      }
+    },
+    "/crm/v3/objects/contacts/{contactId}": {
+      "parameters": [
+        {"name": "contactId", "in": "path", "required": true, "description": "The contact id", "schema": {"type": "string"}}
+      ],
+      "get": {
+        "operationId": "get-/crm/v3/objects/contacts/{contactId}_getById",
+        "summary": "Read a contact",
+        "parameters": [
+          {"name": "properties", "in": "query", "style": "form", "explode": true, "schema": {"type": "array", "items": {"type": "string"}}},
+          {"name": "idProperty", "in": "query", "schema": {"type": "string"}},
+          {"$ref": "#/components/parameters/Archived"}
+        ],
+        "responses": {"200": {"description": "OK"}}
+      },
+      "patch": {
+        "operationId": "patch-/crm/v3/objects/contacts/{contactId}_update",
+        "summary": "Update a contact",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SimpleInput"}}}},
+        "responses": {"200": {"description": "OK"}}
+      },
+      "delete": {
+        "operationId": "delete-/crm/v3/objects/contacts/{contactId}_archive",
+        "summary": "Archive a contact",
+        "responses": {"204": {"description": "No content"}}
+      }
+    },
+    "/crm/v3/objects/contacts/batch/create": {
+      "post": {
+        "operationId": "post-/crm/v3/objects/contacts/batch/create_create",
+        "summary": "Create a batch of contacts",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BatchInput"}}}},
+        "responses": {"201": {"description": "Created"}}
+      }
+    },
+    "/crm/v3/objects/contacts/batch/update": {
+      "post": {
+        "operationId": "post-/crm/v3/objects/contacts/batch/update_update",
+        "summary": "Update a batch of contacts",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BatchInput"}}}},
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/crm/v3/objects/contacts/batch/archive": {
+      "post": {
+        "operationId": "post-/crm/v3/objects/contacts/batch/archive_archive",
+        "summary": "Archive a batch of contacts",
+        "requestBody": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/BatchInput"}}}},
+        "responses": {"204": {"description": "No content"}}
+      }
+    },
+    "/crm/v4/objects/contacts/{contactId}/associations/{toObjectType}/{toObjectId}": {
+      "put": {
+        "operationId": "put-/crm/v4/objects/contacts/{contactId}/associations/{toObjectType}/{toObjectId}_create",
+        "summary": "Associate a contact with another record",
+        "parameters": [
+          {"name": "contactId", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "toObjectType", "in": "path", "required": true, "schema": {"type": "string"}},
+          {"name": "toObjectId", "in": "path", "required": true, "schema": {"type": "string"}}
+        ],
+        "requestBody": {"$ref": "#/components/requestBodies/AssociationBody"},
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/search/records": {
+      "get": {
+        "operationId": "searchRecords",
+        "summary": "Search records",
+        "parameters": [
+          {"name": "filter[name]", "in": "query", "description": "Filter by name", "schema": {"type": "string"}},
+          {"name": "page", "in": "query", "style": "deepObject", "explode": true, "schema": {"type": "object", "properties": {"size": {"type": "integer"}, "number": {"type": "integer"}}}},
+          {"name": "fields", "in": "query", "style": "form", "explode": false, "schema": {"type": "array", "items": {"type": "string"}}},
+          {"name": "X-Request-Id", "in": "header", "description": "Correlation id", "schema": {"type": "string"}},
+          {"name": "session", "in": "cookie", "schema": {"type": "string"}}
+        ],
+        "responses": {"200": {"description": "OK"}}
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "uploadFile",
+        "summary": "Upload a file",
+        "requestBody": {"content": {"multipart/form-data": {"schema": {"type": "object", "properties": {"file": {"type": "string", "format": "binary"}}}}}},
+        "responses": {"200": {"description": "OK"}}
+      }
+    }
+  }
+}

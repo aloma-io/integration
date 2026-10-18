@@ -132,6 +132,82 @@ program
     new Extractor().extract('./src/controller/index.mts', './build/.controller.json');
   });
 
+// Contract test written into a generated connector: every method must make exactly the request the
+// spec describes. It runs against a recording client, and blocks the network.
+const CONTRACT_TEST = `// Generated from the OpenAPI spec. Each method must make exactly the request the spec describes.
+// No network: requests go to a recording client, and fetch is blocked.
+import fs from 'node:fs';
+
+globalThis.fetch = async (url) => {
+  throw new Error(\`network blocked in contract tests: \${url}\`);
+};
+
+const {runContract} = await import('@aloma.io/integration-sdk');
+const {default: Controller} = await import('../build/controller/index.mjs');
+const read = (file) => JSON.parse(fs.readFileSync(new URL(file, import.meta.url), 'utf-8'));
+const contract = read('./contract.json');
+const {methods} = read('../build/.controller.json');
+
+const controller = new Controller();
+const noop = async () => {};
+await controller._doStart({}, null, noop, noop, () => ({fetch: noop}), noop, noop, noop);
+
+const result = await runContract(controller, contract, {methods});
+for (const failure of result.failures) console.error(\`FAIL \${failure.method}: \${failure.problem}\`);
+console.log(\`\${result.passed} of \${contract.operations.length} operations match the contract\`);
+if (result.failures.length) process.exit(1);
+`;
+
+/**
+ * Writes what goes with a generated controller: the generation report, the contract and its test,
+ * the documentation page and the command reference. One entry per resource for multi-resource connectors.
+ */
+function writeCompanions(target: string, parts: Array<{generator: OpenAPIToConnector; resourceName?: string}>, name: string) {
+  const namespace = parts[0].generator.defaultNamespace();
+  if (parts.length > 1 || parts[0].resourceName) {
+    const plan = OpenAPIToConnector.planExposedNames(
+      parts.map(({generator, resourceName}) => ({fileName: resourceName!, spec: generator.getSpec()})),
+      parts[0].generator.getOptions()
+    );
+    for (const {generator, resourceName} of parts) generator.useExposedNames(plan.get(resourceName!));
+  }
+  const report = {operations: 0, generated: 0, skipped: [] as any[], warnings: [] as any[]};
+  const contract = {connector: name, operations: [] as any[]};
+  const commands = {connector: name, namespace, methods: [] as any[]};
+
+  for (const {generator, resourceName} of parts) {
+    const r = generator.getReport();
+    report.operations += r.operations;
+    report.generated += r.generated;
+    report.skipped.push(...r.skipped);
+    report.warnings.push(...r.warnings.map((w) => ({...(resourceName ? {resource: resourceName} : {}), ...w})));
+    contract.operations.push(...generator.generateContract({resourceName}).operations);
+    commands.methods.push(...generator.generateCommandReference({namespace, resourceName}).methods);
+  }
+
+  const write = (rel: string, text: string) => {
+    const file = path.join(target, rel);
+    fs.mkdirSync(path.dirname(file), {recursive: true});
+    fs.writeFileSync(file, text);
+  };
+
+  write('openapi-report.json', JSON.stringify(report, null, 2) + '\n');
+  write('test/contract.json', JSON.stringify(contract, null, 2) + '\n');
+  write('test/contract.test.mjs', CONTRACT_TEST);
+  write(
+    'docs/connector.md',
+    parts.length === 1 && !parts[0].resourceName
+      ? parts[0].generator.generateDocs({namespace})
+      : OpenAPIToConnector.combineDocs(name, parts, namespace)
+  );
+  write('docs/commands.json', JSON.stringify(commands, null, 2) + '\n');
+
+  console.log(`📊 ${report.generated} of ${report.operations} operations generated`);
+  if (report.warnings.length) {
+    console.log(`⚠️  ${report.warnings.length} limitations, listed in openapi-report.json and docs/connector.md`);
+  }
+}
+
 program
   .command('from-openapi')
   .description('Generate a connector controller from an OpenAPI specification')
@@ -144,6 +220,7 @@ program
     'Generate as a resource class with the specified class name (e.g., CompaniesResource)'
   )
   .option('--multi-resource', 'Generate multiple resource files + main controller (requires multiple --spec files)')
+  .option('--reference-url <template>', "provider reference link per operation, e.g. 'https://docs.example.com/api/{operationId}'")
   .option('--controller-only', 'Generate only the controller file, do not create full project structure')
   .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
   .option('--no-build', 'Skip installing dependencies and building the project')
@@ -157,7 +234,7 @@ program
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
       // Generate the controller from OpenAPI spec
-      const generatorOptions = {nestedPaths: !!options.nestedPaths};
+      const generatorOptions = {nestedPaths: !!options.nestedPaths, referenceUrl: options.referenceUrl};
       const generator = new OpenAPIToConnector(spec, name, generatorOptions);
       let controllerCode: string;
 
@@ -174,6 +251,11 @@ program
         const controllerPath = path.resolve(options.out);
         fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
         fs.writeFileSync(controllerPath, controllerCode);
+        const report = generator.getReport();
+        if (report.warnings.length) {
+          console.log(`⚠️  ${report.warnings.length} limitations:`);
+          for (const w of report.warnings) console.log(`   - ${w.operation}: ${w.problem}`);
+        }
 
         console.log(`\n✅ Success! Generated controller from OpenAPI specification
 📝 Connector name: ${name}
@@ -194,6 +276,7 @@ Controller file generated successfully! You can now use it in your existing proj
         const controllerPath = `${target}/${options.out}`;
         fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
         fs.writeFileSync(controllerPath, controllerCode);
+        if (!options.resource) writeCompanions(target, [{generator}], name);
 
         console.log('Generating keys...');
         await generateKeys({target});
@@ -280,6 +363,7 @@ program
     'comma-separated list of "className:specFile" pairs (e.g., "CompaniesResource:companies.json,ContactsResource:contacts.json")'
   )
   .option('--base-url <url>', 'base URL for the API (if not specified, will be extracted from first OpenAPI spec)')
+  .option('--reference-url <template>', "provider reference link per operation, e.g. 'https://docs.example.com/api/{operationId}'")
   .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
@@ -287,7 +371,7 @@ program
     if (!name) throw new Error('name is empty');
 
     const target = `${process.cwd()}/${name}`;
-    const generatorOptions = {nestedPaths: !!options.nestedPaths};
+    const generatorOptions = {nestedPaths: !!options.nestedPaths, referenceUrl: options.referenceUrl};
 
     try {
       // Parse resources specification
@@ -308,6 +392,7 @@ program
       // Generate each resource
       const resources: Array<{className: string; fileName: string}> = [];
       const parsedResourceSpecs: Array<{fileName: string; spec: any}> = [];
+      const companions: Array<{generator: OpenAPIToConnector; resourceName?: string}> = [];
       let baseUrl = options.baseUrl;
 
       for (const {className, specFile} of resourceSpecs) {
@@ -334,6 +419,7 @@ program
 
         resources.push({className, fileName});
         parsedResourceSpecs.push({fileName, spec});
+        companions.push({generator, resourceName: fileName});
       }
 
       // Generate the main controller
@@ -345,6 +431,7 @@ program
       // Write the main controller
       const controllerPath = `${target}/src/controller/index.mts`;
       fs.writeFileSync(controllerPath, mainControllerCode);
+      writeCompanions(target, companions, name);
 
       console.log('Generating keys...');
       await generateKeys({target});

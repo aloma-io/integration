@@ -49,23 +49,10 @@ class OAuthFetcher extends Fetcher {
   }
 
   async onError(e, url, options, retries, args, rateLimit) {
-    var local = this;
+    await this.wait(this.retryDelay(e, rateLimit));
 
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        async () => {
-          try {
-            resolve(
-              await local.fetch(url, options, retries, {
-                forceTokenRefresh: e.status === 401,
-              })
-            );
-          } catch (e) {
-            reject(e);
-          }
-        },
-        rateLimit ? 10000 : 500
-      );
+    return this.fetch(url, options, retries, {
+      forceTokenRefresh: e.status === 401,
     });
   }
 
