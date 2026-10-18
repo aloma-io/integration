@@ -298,6 +298,40 @@ await test('with no other link, methods point to the supplied general reference,
   assert(getPage.reference === 'https://docs.example.test/reference/contacts/get-page', 'fallback replaced a real link');
 });
 
+await test('example values for credential fields are short placeholders, never secret-like strings', async () => {
+  const doc = spec();
+  doc.paths['/oauth/token'] = {
+    post: {
+      operationId: 'createToken',
+      requestBody: {
+        content: {
+          'application/x-www-form-urlencoded': {
+            schema: {
+              type: 'object',
+              properties: {
+                client_id: {type: 'string'},
+                client_secret: {type: 'string'},
+                refresh_token: {type: 'string'},
+                password: {type: 'string'},
+                api_key: {type: 'string'},
+              },
+            },
+          },
+        },
+      },
+      responses: {200: {description: 'OK'}},
+    },
+  };
+  const gen = new OpenAPIToConnector(doc, 'Example CRM');
+  const text = JSON.stringify(gen.generateContract()) + gen.generateDocs() + JSON.stringify(gen.generateCommandReference());
+  // The pre-push leak scan blocks client_secret= followed by 16 or more characters, and quoted secrets of 24 or more.
+  assert(!/client_secret=[A-Za-z0-9+\/_.~%-]{16,}/i.test(text), 'secret-like form value in the generated output');
+  for (const field of ['client_secret', 'refresh_token', 'password', 'api_key']) {
+    const m = text.match(new RegExp(`"${field}":"([^"]*)"`));
+    assert(m && m[1].length < 16, `${field} example ${m && m[1]}`);
+  }
+});
+
 await test('the command reference matches the doc page method for method', async () => {
   const gen = new OpenAPIToConnector(spec(), 'Example CRM');
   const ref = gen.generateCommandReference({namespace: 'exampleCrm'});

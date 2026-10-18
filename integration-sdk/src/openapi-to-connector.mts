@@ -907,7 +907,8 @@ await runtime.start();
         return first ? {[first]: this.exampleValue(s.properties[first], first, depth + 1)} : {};
       }
       default:
-        return `${name}-value`;
+        // Credential fields get a short, obviously fake value, so examples never look like a real secret.
+        return /secret|passw|token|api_?key|assertion|credential/i.test(name) ? 'example' : `${name}-value`;
     }
   }
 
