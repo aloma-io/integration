@@ -252,7 +252,7 @@ await test('a multi-resource doc page has one setup section and a section per re
   assert(md.includes('connectors.exampleCrm.contactsGetById(') && md.includes('connectors.exampleCrm.filesGetById('), 'methods missing');
 });
 
-// --- Patrick's decisions (18 Oct): nested names for large APIs; a general reference as the last link ---
+// --- Nested names for large APIs; a general reference as the last link ---
 
 function largeSpec(n) {
   const doc = {openapi: '3.0.0', info: {title: 'Large', version: '1'}, paths: {}};
