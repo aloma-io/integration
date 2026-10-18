@@ -1,6 +1,8 @@
 import {AbstractController} from '@aloma.io/integration-sdk';
 import * as productsFunctions from '../resources/products.mjs';
+import type * as productsTypes from '../resources/products.mjs';
 import * as ordersFunctions from '../resources/orders.mjs';
+import type * as ordersTypes from '../resources/orders.mjs';
 
 export default class Controller extends AbstractController {
   products: any = {};
@@ -10,16 +12,16 @@ export default class Controller extends AbstractController {
 
   protected async start(): Promise<void> {
     const config = this.config;
-    
+
     this.api = this.getClient({
-      baseUrl: 'https://api.testshop.com',
+      baseUrl: "https://api.testshop.com",
       customize(request) {
         request.headers ||= {};
         // Add authentication headers based on your API requirements
         // Example: request.headers["Authorization"] = `Bearer ${config.apiToken}`;
       },
     });
-    
+
     // Bind resource functions to this controller context
     // This allows using this.resourceName.method() syntax
     this.bindResourceFunctions('products', productsFunctions);
@@ -39,233 +41,216 @@ export default class Controller extends AbstractController {
    * @param url - API endpoint
    * @param options - Request options
    */
-  async request({ url, options }: { url: string; options?: any }) {
+  async request({url, options}: {url: string; options?: any}) {
     return this.api.fetch(url, options);
   }
 
   /**
- * List all products
- *
- * @param {Object} options - Request options
- * @param {number} options.limit (optional) - Maximum number of products to return [query]
- * @param {string} options.category (optional) - Filter by category [query]
- * @param {boolean} options.archived (optional) - Include archived products [query]
- *
- * @returns {Promise<ProductList>} GET /products response
- *
- * response fields:
- * - products?: Product[]
- * - total?: number - Total number of products
- * - hasMore?: boolean - Whether there are more products available
+   * List all products
+   *
+   * GET /products
+   *
+   * @param {number} limit (optional) - Maximum number of products to return [query]
+   * @param {string} category (optional) - Filter by category [query]
+   * @param {boolean} archived (optional) - Include archived products [query]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.products.productsGetProducts({})
+   * ```
+   *
+   * @returns {Promise<productsTypes.ProductList>} GET /products response
    */
-  async productsGetProducts(options?: {limit?: number, category?: string, archived?: boolean, headers?: Record<string, string>}) {
-    return this.products.getProducts(options);
+  async productsGetProducts({limit, category, archived, headers}: {limit?: number; category?: string; archived?: boolean; headers?: Record<string, string>} = {}) {
+    return this.products.getProducts({limit, category, archived, headers});
   }
 
   /**
- * Create a new product
- *
- * @param {Object} options - Request options
- * @param {string} options.name (required) - Product name [body property]
- * @param {string} options.description (required) - Product description [body property]
- * @param {number} options.price (required) - Product price [body property]
- * @param {string} options.category (required) - Product category [body property]
- * @param {string[]} options.tags (required) - Product tags [body property]
- *
- * @returns {Promise<Product>} POST /products response
- *
- * response fields:
- * - id: string - Unique product identifier
- * - name: string - Product name
- * - description?: string - Product description
- * - price: number - Product price
- * - category?: string - Product category
- * - inStock?: boolean - Whether product is in stock
- * - tags?: string[] - Product tags
- * - createdAt?: string - Creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Create a new product
+   *
+   * POST /products
+   *
+   * @param {string} name (required) - Product name [body]
+   * @param {string} description (optional) - Product description [body]
+   * @param {number} price (required) - Product price [body]
+   * @param {string} category (optional) - Product category [body]
+   * @param {string[]} tags (optional) - Product tags [body]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.products.productsCreateProduct({ name: "name-value", price: 1 })
+   * ```
+   *
+   * @returns {Promise<productsTypes.Product>} POST /products response
    */
-  async productsCreateProduct(options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
-    return this.products.createProduct(options);
+  async productsCreateProduct({name, description, price, category, tags, headers}: {name: string; description?: string; price: number; category?: string; tags?: string[]; headers?: Record<string, string>}) {
+    return this.products.createProduct({name, description, price, category, tags, headers});
   }
 
   /**
- * Get a specific product
- *
- * @param {string} productId The product ID
- * @param {Object} options (optional) - Request options
- *
- * @returns {Promise<Product>} GET /products/{productId} response
- *
- * response fields:
- * - id: string - Unique product identifier
- * - name: string - Product name
- * - description?: string - Product description
- * - price: number - Product price
- * - category?: string - Product category
- * - inStock?: boolean - Whether product is in stock
- * - tags?: string[] - Product tags
- * - createdAt?: string - Creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Get a specific product
+   *
+   * GET /products/{productId}
+   *
+   * @param {string} productId (required) - The product ID [path]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.products.productsGetProduct({ productId: "productId-1" })
+   * ```
+   *
+   * @returns {Promise<productsTypes.Product>} GET /products/{productId} response
    */
-  async productsGetProduct(productId: string, options?: {headers?: Record<string, string>}) {
-    return this.products.getProduct(productId, options);
+  async productsGetProduct({productId, headers}: {productId: string; headers?: Record<string, string>}) {
+    return this.products.getProduct({productId, headers});
   }
 
   /**
- * Update a product
- *
- * @param {string} productId The product ID
- * @param {Object} options - Request options
- * @param {string} options.name (required) - Product name [body property]
- * @param {string} options.description (required) - Product description [body property]
- * @param {number} options.price (required) - Product price [body property]
- * @param {string} options.category (required) - Product category [body property]
- * @param {boolean} options.inStock (required) - Whether product is in stock [body property]
- * @param {string[]} options.tags (required) - Product tags [body property]
- *
- * @returns {Promise<Product>} PUT /products/{productId} response
- *
- * response fields:
- * - id: string - Unique product identifier
- * - name: string - Product name
- * - description?: string - Product description
- * - price: number - Product price
- * - category?: string - Product category
- * - inStock?: boolean - Whether product is in stock
- * - tags?: string[] - Product tags
- * - createdAt?: string - Creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Update a product
+   *
+   * PUT /products/{productId}
+   *
+   * @param {string} productId (required) - The product ID [path]
+   * @param {string} name (optional) - Product name [body]
+   * @param {string} description (optional) - Product description [body]
+   * @param {number} price (optional) - Product price [body]
+   * @param {string} category (optional) - Product category [body]
+   * @param {boolean} inStock (optional) - Whether product is in stock [body]
+   * @param {string[]} tags (optional) - Product tags [body]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.products.productsUpdateProduct({ productId: "productId-1" })
+   * ```
+   *
+   * @returns {Promise<productsTypes.Product>} PUT /products/{productId} response
    */
-  async productsUpdateProduct(productId: string, options: {name: string /** Product name */, description: string /** Product description */, price: number /** Product price */, category: string /** Product category */, inStock: boolean /** Whether product is in stock */, tags: string[] /** Product tags */, headers?: Record<string, string>}) {
-    return this.products.updateProduct(productId, options);
+  async productsUpdateProduct({productId, name, description, price, category, inStock, tags, headers}: {productId: string; name?: string; description?: string; price?: number; category?: string; inStock?: boolean; tags?: string[]; headers?: Record<string, string>}) {
+    return this.products.updateProduct({productId, name, description, price, category, inStock, tags, headers});
   }
 
   /**
- * Delete a product
- *
- * @param {string} productId The product ID
- * @param {Object} options (optional) - Request options
- *
- * @returns {Promise<any>} DELETE /products/{productId} response
+   * Delete a product
+   *
+   * DELETE /products/{productId}
+   *
+   * @param {string} productId (required) - The product ID [path]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.products.productsDeleteProduct({ productId: "productId-1" })
+   * ```
+   *
+   * @returns {Promise<any>} DELETE /products/{productId} response
    */
-  async productsDeleteProduct(productId: string, options?: {headers?: Record<string, string>}) {
-    return this.products.deleteProduct(productId, options);
+  async productsDeleteProduct({productId, headers}: {productId: string; headers?: Record<string, string>}) {
+    return this.products.deleteProduct({productId, headers});
   }
 
   /**
- * List all orders
- *
- * @param {Object} options - Request options
- * @param {string} options.status (optional) - Filter by order status [query]
- * @param {string} options.customerId (optional) - Filter by customer ID [query]
- * @param {number} options.limit (optional) - Maximum number of orders to return [query]
- *
- * @returns {Promise<OrderList>} GET /orders response
- *
- * response fields:
- * - orders?: Order[]
- * - total?: number - Total number of orders
- * - hasMore?: boolean - Whether there are more orders available
+   * List all orders
+   *
+   * GET /orders
+   *
+   * @param {string} status (optional) - Filter by order status [query]
+   * @param {string} customerId (optional) - Filter by customer ID [query]
+   * @param {number} limit (optional) - Maximum number of orders to return [query]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.orders.ordersGetOrders({})
+   * ```
+   *
+   * @returns {Promise<ordersTypes.OrderList>} GET /orders response
    */
-  async ordersGetOrders(options?: {status?: string, customerId?: string, limit?: number, headers?: Record<string, string>}) {
-    return this.orders.getOrders(options);
+  async ordersGetOrders({status, customerId, limit, headers}: {status?: string; customerId?: string; limit?: number; headers?: Record<string, string>} = {}) {
+    return this.orders.getOrders({status, customerId, limit, headers});
   }
 
   /**
- * Create a new order
- *
- * @param {Object} options - Request options
- * @param {string} options.customerId (required) - Customer who is placing the order [body property]
- * @param {OrderItemRequest[]} options.items (required) - Items to order [body property]
- * @param {Address} options.shippingAddress (required) -  [body property]
- * @param {Address} options.billingAddress (required) -  [body property]
- *
- * @returns {Promise<Order>} POST /orders response
- *
- * response fields:
- * - id: string - Unique order identifier
- * - customerId: string - Customer who placed the order
- * - items: OrderItem[] - Items in the order
- * - status: string - Current order status
- * - totalAmount: number - Total order amount
- * - shippingAddress?: Address
- * - billingAddress?: Address
- * - createdAt?: string - Order creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Create a new order
+   *
+   * POST /orders
+   *
+   * @param {string} customerId (required) - Customer who is placing the order [body]
+   * @param {ordersTypes.OrderItemRequest[]} items (required) - Items to order [body]
+   * @param {ordersTypes.Address} shippingAddress (optional) -  [body]
+   * @param {ordersTypes.Address} billingAddress (optional) -  [body]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.orders.ordersCreateOrder({ customerId: "customerId-value", items: [{"productId":"productId-value"}] })
+   * ```
+   *
+   * @returns {Promise<ordersTypes.Order>} POST /orders response
    */
-  async ordersCreateOrder(options: {customerId: string /** Customer who is placing the order */, items: OrderItemRequest[] /** Items to order */, shippingAddress: Address, billingAddress: Address, headers?: Record<string, string>}) {
-    return this.orders.createOrder(options);
+  async ordersCreateOrder({customerId, items, shippingAddress, billingAddress, headers}: {customerId: string; items: ordersTypes.OrderItemRequest[]; shippingAddress?: ordersTypes.Address; billingAddress?: ordersTypes.Address; headers?: Record<string, string>}) {
+    return this.orders.createOrder({customerId, items, shippingAddress, billingAddress, headers});
   }
 
   /**
- * Get a specific order
- *
- * @param {string} orderId The order ID
- * @param {Object} options (optional) - Request options
- *
- * @returns {Promise<Order>} GET /orders/{orderId} response
- *
- * response fields:
- * - id: string - Unique order identifier
- * - customerId: string - Customer who placed the order
- * - items: OrderItem[] - Items in the order
- * - status: string - Current order status
- * - totalAmount: number - Total order amount
- * - shippingAddress?: Address
- * - billingAddress?: Address
- * - createdAt?: string - Order creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Get a specific order
+   *
+   * GET /orders/{orderId}
+   *
+   * @param {string} orderId (required) - The order ID [path]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.orders.ordersGetOrder({ orderId: "orderId-1" })
+   * ```
+   *
+   * @returns {Promise<ordersTypes.Order>} GET /orders/{orderId} response
    */
-  async ordersGetOrder(orderId: string, options?: {headers?: Record<string, string>}) {
-    return this.orders.getOrder(orderId, options);
+  async ordersGetOrder({orderId, headers}: {orderId: string; headers?: Record<string, string>}) {
+    return this.orders.getOrder({orderId, headers});
   }
 
   /**
- * Update order status
- *
- * @param {string} orderId The order ID
- * @param {Object} options - Request options
- * @param {string} options.status (required) - New order status [body property]
- * @param {string} options.trackingNumber (required) - Tracking number (for shipped status) [body property]
- *
- * @returns {Promise<Order>} PATCH /orders/{orderId} response
- *
- * response fields:
- * - id: string - Unique order identifier
- * - customerId: string - Customer who placed the order
- * - items: OrderItem[] - Items in the order
- * - status: string - Current order status
- * - totalAmount: number - Total order amount
- * - shippingAddress?: Address
- * - billingAddress?: Address
- * - createdAt?: string - Order creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Update order status
+   *
+   * PATCH /orders/{orderId}
+   *
+   * @param {string} orderId (required) - The order ID [path]
+   * @param {string} status (required) - New order status [body]
+   * @param {string} trackingNumber (optional) - Tracking number (for shipped status) [body]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.orders.ordersUpdateOrderStatus({ orderId: "orderId-1", status: "confirmed" })
+   * ```
+   *
+   * @returns {Promise<ordersTypes.Order>} PATCH /orders/{orderId} response
    */
-  async ordersUpdateOrderStatus(orderId: string, options: {status: string /** New order status */, trackingNumber: string /** Tracking number (for shipped status) */, headers?: Record<string, string>}) {
-    return this.orders.updateOrderStatus(orderId, options);
+  async ordersUpdateOrderStatus({orderId, status, trackingNumber, headers}: {orderId: string; status: string; trackingNumber?: string; headers?: Record<string, string>}) {
+    return this.orders.updateOrderStatus({orderId, status, trackingNumber, headers});
   }
 
   /**
- * Cancel an order
- *
- * @param {string} orderId The order ID
- * @param {Object} options (optional) - Request options
- *
- * @returns {Promise<Order>} POST /orders/{orderId}/cancel response
- *
- * response fields:
- * - id: string - Unique order identifier
- * - customerId: string - Customer who placed the order
- * - items: OrderItem[] - Items in the order
- * - status: string - Current order status
- * - totalAmount: number - Total order amount
- * - shippingAddress?: Address
- * - billingAddress?: Address
- * - createdAt?: string - Order creation timestamp
- * - updatedAt?: string - Last update timestamp
+   * Cancel an order
+   *
+   * POST /orders/{orderId}/cancel
+   *
+   * @param {string} orderId (required) - The order ID [path]
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.orders.ordersCancelOrder({ orderId: "orderId-1" })
+   * ```
+   *
+   * @returns {Promise<ordersTypes.Order>} POST /orders/{orderId}/cancel response
    */
-  async ordersCancelOrder(orderId: string, options?: {headers?: Record<string, string>}) {
-    return this.orders.cancelOrder(orderId, options);
+  async ordersCancelOrder({orderId, headers}: {orderId: string; headers?: Record<string, string>}) {
+    return this.orders.cancelOrder({orderId, headers});
   }
 }

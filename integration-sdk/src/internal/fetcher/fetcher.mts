@@ -33,21 +33,29 @@ export default class Fetcher {
     if (this.customize0) await this.customize0(options, args);
   }
 
-  protected async onError(e: any, url: string, options: any, retries: number, args: any, rateLimit?) {
-    var local = this;
+  protected wait(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
-    return new Promise((resolve, reject) => {
-      setTimeout(
-        async () => {
-          try {
-            resolve(await local.fetch(url, options, retries, args));
-          } catch (e) {
-            reject(e);
-          }
-        },
-        rateLimit ? 10000 : 500
-      );
-    });
+  /**
+   * delay before retrying: Retry-After when the server sends one (capped at 60 s), otherwise 10 s for
+   * rate limits and 500 ms for other errors
+   */
+  protected retryDelay(e: any, rateLimit?: boolean): number {
+    const header = e?.retryAfter;
+    if (header) {
+      const seconds = Number(header);
+      const ms = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(header) - Date.now();
+      if (Number.isFinite(ms) && ms >= 0) return Math.min(ms, 60 * 1000);
+    }
+
+    return rateLimit ? 10000 : 500;
+  }
+
+  protected async onError(e: any, url: string, options: any, retries: number, args: any, rateLimit?) {
+    await this.wait(this.retryDelay(e, rateLimit));
+
+    return this.fetch(url, options, retries, args);
   }
 
   /**
@@ -131,6 +139,7 @@ export default class Fetcher {
         const e: any = new Error(status + ' ' + text);
 
         e.status = status;
+        e.retryAfter = ret.headers?.get?.('retry-after');
         throw e;
       }
 
@@ -144,23 +153,21 @@ export default class Fetcher {
 
       return unwrap(ret, options0);
     } catch (e: any) {
-      // too many requests
-      if (e.status === 429) {
-        return local.onError(e, url, options0, retries, args, true);
-      }
-
       // bad request
       if (e.status === 400 || e.status === 422) {
         throw e;
       }
 
-      --retries;
+      // too many requests count against the same retry limit, so a rate limit cannot retry forever
+      const rateLimit = e.status === 429;
 
-      console.log(theURL, e);
+      // the query string can carry personal data or keys, so it is not logged
+      console.log(theURL.split('?')[0], rateLimit ? '429 too many requests' : e);
 
-      if (retries <= 0) throw e;
+      const remaining = retries - 1;
+      if (remaining <= 0) throw e;
 
-      return local.onError(e, url, options0, retries, args);
+      return local.onError(e, url, options0, remaining, args, rateLimit);
     }
   }
 }

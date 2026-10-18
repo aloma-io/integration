@@ -148,7 +148,7 @@ await test('Bug2: Resource function for simple path+params has no statements aft
   const funcBody = funcMatch[0];
 
   // Find all return statements
-  const returnStatements = funcBody.match(/return this\.api\.fetch/g);
+  const returnStatements = funcBody.match(/return /g);
   assert(
     returnStatements && returnStatements.length === 1,
     `Expected exactly 1 return statement but found ${returnStatements ? returnStatements.length : 0}. Dead code after return!`
@@ -180,7 +180,7 @@ await test('Bug2: Controller function for simple path+params has no dead code af
   const methodBody = methodMatch[0];
 
   // Find all return statements
-  const returnStatements = methodBody.match(/return this\.api\.fetch/g);
+  const returnStatements = methodBody.match(/return /g);
   assert(
     returnStatements && returnStatements.length === 1,
     `Expected exactly 1 return statement but found ${returnStatements ? returnStatements.length : 0}. Dead code after return in controller!`

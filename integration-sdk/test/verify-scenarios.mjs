@@ -86,8 +86,9 @@ test('Simple Scenario - methods without options should be clean', () => {
   const generator = new OpenAPIToConnector(spec, 'simple-test');
   const actualOutput = generator.generateController();
   
-  expect(actualOutput).toInclude('async getProducts(options?: {headers?: Record<string, string>}) {');
-  expect(actualOutput).toInclude('async createProduct(options:');
+  // One argument object; optional throughout when nothing is required, so it defaults to {}.
+  expect(actualOutput).toInclude('async getProducts({headers}: {headers?: Record<string, string>} = {}) {');
+  expect(actualOutput).toInclude('async createProduct({');
 });
 
 // Test 3: Complex Scenario - Main Controller
@@ -173,9 +174,10 @@ test('Path parameters and options should be handled correctly', () => {
   const generator = new OpenAPIToConnector(spec, 'test-shop');
   const actualOutput = generator.generateResourceClass('OrdersResource');
   
-  expect(actualOutput).toInclude('export function getOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
-  expect(actualOutput).toInclude('export function updateOrderStatus(this: any, orderId: string, options');
-  expect(actualOutput).toInclude('export function cancelOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
+  // Path ids are keys of the one argument object, as the connector runtime passes it.
+  expect(actualOutput).toInclude('export function getOrder(this: any, {orderId, headers}: {orderId: string; headers?: Record<string, string>})');
+  expect(actualOutput).toInclude('export function updateOrderStatus(this: any, {orderId, ');
+  expect(actualOutput).toInclude('export function cancelOrder(this: any, {orderId, headers}: {orderId: string; headers?: Record<string, string>})');
 });
 
 // Test 8: Exposed Methods in Main Controller
@@ -256,8 +258,9 @@ test('Schema names should be sanitized correctly', () => {
   const generator = new OpenAPIToConnector(testSpec, 'test');
   const output = generator.generateController();
   
-  expect(output).toInclude('export interface Complex_Name_With_Dots {');
-  expect(output).toNotInclude('export interface Complex.Name.With.Dots {');
+  // Single-controller interfaces are not exported: the connector build allows one exported declaration.
+  expect(output).toInclude('interface Complex_Name_With_Dots {');
+  expect(output).toNotInclude('interface Complex.Name.With.Dots {');
   expect(output).toInclude('Promise<Complex_Name_With_Dots>');
 });
 
@@ -279,7 +282,7 @@ test('Simple methods should not have options parameter', () => {
   const generator = new OpenAPIToConnector(simpleSpec, 'test');
   const output = generator.generateController();
   
-  expect(output).toInclude('async getSimple(options?: {headers?: Record<string, string>}) {');
+  expect(output).toInclude('async getSimple({headers}: {headers?: Record<string, string>} = {}) {');
   expect(output).toNotInclude('options = options || {}');
   expect(output).toNotInclude('headers: options');
 });

@@ -1,14 +1,19 @@
-import {AbstractController} from '@aloma.io/integration-sdk';
+import {AbstractController, callOperation} from '@aloma.io/integration-sdk';
+import type {OperationDescriptor} from '@aloma.io/integration-sdk';
+
+const OPERATIONS: {[name: string]: OperationDescriptor} = {
+  "getProducts": {"method":"GET","path":"/products","pathParams":[],"query":[],"headers":[],"body":null},
+  "createProduct": {"method":"POST","path":"/products","pathParams":[],"query":[],"headers":[],"body":{"mode":"wrapper","contentType":"application/json"}},
+};
 
 export default class Controller extends AbstractController {
-  
   private api: any;
 
   protected async start(): Promise<void> {
     const config = this.config;
-    
+
     this.api = this.getClient({
-      baseUrl: 'https://api.example.com',
+      baseUrl: "https://api.example.com",
       customize(request) {
         request.headers ||= {};
         // Add authentication headers based on your API requirements
@@ -18,43 +23,39 @@ export default class Controller extends AbstractController {
   }
 
   /**
- * Get all products
- *
- *
- * @returns {Promise<any>} GET /products response
+   * Get all products
+   *
+   * GET /products
+   *
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.simpleTest.getProducts({})
+   * ```
+   *
+   * @returns {Promise<any>} GET /products response
    */
-  async getProducts(options?: {headers?: Record<string, string>}) {
-    const url = '/products';
-
-    const fetchOptions: any = {
-      method: 'GET',
-    };
-
-    return this.api.fetch(url, fetchOptions);
+  async getProducts({headers}: {headers?: Record<string, string>} = {}) {
+    return callOperation(this.api, OPERATIONS.getProducts, {headers});
   }
 
   /**
- * Create product
- *
- * @param {Object} options - Request options
- * @param {any} options.body (required) - Request body
- *
- * @returns {Promise<any>} POST /products response
+   * Create product
+   *
+   * POST /products
+   *
+   * @param {any} body (required) - request body (application/json)
+   * @param {Record<string, string>} headers (optional) - extra request headers
+   *
+   * @example usage
+   * ```
+   * await connectors.simpleTest.createProduct({ body: {} })
+   * ```
+   *
+   * @returns {Promise<any>} POST /products response
    */
-  async createProduct(options: {body?: any, headers?: Record<string, string>}) {
-    options = options || {};
-
-    const url = '/products';
-
-    const { headers, ...bodyData } = options;
-    const requestBody = Object.keys(bodyData).length > 0 ? bodyData : undefined;
-
-    const fetchOptions: any = {
-      method: 'POST',
-      body: requestBody,
-      headers: options.headers,
-    };
-
-    return this.api.fetch(url, fetchOptions);
+  async createProduct({body, headers}: {body: any; headers?: Record<string, string>}) {
+    return callOperation(this.api, OPERATIONS.createProduct, {body, headers});
   }
 }
