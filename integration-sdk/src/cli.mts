@@ -159,6 +159,16 @@ if (result.failures.length) process.exit(1);
 `;
 
 /**
+ * The hand-written auth module is written once and never overwritten; the entry point uses it.
+ */
+function writeAuthFiles(target: string, name: string) {
+  const authPath = path.join(target, 'src/auth.mts');
+  if (!fs.existsSync(authPath)) fs.writeFileSync(authPath, OpenAPIToConnector.authModuleStub());
+  fs.writeFileSync(path.join(target, 'src/index.mts'), OpenAPIToConnector.entryPoint(name));
+  console.log('🔑 Authentication: edit src/auth.mts (hand-written; kept when the connector is regenerated)');
+}
+
+/**
  * Writes what goes with a generated controller: the generation report, the contract and its test,
  * the documentation page and the command reference. One entry per resource for multi-resource connectors.
  */
@@ -221,8 +231,10 @@ program
   )
   .option('--multi-resource', 'Generate multiple resource files + main controller (requires multiple --spec files)')
   .option('--reference-url <template>', "provider reference link per operation, e.g. 'https://docs.example.com/api/{operationId}'")
+  .option('--reference-fallback <url>', "provider reference for methods with no more specific link, e.g. the API overview")
   .option('--controller-only', 'Generate only the controller file, do not create full project structure')
-  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage); the default for large APIs')
+  .option('--no-nested-paths', 'Keep flat method names, even for a large API')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
     name = name.replace(/[\/\.]/gi, '');
@@ -234,7 +246,13 @@ program
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
       // Generate the controller from OpenAPI spec
-      const generatorOptions = {nestedPaths: !!options.nestedPaths, referenceUrl: options.referenceUrl};
+      // A full project gets a hand-written auth module (src/auth.mts); a controller on its own keeps the placeholder.
+      const generatorOptions = {
+        nestedPaths: options.nestedPaths,
+        referenceUrl: options.referenceUrl,
+        referenceFallback: options.referenceFallback,
+        ...(options.controllerOnly || options.resource ? {} : {authModule: '../auth.mjs'}),
+      };
       const generator = new OpenAPIToConnector(spec, name, generatorOptions);
       let controllerCode: string;
 
@@ -276,7 +294,10 @@ Controller file generated successfully! You can now use it in your existing proj
         const controllerPath = `${target}/${options.out}`;
         fs.mkdirSync(path.dirname(controllerPath), {recursive: true});
         fs.writeFileSync(controllerPath, controllerCode);
-        if (!options.resource) writeCompanions(target, [{generator}], name);
+        if (!options.resource) {
+          writeAuthFiles(target, name);
+          writeCompanions(target, [{generator}], name);
+        }
 
         console.log('Generating keys...');
         await generateKeys({target});
@@ -364,14 +385,21 @@ program
   )
   .option('--base-url <url>', 'base URL for the API (if not specified, will be extracted from first OpenAPI spec)')
   .option('--reference-url <template>', "provider reference link per operation, e.g. 'https://docs.example.com/api/{operationId}'")
-  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
+  .option('--reference-fallback <url>', "provider reference for methods with no more specific link, e.g. the API overview")
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage); the default for large APIs')
+  .option('--no-nested-paths', 'Keep flat method names, even for a large API')
   .option('--no-build', 'Skip installing dependencies and building the project')
   .action(async (name, options) => {
     name = name.replace(/[\/\.]/gi, '');
     if (!name) throw new Error('name is empty');
 
     const target = `${process.cwd()}/${name}`;
-    const generatorOptions = {nestedPaths: !!options.nestedPaths, referenceUrl: options.referenceUrl};
+    let generatorOptions: any = {
+      nestedPaths: options.nestedPaths,
+      referenceUrl: options.referenceUrl,
+      referenceFallback: options.referenceFallback,
+      authModule: '../auth.mjs',
+    };
 
     try {
       // Parse resources specification
@@ -395,12 +423,14 @@ program
       const companions: Array<{generator: OpenAPIToConnector; resourceName?: string}> = [];
       let baseUrl = options.baseUrl;
 
-      for (const {className, specFile} of resourceSpecs) {
+      // Dotted names are decided by the size of the whole connector, so read every spec first.
+      const specs = resourceSpecs.map(({specFile}) => ({spec: OpenAPIToConnector.parseSpec(fs.readFileSync(specFile, 'utf-8'))}));
+      generatorOptions = OpenAPIToConnector.resolveOptions(specs, generatorOptions);
+
+      for (const [index, {className, specFile}] of resourceSpecs.entries()) {
         console.log(`Generating ${className} from ${specFile}...`);
 
-        // Read and parse the OpenAPI spec
-        const specContent = fs.readFileSync(specFile, 'utf-8');
-        const spec = OpenAPIToConnector.parseSpec(specContent);
+        const spec = specs[index].spec;
 
         // Extract base URL from first spec if not provided
         if (!baseUrl && spec.servers && spec.servers.length > 0) {
@@ -431,6 +461,7 @@ program
       // Write the main controller
       const controllerPath = `${target}/src/controller/index.mts`;
       fs.writeFileSync(controllerPath, mainControllerCode);
+      writeAuthFiles(target, name);
       writeCompanions(target, companions, name);
 
       console.log('Generating keys...');
@@ -477,7 +508,8 @@ program
   .argument('<projectPath>', 'path to the existing connector project')
   .requiredOption('--className <name>', 'class name for the resource (e.g., DealsResource)')
   .requiredOption('--spec <file>', 'OpenAPI specification file for the new resource')
-  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage)')
+  .option('--nested-paths', 'Use dotted namespace paths derived from URL structure (e.g., crm.contacts.getPage); the default for large APIs')
+  .option('--no-nested-paths', 'Keep flat method names, even for a large API')
   .option('--no-build', 'Skip building the project after adding the resource')
   .action(async (projectPath, options) => {
     const target = path.resolve(projectPath);
@@ -501,7 +533,7 @@ program
       const spec = OpenAPIToConnector.parseSpec(specContent);
 
       // Generate the resource functions file (new function-based pattern)
-      const generatorOptions = {nestedPaths: !!options.nestedPaths};
+      const generatorOptions = {nestedPaths: options.nestedPaths};
       const generator = new OpenAPIToConnector(spec, 'Resource', generatorOptions);
       const resourceCode = generator.generateResourceClass(options.className);
 

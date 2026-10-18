@@ -81,14 +81,16 @@ npx @aloma.io/integration-sdk@latest create-multi-resource "My Connector" \
 - `--out <file>` (optional): Output file path for the controller (default: `src/controller/index.mts`)
 - `--controller-only` (optional): Generate only the controller file, no project structure
 - `--resource <className>` (optional): Generate as a resource class instead of controller
-- `--nested-paths` (optional): Dotted method names from the URL, e.g. `crm.contacts.getById` (recommended for large APIs)
+- `--nested-paths` / `--no-nested-paths` (optional): Dotted method names from the URL, e.g. `crm.contacts.getById`. Without either flag, APIs with 50 or more operations (counted across all resources) get dotted names and smaller ones keep flat names
 - `--reference-url <template>` (optional): Provider reference link per operation when the spec has none, with `{operationId}`, `{method}` and `{path}` placeholders
+- `--reference-fallback <url>` (optional): Link for methods with no more specific reference, e.g. the provider's API overview. Links are taken in this order: the operation's own, the template, its tag's, the spec's, then this fallback
 - `--no-build` (optional): Skip installing dependencies and building the project
 
 #### What a generated project contains
 
 Besides `src/controller/index.mts` (and `src/resources/*.mts` for multi-resource connectors):
 
+- `src/auth.mts`: how the connector authenticates (hand-written; written once, never overwritten), used by `src/index.mts` and the controller
 - `openapi-report.json`: operations in the spec, operations generated, and every limitation by operation
 - `docs/connector.md`: the documentation page (setup, usage, every method with its call syntax and provider link)
 - `docs/commands.json`: the same content, machine-readable, for AI step generation
@@ -246,6 +248,32 @@ export default class Controller extends AbstractController {
 ```
 
 A step calls these as `await connectors.myConnector.updateUser({userId: '42', name: 'Ada'})`.
+
+## Authentication
+
+Generated code makes the requests; `src/auth.mts` says where the credential comes from. It exports an `AuthPlan`:
+
+```typescript
+import type {AuthPlan} from '@aloma.io/integration-sdk';
+
+const auth: AuthPlan = {
+  // OAuth 2.0 authorization code flow, run by the SDK runtime (connect, refresh, storage).
+  // The client id and secret come from OAUTH_CLIENT_ID and OAUTH_CLIENT_SECRET where the connector runs.
+  oauth: {
+    authorizationURL: 'https://example.com/oauth/authorize?client_id={{clientId}}&redirect_uri={{redirectURI}}&scope={{scope}}',
+    tokenURL: 'https://example.com/oauth/token',
+    scope: 'contacts.read contacts.write',
+  },
+  // An access token from the connector's configuration, sent as "Authorization: Bearer <token>".
+  token: {field: 'apiToken', name: 'API token'},
+};
+
+export default auth;
+```
+
+- With both, an install can connect with OAuth or set a token; a configured token is used instead of OAuth.
+- With a token only, a request without a configured token is refused before it is sent.
+- `hubspotAuth` is a ready plan for HubSpot (OAuth through the app, or a private app access token): `export {hubspotAuth as default} from '@aloma.io/integration-sdk';`.
 
 ## Generated Method Names
 

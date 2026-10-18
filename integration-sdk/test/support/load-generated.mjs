@@ -46,7 +46,8 @@ async function inFolder(dir, fn) {
 }
 
 // files: {'controller/index.mts': code, 'resources/x.mts': code}, laid out under src/ as in a connector.
-export async function loadConnector(files) {
+// config is the connector's configuration; getClient replaces the recording client when given.
+export async function loadConnector(files, {config = {}, getClient} = {}) {
   const dir = tempDir();
   const src = path.join(dir, 'src');
   let controllerFile;
@@ -84,7 +85,7 @@ export async function loadConnector(files) {
 
   const controller = new Controller();
   const noop = async () => {};
-  await controller._doStart({}, null, noop, noop, () => api, noop, noop, noop);
+  await controller._doStart(config, null, noop, noop, getClient || (() => api), noop, noop, noop);
 
   const resolvers = buildResolvers(meta.methods, controller);
 

@@ -117,6 +117,11 @@ const commentText = (s: any) =>
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/**
+ * from this many operations on, an API gets dotted method names unless told otherwise
+ */
+export const LARGE_API_OPERATIONS = 50;
+
 // Names a generated method must not take: the controller's own members (AbstractController and what the
 // generated controller adds), which a method of the same name would replace.
 const CONTROLLER_MEMBERS = [
@@ -131,7 +136,20 @@ const fnName = (s: string) => (isIdentifier(s) ? s : `${s}_`);
 
 
 export interface OpenAPIToConnectorOptions {
+  /**
+   * dotted method names from the URL (crm.contacts.getById); when not set, large APIs
+   * (LARGE_API_OPERATIONS or more operations) get them and smaller ones keep flat names
+   */
   nestedPaths?: boolean;
+  /**
+   * link used for methods that have no more specific provider reference, e.g. the provider's API overview
+   */
+  referenceFallback?: string;
+  /**
+   * import path of the connector's hand-written auth module (an AuthPlan as its default export), as seen
+   * from the controller file; when set, the controller takes its credentials from it
+   */
+  authModule?: string;
   /**
    * link to the provider's reference for each operation, when the spec has none of its own;
    * {operationId}, {method} and {path} are replaced (URL-encoded)
@@ -151,6 +169,16 @@ export class OpenAPIToConnector {
   }
 
   private table?: OperationRow[];
+  private operationCount?: number;
+
+  /**
+   * whether method names are dotted: as set, or by the size of the API
+   */
+  useNestedPaths(): boolean {
+    if (this.options.nestedPaths !== undefined) return this.options.nestedPaths;
+    this.operationCount ??= this.extractOperations().length;
+    return this.operationCount >= LARGE_API_OPERATIONS;
+  }
   private warnings: Array<{operation: string; problem: string}> = [];
   private exposedNames?: Map<string, string>;
 
@@ -163,12 +191,13 @@ export class OpenAPIToConnector {
     resourceSpecs: Array<{fileName: string; spec: OpenAPIV3.Document}>,
     options: OpenAPIToConnectorOptions = {}
   ): Map<string, Map<string, string>> {
+    const resolved = OpenAPIToConnector.resolveOptions(resourceSpecs, options);
     const tables = resourceSpecs.map(({fileName, spec}) => ({
       fileName,
-      rows: new OpenAPIToConnector(spec, fileName, options).getOperationTable(),
+      rows: new OpenAPIToConnector(spec, fileName, resolved).getOperationTable(),
     }));
     const baseOf = (fileName: string, row: OperationRow) =>
-      options.nestedPaths ? row.name : `${fileName}${capitalize(row.flatName)}`;
+      resolved.nestedPaths ? row.name : `${fileName}${capitalize(row.flatName)}`;
 
     // Blocked: the namespaces of dotted names, and the resource properties on the main controller.
     const blocked = OpenAPIToConnector.namespacesOf(tables.flatMap(({fileName, rows}) => rows.map((r) => baseOf(fileName, r))));
@@ -189,6 +218,19 @@ export class OpenAPIToConnector {
       plan.set(fileName, names);
     }
     return plan;
+  }
+
+  /**
+   * Options for every resource of a multi-resource connector: dotted names are decided by the size of the
+   * whole connector, not of each resource.
+   */
+  static resolveOptions(
+    resourceSpecs: Array<{spec: OpenAPIV3.Document}>,
+    options: OpenAPIToConnectorOptions = {}
+  ): OpenAPIToConnectorOptions {
+    if (options.nestedPaths !== undefined) return options;
+    const total = resourceSpecs.reduce((n, {spec}) => n + new OpenAPIToConnector(spec, '', options).extractOperations().length, 0);
+    return {...options, nestedPaths: total >= LARGE_API_OPERATIONS};
   }
 
   /**
@@ -301,7 +343,7 @@ export class OpenAPIToConnector {
    * When disabled (default), falls back to the existing flat method name.
    */
   deriveMethodPath(httpMethod: string, urlPath: string, operationId: string): string {
-    if (!this.options.nestedPaths) {
+    if (!this.useNestedPaths()) {
       return this.generateMethodName({method: httpMethod, path: urlPath, operationId});
     }
 
@@ -479,6 +521,64 @@ export class OpenAPIToConnector {
     return this.extractOperations().length;
   }
 
+  private authImport(): string {
+    return this.options.authModule ? `import auth from ${JSON.stringify(this.options.authModule)};\n` : '';
+  }
+
+  // How the controller's start() makes its client: credentials from the hand-written auth module, or a
+  // placeholder to fill in when there is none.
+  private clientSetup(baseUrl: string): string {
+    if (this.options.authModule) {
+      return `    this.api = this.getClient({
+      baseUrl: ${JSON.stringify(baseUrl)},
+      ...clientAuth(auth, config),
+    });`;
+    }
+    return `    this.api = this.getClient({
+      baseUrl: ${JSON.stringify(baseUrl)},
+      customize(request) {
+        request.headers ||= {};
+        // Add authentication headers based on your API requirements
+        // Example: request.headers["Authorization"] = \`Bearer \${config.apiToken}\`;
+      },
+    });`;
+  }
+
+  /**
+   * The hand-written auth module written once into a new connector project (src/auth.mts). Regenerating
+   * the connector does not overwrite it.
+   */
+  static authModuleStub(): string {
+    return `// Hand-written: how this connector authenticates. The generator writes this file once and never
+// overwrites it. Use OAuth (run by the SDK runtime), an access token from the connector's configuration,
+// or both; see AuthPlan in @aloma.io/integration-sdk, and hubspotAuth for an example.
+import type {AuthPlan} from '@aloma.io/integration-sdk';
+
+const auth: AuthPlan = {
+  token: {field: 'apiToken', name: 'API token'},
+};
+
+export default auth;
+`;
+  }
+
+  /**
+   * The connector's entry point (src/index.mts) when it has a hand-written auth module.
+   */
+  static entryPoint(summary: string): string {
+    return `import {Builder, configureAuth} from '@aloma.io/integration-sdk';
+import auth from './auth.mjs';
+
+const builder = new Builder();
+
+configureAuth(builder, auth, {summary: ${JSON.stringify(summary)}});
+
+const runtime = await builder.build();
+
+await runtime.start();
+`;
+  }
+
   /**
    * The operation table: every operation in the spec, named once, with its parameters and body.
    * Everything the generator writes (controller, resource files, contract, docs) is built from it.
@@ -509,7 +609,7 @@ export class OpenAPIToConnector {
 
     const operations = this.extractOperations();
     const nestedBase = (op: OperationInfo) =>
-      this.options.nestedPaths && op.operationId ? this.deriveMethodPath(op.method, op.path, op.operationId) : undefined;
+      this.useNestedPaths() && op.operationId ? this.deriveMethodPath(op.method, op.path, op.operationId) : undefined;
     const namespaces = OpenAPIToConnector.namespacesOf(operations.map(nestedBase).filter((n): n is string => !!n));
     const reserved = new Set(CONTROLLER_MEMBERS);
     for (const n of reserved) namespaces.add(n);
@@ -530,14 +630,14 @@ export class OpenAPIToConnector {
       const key = `${operation.method} ${operation.path}`;
       const flatName = dedup(usedFlat, this.generateMethodName(operation), operation, reserved);
       const nested = nestedBase(operation);
-      const name = this.options.nestedPaths ? dedup(usedNames, nested || flatName, operation, namespaces) : flatName;
+      const name = this.useNestedPaths() ? dedup(usedNames, nested || flatName, operation, namespaces) : flatName;
 
       const params = this.buildParams(operation, key);
       const body = this.buildBody(operation, key, params);
       // Most specific first: the operation's own link, a supplied per-operation template, its tag, the spec.
       const specific = operation.externalDocs?.url || fromTemplate(operation);
       const tagLink = (operation.tags || []).map((t) => tagLinks.get(t)).find(Boolean);
-      const reference = specific || tagLink || general;
+      const reference = specific || tagLink || general || this.options.referenceFallback;
 
       return {
         key,
@@ -1157,17 +1257,18 @@ export class OpenAPIToConnector {
       }
     }
 
-    const plan = OpenAPIToConnector.planExposedNames(specs, this.options);
+    const resolved = OpenAPIToConnector.resolveOptions(specs, this.options);
+    const plan = OpenAPIToConnector.planExposedNames(specs, resolved);
     const methods: Array<{name: string; row: OperationRow; resource: string; code: string}> = [];
 
     for (const {fileName: resourceName, spec} of specs) {
-      const gen = new OpenAPIToConnector(spec, resourceName, this.options);
+      const gen = new OpenAPIToConnector(spec, resourceName, resolved);
       gen.typePrefix = `${resourceName}Types.`;
       const names = plan.get(resourceName)!;
 
       for (const row of gen.getOperationTable()) {
         const name = names.get(row.key)!;
-        const base = this.options.nestedPaths ? row.name : `${resourceName}${capitalize(row.flatName)}`;
+        const base = gen.useNestedPaths() ? row.name : `${resourceName}${capitalize(row.flatName)}`;
         if (name !== base) this.warn(row.key, `method name "${base}" is used by another resource; exposed as "${name}"`);
 
         const {signature, pass} = gen.emitArgs(row);
@@ -1203,7 +1304,7 @@ ${gen.generateDetailedJSDoc(row, name)}
         const {signature, pass} = this.emitArgs(row);
         const params = signature.slice(1, -1);
         return `/**
-${this.generateDetailedJSDoc(row, this.options.nestedPaths ? row.name : `${resourceName}${capitalize(row.flatName)}`, ' ')}
+${this.generateDetailedJSDoc(row, this.exposedNames?.get(row.key) || (this.useNestedPaths() ? row.name : `${resourceName}${capitalize(row.flatName)}`), ' ')}
  */
 export function ${fnName(row.flatName)}(this: any, ${params}) {
   return callOperation(this.api, OPERATIONS${access(fnName(row.flatName))}, ${pass});
@@ -1249,8 +1350,8 @@ ${functions}
 
     const exposedMethods = this.generateExposedResourceMethods(resources, resourceSpecs);
 
-    return `import {AbstractController} from '@aloma.io/integration-sdk';
-${imports}
+    return `import {AbstractController${this.options.authModule ? ', clientAuth' : ''}} from '@aloma.io/integration-sdk';
+${this.authImport()}${imports}
 
 export default class Controller extends AbstractController {
 ${properties}
@@ -1260,14 +1361,7 @@ ${properties}
   protected async start(): Promise<void> {
     const config = this.config;
 
-    this.api = this.getClient({
-      baseUrl: ${JSON.stringify(baseUrl)},
-      customize(request) {
-        request.headers ||= {};
-        // Add authentication headers based on your API requirements
-        // Example: request.headers["Authorization"] = \`Bearer \${config.apiToken}\`;
-      },
-    });
+${this.clientSetup(baseUrl)}
 
     // Bind resource functions to this controller context
     // This allows using this.resourceName.method() syntax
@@ -1326,9 +1420,9 @@ ${this.generateDetailedJSDoc(row)}
 
     const preamble = [typeImports.trim(), interfaces.trim()].filter(Boolean).join('\n\n');
 
-    return `import {AbstractController, callOperation} from '@aloma.io/integration-sdk';
+    return `import {AbstractController, callOperation${this.options.authModule ? ', clientAuth' : ''}} from '@aloma.io/integration-sdk';
 import type {OperationDescriptor} from '@aloma.io/integration-sdk';
-
+${this.authImport()}
 ${preamble ? `${preamble}\n\n` : ''}${this.emitDescriptors(table, (row) => row.name)}
 
 export default class Controller extends AbstractController {
@@ -1337,14 +1431,7 @@ export default class Controller extends AbstractController {
   protected async start(): Promise<void> {
     const config = this.config;
 
-    this.api = this.getClient({
-      baseUrl: ${JSON.stringify(baseUrl)},
-      customize(request) {
-        request.headers ||= {};
-        // Add authentication headers based on your API requirements
-        // Example: request.headers["Authorization"] = \`Bearer \${config.apiToken}\`;
-      },
-    });
+${this.clientSetup(baseUrl)}
   }
 
 ${methods}
@@ -1359,7 +1446,7 @@ ${methods}
       const planned = this.exposedNames?.get(row.key);
       names.set(
         row,
-        planned || (resourceName && !this.options.nestedPaths ? `${resourceName}${capitalize(row.flatName)}` : row.name)
+        planned || (resourceName && !this.useNestedPaths() ? `${resourceName}${capitalize(row.flatName)}` : row.name)
       );
     }
     return names;

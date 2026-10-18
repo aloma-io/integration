@@ -252,6 +252,52 @@ await test('a multi-resource doc page has one setup section and a section per re
   assert(md.includes('connectors.exampleCrm.contactsGetById(') && md.includes('connectors.exampleCrm.filesGetById('), 'methods missing');
 });
 
+// --- Patrick's decisions (18 Oct): nested names for large APIs; a general reference as the last link ---
+
+function largeSpec(n) {
+  const doc = {openapi: '3.0.0', info: {title: 'Large', version: '1'}, paths: {}};
+  for (let i = 0; i < n; i++) {
+    doc.paths[`/crm/v3/objects/thing${i}`] = {get: {operationId: `get-/crm/v3/objects/thing${i}_getPage`, responses: {200: {description: 'OK'}}}};
+  }
+  return doc;
+}
+
+await test('large APIs get nested names by default; small ones stay flat; an explicit choice wins', async () => {
+  const large = new OpenAPIToConnector(largeSpec(60), 'Large').getOperationTable();
+  assert(large.every((r) => r.name.startsWith('crm.thing')), `large: ${large[0].name}`);
+  const small = new OpenAPIToConnector(spec(), 'Example CRM').getOperationTable();
+  assert(small.find((r) => r.key === 'GET /crm/v3/objects/contacts').name === 'getPage', 'small spec is not flat');
+  const forced = new OpenAPIToConnector(largeSpec(60), 'Large', {nestedPaths: false}).getOperationTable();
+  assert(!forced[0].name.includes('.'), `forced flat: ${forced[0].name}`);
+});
+
+await test('a multi-resource connector that is large in total gets nested names, though each resource is small', async () => {
+  const resourceSpecs = Array.from({length: 6}, (_, i) => {
+    const doc = largeSpec(10);
+    for (const key of Object.keys(doc.paths)) {
+      doc.paths[key.replace('thing', `r${i}x`)] = doc.paths[key];
+      delete doc.paths[key];
+    }
+    return {fileName: `res${i}`, spec: doc};
+  });
+  const plan = OpenAPIToConnector.planExposedNames(resourceSpecs);
+  const names = [...plan.get('res0').values()];
+  assert(names.every((n) => n.includes('.')), `names ${names.slice(0, 3)}`);
+});
+
+await test('with no other link, methods point to the supplied general reference, labelled as general', async () => {
+  const doc = spec();
+  delete doc.externalDocs;
+  for (const item of Object.values(doc.paths)) for (const op of Object.values(item)) if (op && op.externalDocs) delete op.externalDocs;
+  const gen = new OpenAPIToConnector(doc, 'Example CRM', {referenceFallback: 'https://docs.example.test/api-overview'});
+  const table = gen.getOperationTable();
+  assert(table.every((r) => r.reference === 'https://docs.example.test/api-overview' && r.referenceIsGeneral), 'fallback not used');
+  assert(gen.generateDocs().includes('[provider API reference](https://docs.example.test/api-overview)'), 'docs label');
+  const linked = new OpenAPIToConnector(spec(), 'Example CRM', {referenceFallback: 'https://docs.example.test/api-overview'});
+  const getPage = linked.getOperationTable().find((r) => r.key === 'GET /crm/v3/objects/contacts');
+  assert(getPage.reference === 'https://docs.example.test/reference/contacts/get-page', 'fallback replaced a real link');
+});
+
 await test('the command reference matches the doc page method for method', async () => {
   const gen = new OpenAPIToConnector(spec(), 'Example CRM');
   const ref = gen.generateCommandReference({namespace: 'exampleCrm'});

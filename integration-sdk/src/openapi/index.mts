@@ -200,3 +200,5 @@ export async function assertParamEffect(
     throw new Error(`parameter "${param}" had no effect: values ${JSON.stringify(values)} gave the same result`);
   }
 }
+
+export * from './auth.mjs';
