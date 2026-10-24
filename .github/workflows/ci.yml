@@ -13,8 +13,13 @@ permissions:
 
 jobs:
   integration_sdk:
+    name: integration_sdk (node ${{ matrix.node }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22', '24']
     defaults:
       run:
         working-directory: integration-sdk
@@ -27,7 +32,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node }}
 
       - name: Install dependencies
         run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
@@ -37,6 +42,11 @@ jobs:
 
       - name: Test
         run: npx yarn@1.22.22 test
+
+      # The connector test harness tests run in their own step: `yarn test` loads verify-scenarios.mjs, which
+      # calls process.exit() while mocha is still loading files, so describe/it style tests never run there.
+      - name: Test connector harness (fake ALOMA handshake, mocked vendor HTTP, no network)
+        run: npx yarn@1.22.22 test:harness
 
   workspace_sdk:
     runs-on: ubuntu-latest
