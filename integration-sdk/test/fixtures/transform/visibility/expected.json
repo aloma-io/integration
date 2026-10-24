@@ -1,0 +1,9 @@
+{
+ "text": "\n/**\n * \n *\n * \n * \n **/    \ndeclare function visible({a}: {\n/**\n\n */\n a: string}): string;\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function quoted-name({a}: {\n/**\n\n */\n a: string}): void;\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function arrow({a}: {\n/**\n\n */\n a: string}): string;\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function inheritedPublic(): void;\n      ",
+ "methods": [
+  "visible",
+  "quoted-name",
+  "arrow",
+  "inheritedPublic"
+ ]
+}

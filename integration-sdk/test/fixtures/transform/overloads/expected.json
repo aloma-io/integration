@@ -1,0 +1,6 @@
+{
+ "text": "\n/**\n * first form\n *\n * \n * \n **/    \ndeclare function over({a}: {\n/**\n\n */\n a: string}): string;\n      \n\n/**\n * second form\n *\n * \n * \n **/    \ndeclare function over({b}: {\n/**\n\n */\n b: number}): number;\n      ",
+ "methods": [
+  "over"
+ ]
+}

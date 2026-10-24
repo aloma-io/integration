@@ -1,0 +1,8 @@
+{
+ "text": "\n/**\n * Returns recorded calls scoped to the current task.\n *\n * \n * @example usage\n```javascript\nconst log = await connectors.testing.getCallLog({})\n// log.calls = [{method, args, timestamp}, ...] for THIS task only\n```\n **/    \ndeclare function getCallLog(): { calls: CallRecord[]; count: number; };\n      \n/**\n * Resets the call log for the current task only.\n *\n * \n * @example usage\n```javascript\nawait connectors.testing.clearCallLog({})\n```\n **/    \ndeclare function clearCallLog(): { cleared: boolean; };\n      \n/**\n * Updates the response map for the current task at runtime.\n *\n * \n * @example usage\n```javascript\nawait connectors.testing.setResponses({\n  responses: { \"someConnector.create\": { id: \"456\" } }\n})\n```\n **/    \ndeclare function setResponses(): { updated: boolean; responseCount: number; };\n      ",
+ "methods": [
+  "getCallLog",
+  "clearCallLog",
+  "setResponses"
+ ]
+}
