@@ -1,0 +1,8 @@
+{
+ "text": "\n/**\n * \n *\n * \n * \n **/    \ndeclare function typed({email; count; tags; mode; either; nested}: {\n/**\n\n */\n email: string; \n/**\n\n */\n count: any; \n/**\n\n */\n tags: string[]; \n/**\n\n */\n mode: any; \n/**\n\n */\n either: any; \n/**\n\n */\n nested: any}): { ok: boolean; tags: number[]; };\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function tuple(): [string, number];\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function maybe(): string | undefined;\n      ",
+ "methods": [
+  "typed",
+  "tuple",
+  "maybe"
+ ]
+}

@@ -1,0 +1,9 @@
+{
+ "text": "\n/**\n * greet somebody\n *\n * @namespace demo\n * @example usage\n```javascript\ngreet({name: 'Ann'})\n```\n **/    \ndeclare function greet({name; times = 2; loud = false; label = 'x'; neg = -1; nothing}: {\n/**\nwho to greet, e.g. Ann\n */\n name: any; \n/**\nhow often\n */\n times: any; \n/**\n\n */\n loud: any; \n/**\n\n */\n label: any; \n/**\n\n */\n neg: any; \n/**\n\n */\n nothing: any}): { ok: boolean; greeting: any; };\n      \n/**\n * no params\n *\n * \n * \n **/    \ndeclare function ping(): { ok: boolean; };\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function list(): string[];\n      \n/**\n * \n *\n * \n * \n **/    \ndeclare function nothing(): void;\n      ",
+ "methods": [
+  "greet",
+  "ping",
+  "list",
+  "nothing"
+ ]
+}
