@@ -12,6 +12,8 @@
     "dev": "./node_modules/typescript/bin/tsc --watch",
     "build": "./node_modules/typescript/bin/tsc",
     "test": "./node_modules/mocha/bin/_mocha --recursive test/ --loader ts-node/esm",
+    "test:harness": "./node_modules/mocha/bin/_mocha --exit \"test/harness*.test.mjs\"",
+    "test:mutation": "node tools/mutation-run.mjs",
     "test:scenarios": "node test/verify-scenarios.mjs",
     "test:all": "npm run test:scenarios",
     "format": "yarn prettier --write src/",
