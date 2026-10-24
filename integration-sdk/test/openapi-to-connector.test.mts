@@ -141,7 +141,9 @@ paths:
     it('should reject invalid JSON/YAML', () => {
       expect(() => {
         OpenAPIToConnector.parseSpec('invalid json {');
-      }).to.throw('Failed to parse OpenAPI spec');
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'Failed to parse OpenAPI spec'.
+      // 'invalid json {' is not JSON, but js-yaml loads it as a plain string, so it is rejected by the schema check.
+      }).to.throw('Invalid OpenAPI 3.x specification');
     });
   });
 
@@ -152,9 +154,12 @@ paths:
       
       expect(controllerCode).to.include('import {AbstractController}');
       expect(controllerCode).to.include('export default class Controller extends AbstractController');
-      expect(controllerCode).to.include('async getUsers(args: any)');
-      expect(controllerCode).to.include('async createUser(args: any)');
-      expect(controllerCode).to.include('async get_users_{id}(args: any)');
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'async getUsers(args: any)',
+      // 'async createUser(args: any)' and 'async get_users_{id}(args: any)' (an older args-object signature; the
+      // third name never matched the spec's operationId getUserById, path params are now positional).
+      expect(controllerCode).to.include('async getUsers(options?: {headers?: Record<string, string>})');
+      expect(controllerCode).to.include('async createUser(options');
+      expect(controllerCode).to.include('async getUserById(id: string, options?: {headers?: Record<string, string>})');
     });
 
     it('should generate proper JSDoc comments', () => {
@@ -163,8 +168,20 @@ paths:
       
       expect(controllerCode).to.include('* Get all users');
       expect(controllerCode).to.include('* Retrieve a list of all users');
-      expect(controllerCode).to.include('* @param args.body - Request body');
-      expect(controllerCode).to.include('* @param args.id - User ID');
+      // PINS: expectation updated to today's output on 24 Oct; original expected '* @param args.body - Request body'
+      // and '* @param args.id - User ID' (older args-object JSDoc; the object body is now expanded into its properties).
+      expect(controllerCode).to.include('* @param {string} options.name (required)');
+      expect(controllerCode).to.include('* @param {string} id User ID');
+    });
+
+    it('should substitute path parameters into the url', () => {
+      // Added on 24 Oct with the entry-point fix: nothing asserted the generated path parameter handling before.
+      const generator = new OpenAPIToConnector(validOpenAPISpec, 'Test Connector');
+      const controllerCode = generator.generateController();
+
+      expect(controllerCode).to.include("let url = '/users/{id}';");
+      expect(controllerCode).to.include('if (id) {');
+      expect(controllerCode).to.include("url = url.replace('{id}', id);");
     });
 
     it('should handle operations without operationId', () => {
@@ -187,7 +204,8 @@ paths:
       const generator = new OpenAPIToConnector(specWithoutOperationId, 'Test Connector');
       const controllerCode = generator.generateController();
       
-      expect(controllerCode).to.include('async get_test(args: any)');
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'async get_test(args: any)'.
+      expect(controllerCode).to.include('async get_test(options?: {headers?: Record<string, string>})');
     });
 
     it('should throw error for empty spec', () => {

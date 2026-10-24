@@ -44,8 +44,13 @@ describe('Scenario Tests - Full Code Generation', () => {
       const actualOutput = generator.generateController();
       
       // Verify methods without options don't have unnecessary code
-      expect(actualOutput).to.include('async getProducts() {'); // No options parameter
-      expect(actualOutput).to.not.include('options = options || {}'); // No options initialization for getProducts
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'async getProducts() {'.
+      // Since the headers type fix (f2d55a0, Bug C) every method takes an optional options with headers.
+      expect(actualOutput).to.include('async getProducts(options?: {headers?: Record<string, string>}) {');
+      // PINS: expectation updated to today's output on 24 Oct; original asserted this on the whole output, which also
+      // contains createProduct's (legitimate) initialization, so it is now scoped to the getProducts method only.
+      const getProductsBody = actualOutput.slice(actualOutput.indexOf('async getProducts('), actualOutput.indexOf('async createProduct('));
+      expect(getProductsBody).to.not.include('options = options || {}'); // No options initialization for getProducts
       expect(actualOutput).to.include('async createProduct(options:'); // Has options parameter
       expect(actualOutput).to.include('options = options || {};'); // Has options initialization for createProduct
     });
@@ -163,13 +168,15 @@ describe('Scenario Tests - Full Code Generation', () => {
       const actualOutput = generator.generateResourceClass('OrdersResource');
       
       // Verify path parameters are handled correctly
-      expect(actualOutput).to.include('export function getOrder(this: any, orderId: string)');
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'getOrder(this: any, orderId: string)'
+      // and 'cancelOrder(this: any, orderId: string)' with no trailing options (stale since the headers type fix, Bug C).
+      expect(actualOutput).to.include('export function getOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
       expect(actualOutput).to.include('export function updateOrderStatus(this: any, orderId: string, options');
-      expect(actualOutput).to.include('export function cancelOrder(this: any, orderId: string)');
+      expect(actualOutput).to.include('export function cancelOrder(this: any, orderId: string, options?: {headers?: Record<string, string>})');
       
       // Verify methods without options don't have unnecessary code
-      expect(actualOutput).to.match(/export function getOrder\(this: any, orderId: string\) \{/);
-      expect(actualOutput).to.match(/export function cancelOrder\(this: any, orderId: string\) \{/);
+      expect(actualOutput).to.match(/export function getOrder\(this: any, orderId: string, options\?: \{headers\?: Record<string, string>\}\) \{/);
+      expect(actualOutput).to.match(/export function cancelOrder\(this: any, orderId: string, options\?: \{headers\?: Record<string, string>\}\) \{/);
     });
 
     it('should correctly expose resource methods in main controller', () => {
@@ -278,7 +285,8 @@ describe('Scenario Tests - Full Code Generation', () => {
       const output = generator.generateController();
       
       // Should not have options parameter or initialization
-      expect(output).to.include('async getSimple() {');
+      // PINS: expectation updated to today's output on 24 Oct; original expected 'async getSimple() {' (stale since Bug C).
+      expect(output).to.include('async getSimple(options?: {headers?: Record<string, string>}) {');
       expect(output).to.not.include('options = options || {}');
       expect(output).to.not.include('headers: options');
     });

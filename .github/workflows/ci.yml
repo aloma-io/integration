@@ -40,13 +40,10 @@ jobs:
       - name: Build
         run: npx yarn@1.22.22 build
 
+      # `yarn test` (tools/run-tests.mjs) runs the mocha describe/it files (generator, scenarios, connector harness)
+      # in one mocha process and every standalone test script in its own node process.
       - name: Test
         run: npx yarn@1.22.22 test
-
-      # The connector test harness tests run in their own step: `yarn test` loads verify-scenarios.mjs, which
-      # calls process.exit() while mocha is still loading files, so describe/it style tests never run there.
-      - name: Test connector harness (fake ALOMA handshake, mocked vendor HTTP, no network)
-        run: npx yarn@1.22.22 test:harness
 
   workspace_sdk:
     runs-on: ubuntu-latest
