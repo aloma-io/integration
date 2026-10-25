@@ -126,10 +126,14 @@ export class OpenAPIToConnector {
     const validationResult = OpenAPISchema.safeParse(parsed);
     if (!validationResult.success) {
       // Check if the errors are just about missing 'type' fields in schemas
-      const criticalErrors = validationResult.error.errors.filter((err) => {
+      // zod 4 reports .issues (zod 3's .errors is gone), and a missing field is an invalid_type issue whose message no
+      // longer reads 'Required'
+      const isMissing = (err: any) =>
+        err.message.includes('Required') || (err.code === 'invalid_type' && /received undefined/.test(err.message));
+      const criticalErrors = validationResult.error.issues.filter((err) => {
         const path = err.path.join('.');
         // Allow missing 'type' in schema definitions as many OpenAPI specs don't include it
-        return !path.includes('components.schemas') || !err.message.includes('Required');
+        return !path.includes('components.schemas') || !isMissing(err);
       });
 
       if (criticalErrors.length > 0) {
