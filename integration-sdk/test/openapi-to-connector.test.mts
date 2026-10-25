@@ -138,6 +138,13 @@ paths:
       }).to.throw('Invalid OpenAPI 3.x specification');
     });
 
+    it('names the field that fails validation (zod 4 reports issues, not errors)', () => {
+      const missingTitle = {openapi: '3.0.0', info: {version: '1.0.0'}, paths: {}};
+      expect(() => {
+        OpenAPIToConnector.parseSpec(JSON.stringify(missingTitle));
+      }).to.throw(/Invalid OpenAPI 3\.x specification: info\.title: /);
+    });
+
     it('should reject invalid JSON/YAML', () => {
       expect(() => {
         OpenAPIToConnector.parseSpec('invalid json {');
