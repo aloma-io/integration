@@ -1,6 +1,6 @@
 {
   "name": "@aloma.io/integration-sdk",
-  "version": "3.8.67",
+  "version": "3.8.69",
   "description": "",
   "author": "aloma.io",
   "license": "Apache-2.0",
@@ -11,7 +11,9 @@
   "scripts": {
     "dev": "./node_modules/typescript/bin/tsc --watch",
     "build": "./node_modules/typescript/bin/tsc",
-    "test": "./node_modules/mocha/bin/_mocha --recursive test/ --loader ts-node/esm",
+    "test": "node tools/run-tests.mjs",
+    "test:harness": "./node_modules/mocha/bin/_mocha --exit \"test/harness*.test.mjs\"",
+    "test:mutation": "node tools/mutation-run.mjs",
     "test:scenarios": "node test/verify-scenarios.mjs",
     "test:all": "npm run test:scenarios",
     "format": "yarn prettier --write src/",
@@ -29,9 +31,9 @@
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2",
-    "@ts-ast-parser/core": "^0.5",
     "@types/node": "^18",
     "commander": "^12",
+    "comment-parser": "^1.4.1",
     "dotenv": "^16",
     "express": "^4",
     "jose": "^5",
@@ -40,7 +42,7 @@
     "prom-client": "^15",
     "typescript": "^5",
     "ws": "^8",
-    "zod": "^3"
+    "zod": "^4"
   },
   "optionalDependencies": {
     "bufferutil": "^4",

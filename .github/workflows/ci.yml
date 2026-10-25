@@ -1,0 +1,69 @@
+name: ci
+
+# Builds both packages and runs the integration SDK tests on every pull request and on main.
+# It publishes nothing and uses no secrets; publishing stays in publish.yml.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  integration_sdk:
+    name: integration_sdk (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['18', '20', '22', '24']
+    defaults:
+      run:
+        working-directory: integration-sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install dependencies
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+
+      - name: Build
+        run: npx yarn@1.22.22 build
+
+      # `yarn test` (tools/run-tests.mjs) runs the mocha describe/it files (generator, scenarios, connector harness)
+      # in one mocha process and every standalone test script in its own node process.
+      - name: Test
+        run: npx yarn@1.22.22 test
+
+  workspace_sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: workspace-sdk
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+
+      - name: Build
+        run: npx yarn@1.22.22 build
