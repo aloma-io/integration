@@ -253,7 +253,10 @@ The script generates method names using the following priority:
 ## Parameter Mapping
 
 - **Path parameters**: Mapped to `args.paramName`
-- **Query parameters**: Mapped to `args.paramName`
+- **Query parameters**: Mapped to `args.paramName`, copied into `fetchOptions.params`; the SDK Fetcher sends them as
+  the query string. `undefined` and `null` values are skipped, numbers and booleans are stringified,
+  arrays become repeated keys (`properties=a&properties=b`, the OpenAPI default `style: form, explode: true`), and
+  nested objects are refused with an error. Values are encoded by `URLSearchParams`; a query already in the url is kept.
 - **Request body**: Mapped to `args.body`
 - **Headers**: Mapped to `args.headerName`
 

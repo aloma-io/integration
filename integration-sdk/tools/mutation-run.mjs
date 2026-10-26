@@ -2,8 +2,8 @@
 //
 //   yarn build && yarn test:mutation
 //
-// Applies each deliberate single-point bug below to src/, rebuilds, runs the harness tests and expects them
-// to FAIL. The original file is restored after every mutant (and on Ctrl-C). Writes test/MUTATION.md.
+// Applies each deliberate single-point bug below to src/, rebuilds, runs the harness tests (or, for the F mutants,
+// test/fetcher-query-params.test.mjs) and expects them to FAIL. The original file is restored after every mutant (and on Ctrl-C). Writes test/MUTATION.md.
 // Not part of CI: it rebuilds the SDK ~30 times. Run it when the harness or the SDK paths it covers change.
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -47,6 +47,19 @@ const MUTANTS = [
   ['M30', 'harness fake ALOMA', 'testing/fake-aloma.mts', "{query: method, variables, ...ctx}", "{query: method, variables}", 'call() drops the ctx fields'],
   ['M31', 'harness', 'testing/harness.mts', 'this.vendor.verify();', '', 'stop() no longer fails on unmocked requests'],
   ['M32', 'harness', 'testing/harness.mts', "await aloma.setConfig(options.config || {});", "", 'the harness never sends configuration'],
+  // PLAT-47: Fetcher query parameters, checked by test/fetcher-query-params.test.mjs
+  ['F01', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'const fullURL = withQuery(theURL, toQuery(options0.params));', 'const fullURL = theURL;', 'params are not sent at all (the PLAT-47 bug)'],
+  ['F02', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (Array.isArray(value)) value.forEach((item) => add(key, item));\n    else add(key, value);', 'add(key, value);', 'array handling dropped (arrays are refused as objects)'],
+  ['F03', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (Array.isArray(value)) value.forEach((item) => add(key, item));', "if (Array.isArray(value)) add(key, value.join(','));", 'arrays are comma-joined instead of repeated keys'],
+  ['F04', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (value == null) return;', 'if (value === null) return;', 'undefined values are not skipped'],
+  ['F05', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (value == null) return;', 'if (value === undefined) return;', 'null values are not skipped'],
+  ['F06', 'sdk fetcher', 'internal/fetcher/fetcher.mts', "    if (typeof value === 'object') {", '    if (false) {', 'nested objects are sent instead of refused'],
+  ['F07', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (e instanceof ParamsError) throw e;', '', 'a refused params object is retried'],
+  ['F08', 'sdk fetcher', 'internal/fetcher/fetcher.mts', "const sep = !base.includes('?') ? '?'", "const sep = true ? '?'", 'a query already in the url gets a second "?"'],
+  ['F09', 'sdk fetcher', 'internal/fetcher/fetcher.mts', '        ...init,\n', '        ...options0,\n', 'params is passed on to native fetch'],
+  ['F10', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'const {params, ...init} = options0;', 'const {params, ...init} = options0;\n      delete options0.params;', 'params are dropped from options0, so a retry loses the query'],
+  ['F11', 'sdk fetcher', 'internal/fetcher/fetcher.mts', "console.log(theURL.split('?')[0], e);", 'console.log(theURL, e);', 'a failed attempt logs query values'],
+  ['F12', 'sdk fetcher', 'internal/fetcher/fetcher.mts', 'if (params instanceof URLSearchParams) return params.toString();', '', 'a URLSearchParams instance is silently dropped'],
 ];
 
 const run = (cmd, args, timeout) =>
@@ -57,6 +70,8 @@ const build = () => {
   if (r.status !== 0) throw new Error('build failed:\n' + r.stdout + r.stderr);
 };
 const mocha = () => run('node', ['./node_modules/mocha/bin/_mocha', '--bail', '--exit', 'test/harness.test.mjs', 'test/harness-connector-smoke.test.mjs'], 150000);
+const fetcherTests = () => run('node', ['test/fetcher-query-params.test.mjs'], 150000);
+const testsFor = (id) => (id.startsWith('F') ? fetcherTests() : mocha());
 
 let current = null;
 const restore = () => {
@@ -73,6 +88,8 @@ try {
   build();
   const baseline = mocha();
   if (baseline.status !== 0) throw new Error('baseline run must pass before mutating:\n' + baseline.stdout.slice(-2000));
+  const fetcherBaseline = fetcherTests();
+  if (fetcherBaseline.status !== 0) throw new Error('fetcher baseline must pass:\n' + fetcherBaseline.stdout.slice(-2000));
 
   for (const [id, area, rel, find, replace, bug] of MUTANTS) {
     const file = src(rel);
@@ -85,8 +102,8 @@ try {
     try {
       fs.writeFileSync(file, original.replace(find, () => replace));
       build();
-      const r = mocha();
-      const failing = (r.stdout.match(/^\s+\d+\) .+$/gm) || [])[0]?.trim() || '';
+      const r = testsFor(id);
+      const failing = (r.stdout.match(/^\s+\d+\) .+$|FAIL: .+$/gm) || [])[0]?.trim() || '';
       outcome = r.error?.code === 'ETIMEDOUT' ? 'killed (timeout)' : r.status !== 0 ? 'killed' : 'SURVIVED';
       results.push({id, area, rel, bug, outcome, by: failing});
     } finally {
@@ -107,7 +124,8 @@ const md = [
   '',
   'Each row is one deliberate single-point bug in the SDK code paths the harness exercises (handshake, transport,',
   'dispatch, result return, config) or in the harness itself. `tools/mutation-run.mjs` applies it to `src/`, rebuilds,',
-  'runs `test/harness.test.mjs` with `--bail`, expects a failure, and restores the file. Re-run with',
+  'runs `test/harness.test.mjs` with `--bail` (F rows: `test/fetcher-query-params.test.mjs`), expects a failure, and',
+  'restores the file. Re-run with',
   '`yarn build && yarn test:mutation` after changing the harness or those SDK paths.',
   '',
   '| # | Area | File | Bug | Result |',
