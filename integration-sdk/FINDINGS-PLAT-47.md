@@ -4,7 +4,16 @@ Issue: PLAT-47
 
 Run 20261026-104553, on `origin/main` 70a9898 (`@aloma.io/integration-sdk` 3.8.69). The package version is unchanged.
 
-## Status: the fix is written and verified in the box but NOT committed (gate blocker)
+## Update, run 20261026-111752: the fix is committed (e8f0fbb)
+
+After `integration-sdk/node_modules` was reinstalled from the lockfile (lockfile unchanged), `yarn build` exits 0 and
+`yarn test` passes in full: 5 mocha files and 8 standalone scripts, 0 failed, with fetcher-query-params at 19/19. The
+stashed work was the same, byte for byte, as `.aeh/runs/20261026-110540/unfinished.patch`. Test, code and docs were
+committed together as e8f0fbb, "PLAT-47: the Fetcher sends fetchOptions.params as the query string". The gate passed
+every check on tree 370dfe838730: secret-files, secrets, static, dependencies, tdd, model and probe. The sections
+below are the history of the earlier refusals. Their "not committed" status no longer holds.
+
+## Status (runs 20261026-104553 and 20261026-110540, superseded): the fix is written and verified in the box but NOT committed (gate blocker)
 
 The box's commit gate refused the code commit:
 
