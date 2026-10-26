@@ -31,6 +31,52 @@ The gate's test command (`AEH_TDD`) is set from the Mac only; the box cannot cha
 
 Everything below describes that patch.
 
+## Run 20261026-110540: second attempt, refused again by the gate (tdd, green run fails)
+
+With the gate's test command now configured, this run tried to land the same patch (stash `plat47-fetcher-fix`, checked
+byte-identical to `.aeh/runs/20261026-104553/PLAT-47-fix.patch`, which is also saved as
+`.aeh/runs/20261026-110540/unfinished.patch`). It is still **not committed**. It stays in the box's working tree.
+
+What happened, in order:
+
+1. **Test alone, then code (the task's plan).** The test file was committed alone as `401b1cf` (review warn: no
+   probe for the red step). The code and docs commit was then refused:
+
+       tdd  fail  non-test code changed (integration-sdk/src/internal/fetcher/fetcher.mts,
+                  integration-sdk/tools/mutation-run.mjs) with no new or changed test: write a test that fails on the
+                  current code first
+
+2. **Following the gate: test and code in one commit.** `401b1cf` was reverted by an ordinary commit, with no history
+   rewrite because it may already be published. Then test, code and docs were staged together and reviewed. That
+   commit was refused, and this is the gate's exact reason (review of tree `ea44c6244395`):
+
+       tdd  fail  the tests fail after the change (exit 2)
+                  --- green run:
+                  warning You don't appear to have an internet connection. Try the --offline flag to use the cache for registry queries.
+                  error Command failed with exit code 2.
+
+   Every other check on that tree passed: secret-files, secrets, static, dependencies, the gate's own model review
+   ("No findings"), and the probe. The probe ran in the gate's tester and gave 19/19 for
+   `test/fetcher-query-params.test.mjs` on the fixed tree.
+
+**Likely cause (environment, not the change):** the box cannot confirm this, because it cannot see the gate's test
+command or its tester. In the box, `yarn build` (tsc) exits 2 on missing packages only:
+
+    src/openapi-to-connector.mts: Cannot find module 'zod'
+    src/testing/fake-aloma.mts:  Cannot find module 'ws'
+    src/transform/index.mts:     Cannot find module 'comment-parser'
+
+`node_modules` here is incomplete, and `yarn install --frozen-lockfile` fails (registry proxy 403; `yarn.lock`
+unchanged). `yarn test` then fails 8 of 13 files, every one with `ERR_MODULE_NOT_FOUND` (ws, zod, brace-expansion).
+**The same 8 fail on HEAD without the patch**, and the new fetcher test passes 19/19. If the gate's command is
+`yarn build && yarn test` and its linked `node_modules` is the same incomplete set, it fails before and after any
+change, so no code commit can pass the tdd check.
+
+**To land it (Mac side):** give the gate's tester a complete `node_modules` for `integration-sdk` (zod 4.6.6, ws,
+comment-parser, brace-expansion, at the locked versions), or set its test command to one that runs offline. Then commit
+test + `fetcher.mts` + `mutation-run.mjs` + `OPENAPI_TO_CONNECTOR.md` in **one** commit: the gate needs the new test
+in the same commit as the code change.
+
 ## The change
 
 `src/internal/fetcher/fetcher.mts`:
