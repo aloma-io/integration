@@ -1,5 +1,43 @@
 import {unwrap} from '../util/index.mjs';
 
+class ParamsError extends Error {}
+
+/**
+ * build a query string from request params: undefined and null are skipped, arrays become repeated keys,
+ * objects are refused; values are encoded by URLSearchParams
+ */
+const toQuery = (params: any): string => {
+  if (params == null) return '';
+  if (params instanceof URLSearchParams) return params.toString();
+  if (typeof params !== 'object' || Array.isArray(params)) throw new ParamsError('params must be an object');
+
+  const query = new URLSearchParams();
+  const add = (key: string, value: any) => {
+    if (value == null) return;
+    if (typeof value === 'object') {
+      throw new ParamsError(`params.${key} is an object; only strings, numbers, booleans and arrays of them are sent`);
+    }
+    query.append(key, String(value));
+  };
+
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) value.forEach((item) => add(key, item));
+    else add(key, value);
+  }
+
+  return query.toString();
+};
+
+const withQuery = (url: string, query: string): string => {
+  if (!query) return url;
+
+  const hash = url.indexOf('#');
+  const base = hash < 0 ? url : url.slice(0, hash);
+  const sep = !base.includes('?') ? '?' : /[?&]$/.test(base) ? '' : '&';
+
+  return base + sep + query + (hash < 0 ? '' : url.slice(hash));
+};
+
 /**
  * http request fetcher
  */
@@ -73,6 +111,11 @@ export default class Fetcher {
        * request body like "hello world" or {hello: "world"}
        */
       body?: any;
+      /**
+       * query parameters like {limit: 10, properties: ["a", "b"]}, appended to the url;
+       * undefined and null are skipped, arrays become repeated keys, objects are refused
+       */
+      params?: {[key: string]: any} | URLSearchParams;
     },
     retries?: number,
     args: any = {}
@@ -95,6 +138,8 @@ export default class Fetcher {
       delete options0.url;
 
       theURL = !baseUrl ? url : `${baseUrl?.endsWith('/') ? baseUrl : baseUrl + '/'}${url}`.replace(/\/\/+/gi, '/');
+      // after the slash collapse, so encoded values are not altered; options0 keeps params for retries
+      const fullURL = withQuery(theURL, toQuery(options0.params));
 
       if (!options0?.headers || !options0?.headers?.Accept) {
         options0.headers = {
@@ -120,8 +165,9 @@ export default class Fetcher {
       }
 
       const timeout = Math.min(options0?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
-      const ret = await fetch(theURL, {
-        ...options0,
+      const {params, ...init} = options0;
+      const ret = await fetch(fullURL, {
+        ...init,
         signal: AbortSignal.timeout(timeout),
       });
       const status = await ret.status;
@@ -144,6 +190,8 @@ export default class Fetcher {
 
       return unwrap(ret, options0);
     } catch (e: any) {
+      if (e instanceof ParamsError) throw e;
+
       // too many requests
       if (e.status === 429) {
         return local.onError(e, url, options0, retries, args, true);
@@ -156,7 +204,8 @@ export default class Fetcher {
 
       --retries;
 
-      console.log(theURL, e);
+      // without the query string: its values may hold ids or emails
+      console.log(theURL.split('?')[0], e);
 
       if (retries <= 0) throw e;
 
