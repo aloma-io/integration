@@ -1,0 +1,14 @@
+# R04 429 handled like any error: counted against retry, 500 ms wait. Must fail: test/fetcher-retry.test.mjs "a 429 is retried after 10 s, and the retry succeeds"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 84d8596..93fa8c3 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -193,7 +193,7 @@ export default class Fetcher {
+       if (e instanceof ParamsError) throw e;
+ 
+       // too many requests
+-      if (e.status === 429) {
++      if (false) {
+         return local.onError(e, url, options0, retries, args, true);
+       }
+ 

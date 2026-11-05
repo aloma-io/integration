@@ -1,0 +1,14 @@
+# R07 the failure log line includes the query string. Must fail: test/fetcher-retry.test.mjs "a failed attempt is logged with the url without its query string"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 84d8596..d5117b0 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -205,7 +205,7 @@ export default class Fetcher {
+       --retries;
+ 
+       // without the query string: its values may hold ids or emails
+-      console.log(theURL.split('?')[0], e);
++      console.log(theURL, e);
+ 
+       if (retries <= 0) throw e;
+ 

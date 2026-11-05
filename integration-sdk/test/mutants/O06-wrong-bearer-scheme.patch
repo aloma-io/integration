@@ -1,0 +1,14 @@
+# O06 wrong authorization scheme. Must fail: test/oauth-fetcher.test.mjs "an existing access token is sent as Bearer and nothing is refreshed"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..9530f8b 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -90,7 +90,7 @@ class OAuthFetcher extends Fetcher {
+ 
+     options.headers = {
+       ...options.headers,
+-      Authorization: `Bearer ${token}`,
++      Authorization: `Token ${token}`,
+     };
+   }
+ }

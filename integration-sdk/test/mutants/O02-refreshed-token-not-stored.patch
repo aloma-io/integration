@@ -1,0 +1,15 @@
+# O02 the refreshed token is not stored. Must fail: test/oauth-fetcher.test.mjs "the refreshed token is stored (in memory and saved) and later calls reuse it without another refresh"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..8d46a34 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -35,8 +35,7 @@ class OAuthFetcher extends Fetcher {
+       const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
+ 
+       if (ret.access_token) {
+-        oauth.update(ret.access_token, ret.refresh_token);
+-
++        
+         return ret.access_token;
+       } else {
+         throw new Error('could not obtain access token via refresh token');

@@ -1,0 +1,14 @@
+# R06 a step can set a timeout above the 30 minute cap. Must fail: test/fetcher-retry.test.mjs "the timeout defaults to 30 minutes and is capped at 30 minutes"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 84d8596..bd56ea9 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -164,7 +164,7 @@ export default class Fetcher {
+         options0.body = JSON.stringify(options0.body);
+       }
+ 
+-      const timeout = Math.min(options0?.timeout || 30 * 60 * 1000, 30 * 60 * 1000);
++      const timeout = options0?.timeout || 30 * 60 * 1000;
+       const {params, ...init} = options0;
+       const ret = await fetch(fullURL, {
+         ...init,

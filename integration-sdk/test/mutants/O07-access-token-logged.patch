@@ -1,0 +1,14 @@
+# O07 the new access token is written to the log. Must fail: test/oauth-fetcher.test.mjs "no token appears in the log lines of a failed call and refresh"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..1b71eaa 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -78,7 +78,7 @@ class OAuthFetcher extends Fetcher {
+ 
+     await local.getToken(true);
+ 
+-    console.log('refreshed oauth token');
++    console.log('refreshed oauth token', oauth.accessToken());
+   }
+ 
+   async customize(options: any, args: any = {}) {
