@@ -1,7 +1,7 @@
 // PLAT-23: the OAuth start and finish flows of a connector (on-connect/start-oauth.mts, finish-oauth.mts) against a
 // token endpoint on 127.0.0.1. Standalone script (no mocha). Client ids, secrets, codes and tokens are made-up strings;
-// the key pair that seals the result is generated here at run time. Tests marked PINS SUSPECT BEHAVIOUR pin behaviour
-// that looks wrong and must change on purpose when it is fixed.
+// the key pair that seals the result is generated here at run time. Tests marked "pins current behaviour" fix it as it
+// is now, so a deliberate change to it updates the test with it.
 //
 // What the SDK does and does not do: it builds the authorize URL from a template ({{clientId}}, {{scope}}) and
 // exchanges the code at the token endpoint. State, the PKCE verifier and challenge, and the redirect handling belong to
@@ -134,8 +134,8 @@ await test('start: stores nothing and returns only url and useCodeChallenge, the
   });
 });
 
-await test('start: PINS SUSPECT BEHAVIOUR: the SDK adds no state, no code challenge and no redirect to the URL, and leaves {{state}} / {{redirectURI}} placeholders unfilled', async () => {
-  // PINS SUSPECT BEHAVIOUR: start-oauth.mts:17-22 only knows {{clientId}} and {{scope}}. State, the PKCE challenge and the
+await test('start: pins current behaviour: the SDK adds no state, no code challenge and no redirect to the URL, and leaves {{state}} / {{redirectURI}} placeholders unfilled', async () => {
+  // pins current behaviour: start-oauth.mts:17-22 only knows {{clientId}} and {{scope}}. State, the PKCE challenge and the
   // redirect URI are the platform's job; a connector template that uses {{state}} sends the literal text to the vendor.
   await withEnv({}, async () => {
     const d = await startOf({authorizationURL: 'https://a.example.test/?c={{clientId}}&state={{state}}&redirect_uri={{redirectURI}}', useCodeChallenge: true});
@@ -191,8 +191,8 @@ await test('finish: without useCodeChallenge no code verifier is sent, even if t
   });
 });
 
-await test('finish: PINS SUSPECT BEHAVIOUR: useCodeChallenge without a codeVerifier sends the text "undefined" as the verifier', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts:49-51 does not check that a verifier was passed. The vendor rejects it,
+await test('finish: pins current behaviour: useCodeChallenge without a codeVerifier sends the text "undefined" as the verifier', async () => {
+  // pins current behaviour: finish-oauth.mts:49-51 does not check that a verifier was passed. The vendor rejects it,
   // but the request goes out and the error is the vendor's, not "codeVerifier missing".
   await withEnv({}, async () => {
     const r = await finishWith({oauth: {useCodeChallenge: true}}, {code: CODE, redirectURI: REDIRECT});
@@ -278,8 +278,8 @@ await test('finish: a 200 that is not JSON fails with a parse error and returns 
   });
 });
 
-await test('finish: PINS SUSPECT BEHAVIOUR: a 200 without access_token puts the whole answer, tokens included, in the error and the log of the caller', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts:88 appends the raw answer text. An answer that has a refresh or id token
+await test('finish: pins current behaviour: a 200 without access_token puts the whole answer, tokens included, in the error and the log of the caller', async () => {
+  // pins current behaviour: finish-oauth.mts:88 appends the raw answer text. An answer that has a refresh or id token
   // but no access_token (some vendors do this for OpenID-only grants) leaks it into the error that goes back to the platform.
   await withEnv({}, async () => {
     const r = await finishWith({answer: (req, res) => json(res, 200, {refresh_token: REFRESH, id_token: 'test-id-token-CCC'})});
@@ -355,8 +355,8 @@ await test('finish: a connector finishOAuth hook gets {arg, doFinish, transport}
 
 // ---------------- finish: state, code reuse, redirects, setup errors ----------------
 
-await test('finish: PINS SUSPECT BEHAVIOUR: there is no state check, the exchange runs for whatever is passed and "state" is neither required nor sent', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts:16-108 takes {code, redirectURI, codeVerifier} only. A state value, right or
+await test('finish: pins current behaviour: there is no state check, the exchange runs for whatever is passed and "state" is neither required nor sent', async () => {
+  // pins current behaviour: finish-oauth.mts:16-108 takes {code, redirectURI, codeVerifier} only. A state value, right or
   // wrong, is ignored. The only protection is whatever the platform does before it calls connector.finish-oauth
   // (the platform starts the flow and receives the browser redirect): reachable from the platform side only.
   await withEnv({}, async () => {
@@ -369,8 +369,8 @@ await test('finish: PINS SUSPECT BEHAVIOUR: there is no state check, the exchang
   });
 });
 
-await test('finish: PINS SUSPECT BEHAVIOUR: the same code can be exchanged again, the SDK keeps no record of used codes', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts has no replay guard; a second call with the code just goes to the vendor
+await test('finish: pins current behaviour: the same code can be exchanged again, the SDK keeps no record of used codes', async () => {
+  // pins current behaviour: finish-oauth.mts has no replay guard; a second call with the code just goes to the vendor
   // again (a vendor should refuse it; the SDK does not). Reachable from the platform side only.
   await withEnv({}, async () => {
     const f = await finishOf({});
@@ -385,8 +385,8 @@ await test('finish: PINS SUSPECT BEHAVIOUR: the same code can be exchanged again
   });
 });
 
-await test('finish: PINS SUSPECT BEHAVIOUR: a vendor answering 307 gets the client secret re-sent to the other address', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts:71 uses fetch with the default redirect handling; a 307/308 repeats the POST
+await test('finish: pins current behaviour: a vendor answering 307 gets the client secret re-sent to the other address', async () => {
+  // pins current behaviour: finish-oauth.mts:71 uses fetch with the default redirect handling; a 307/308 repeats the POST
   // body, client_secret and code included, at the Location. Reachable from the vendor side (or anyone who can change
   // the token URL configuration). Both servers are on 127.0.0.1 here.
   await withEnv({}, async () => {
@@ -402,8 +402,8 @@ await test('finish: PINS SUSPECT BEHAVIOUR: a vendor answering 307 gets the clie
   });
 });
 
-await test('finish: PINS SUSPECT BEHAVIOUR: without oauth configured and without a token URL in the environment the error is a TypeError, not "oauth not configured"', async () => {
-  // PINS SUSPECT BEHAVIOUR: finish-oauth.mts:21 reads dispatcher._oauth.tokenURL before the check on line 23. A
+await test('finish: pins current behaviour: without oauth configured and without a token URL in the environment the error is a TypeError, not "oauth not configured"', async () => {
+  // pins current behaviour: finish-oauth.mts:21 reads dispatcher._oauth.tokenURL before the check on line 23. A
   // connector with platformOAuth (no _oauth) gets a confusing message when the platform calls finish-oauth.
   await withEnv({}, async () => {
     const dispatcher = new Dispatcher();

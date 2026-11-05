@@ -1,4 +1,4 @@
-# R05 a POST is no longer retried. Must fail: test/fetcher-retry.test.mjs "PINS SUSPECT BEHAVIOUR: a POST is retried after a 5xx with the same body (duplicate writes)"
+# R05 a POST is no longer retried. Must fail: test/fetcher-retry.test.mjs "pins current behaviour: a POST is retried after a 5xx with the same body (duplicate writes)"
 diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
 index 84d8596..41c3608 100644
 --- a/integration-sdk/src/internal/fetcher/fetcher.mts

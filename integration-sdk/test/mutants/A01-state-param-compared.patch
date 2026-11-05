@@ -1,4 +1,4 @@
-# A01 a state check is added to finishOAuth (none exists today; the pin must fail). Must fail: test/oauth-start-finish.test.mjs "finish: PINS SUSPECT BEHAVIOUR: there is no state check, the exchange runs for whatever is passed and "state" is neither required nor sent"
+# A01 a state check is added to finishOAuth (none exists today; the pin must fail). Must fail: test/oauth-start-finish.test.mjs "finish: pins current behaviour: there is no state check, the exchange runs for whatever is passed and "state" is neither required nor sent"
 diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
 index 5898411..ef4d0a2 100755
 --- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts

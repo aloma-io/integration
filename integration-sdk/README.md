@@ -164,7 +164,7 @@ environment variables and OAuth flows against a real provider. `connectorFromRun
 
 SDK maintainers: `yarn test:harness` runs the harness tests (CI runs it on Node 18, 20, 22 and 24). `yarn test:mutation`
 applies 30+ deliberate bugs to the harness and the SDK handshake, dispatch and result paths and checks the tests
-catch each one; the result is recorded in `test/MUTATION.md`.
+catch each one; the result table is printed to the log.
 
 ## 📚 Documentation
 

@@ -3,7 +3,8 @@
 //   yarn build && yarn test:mutation
 //
 // Applies each deliberate single-point bug below to src/, rebuilds, runs the harness tests (or, for the F mutants,
-// test/fetcher-query-params.test.mjs) and expects them to FAIL. The original file is restored after every mutant (and on Ctrl-C). Writes test/MUTATION.md.
+// test/fetcher-query-params.test.mjs) and expects them to FAIL. The original file is restored after every mutant (and on Ctrl-C). Prints the result table to stdout
+// (nothing is written into the repo).
 // Not part of CI: it rebuilds the SDK ~30 times. Run it when the harness or the SDK paths it covers change.
 import {spawnSync} from 'node:child_process';
 import fs from 'node:fs';
@@ -133,6 +134,6 @@ const md = [
   ...results.map((r) => `| ${r.id} | ${r.area} | \`src/${r.rel}\` | ${r.bug} | ${r.outcome} |`),
   '',
 ].join('\n');
-fs.writeFileSync(path.join(root, 'test', 'MUTATION.md'), md);
+console.log('\n' + md);
 console.log(`\n${killed}/${results.length} killed`);
 process.exit(killed === results.length ? 0 : 1);

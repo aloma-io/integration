@@ -1,0 +1,17 @@
+# P01 the "files" allow-list is removed from package.json. Must fail: test/package-files.test.mjs "package lists no path under test/, tools/, src/ or a scenarios folder"
+diff --git b/integration-sdk/package.json a/integration-sdk/package.json
+index cac6e67..fa1a063 100644
+--- b/integration-sdk/package.json
++++ a/integration-sdk/package.json
+@@ -19,11 +19,6 @@
+     "format": "yarn prettier --write src/",
+     "openapi-to-connector": "node ./build/openapi-to-connector.mjs"
+   },
+-  "files": [
+-    "build/",
+-    "template/",
+-    "README.md"
+-  ],
+   "main": "./build/index.js",
+   "exports": {
+     ".": {

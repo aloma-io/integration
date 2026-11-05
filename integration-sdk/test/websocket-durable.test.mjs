@@ -1,7 +1,7 @@
 // PLAT-23: the durable websocket (transport/durable.mjs) against a websocket server on 127.0.0.1: the queue across a
 // disconnect (no loss, no duplicate, order) and the reconnect. Standalone script (no mocha). The 5 s reconnect wait is
-// held by a fake setTimeout and fired by hand, nothing waits for real. Made-up secret. Tests marked PINS SUSPECT
-// BEHAVIOUR pin behaviour that looks wrong and must change on purpose when it is fixed.
+// held by a fake setTimeout and fired by hand, nothing waits for real. Made-up secret. Tests marked "pins current
+// behaviour" fix it as it is now, so a deliberate change to it updates the test with it.
 //
 // Note: nothing in the SDK calls Transport.newDurableWebsocket today, so this class is reachable only by a connector
 // that calls it itself.
@@ -141,8 +141,8 @@ await test('reconnect: start() while a connection is being made does nothing, so
   }
 });
 
-await test('queue: PINS SUSPECT BEHAVIOUR: a message sent after the server closed the socket and before the reconnect is lost without a trace', async () => {
-  // PINS SUSPECT BEHAVIOUR: durable.mjs:14-20 only queues when ws.send throws, which it does while CONNECTING. On a
+await test('queue: pins current behaviour: a message sent after the server closed the socket and before the reconnect is lost without a trace', async () => {
+  // pins current behaviour: durable.mjs:14-20 only queues when ws.send throws, which it does while CONNECTING. On a
   // CLOSING or CLOSED socket the ws library drops the message silently, so the "durable" queue is empty and the message
   // never arrives. Reachable by any network drop or platform restart: up to 5 s of sends are lost per disconnect.
   const x = await durable();
@@ -191,8 +191,8 @@ await test('receive: a JSON message from the server reaches onMessage, parsed, o
   }
 });
 
-await test('receive: PINS SUSPECT BEHAVIOUR: a message that is not JSON throws out of the socket event handler (uncaught)', async () => {
-  // PINS SUSPECT BEHAVIOUR: durable.mjs:47 JSON.parse is outside the setImmediate and has no try. Reachable from the
+await test('receive: pins current behaviour: a message that is not JSON throws out of the socket event handler (uncaught)', async () => {
+  // pins current behaviour: durable.mjs:47 JSON.parse is outside the setImmediate and has no try. Reachable from the
   // server side of the socket. With makeServer's process-wide handler it is only logged; otherwise the process exits.
   const x = await durable();
   try {

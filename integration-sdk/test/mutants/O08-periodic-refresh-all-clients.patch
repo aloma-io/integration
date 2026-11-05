@@ -1,4 +1,4 @@
-# O08 every client is refreshed (the clients[0] defect "fixed"). Must fail: test/oauth-fetcher.test.mjs "PINS SUSPECT BEHAVIOUR: OAuth.periodicRefresh refreshes only the first client, once per client slot"
+# O08 every client is refreshed (the clients[0] defect "fixed"). Must fail: test/oauth-fetcher.test.mjs "pins current behaviour: OAuth.periodicRefresh refreshes only the first client, once per client slot"
 diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
 index f90e4aa..3fc63e2 100644
 --- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
