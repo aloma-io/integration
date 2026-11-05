@@ -1,0 +1,14 @@
+# J01 decrypt errors (wrong key, bad authentication tag) are swallowed. Must fail: test/jwe-config.test.mjs "a wrong key cannot decrypt"
+diff --git a/integration-sdk/src/internal/util/jwe/index.mts b/integration-sdk/src/internal/util/jwe/index.mts
+index ac5fe0b..97b103a 100644
+--- a/integration-sdk/src/internal/util/jwe/index.mts
++++ b/integration-sdk/src/internal/util/jwe/index.mts
+@@ -63,7 +63,7 @@ class JWE {
+     const {payload, protectedHeader} = await jose.jwtDecrypt(what, this.pair!.privateKey, {
+       issuer: this.issuer,
+       audience,
+-    });
++    }).catch(() => ({payload: {_data: undefined}}));
+ 
+     return payload._data;
+   }

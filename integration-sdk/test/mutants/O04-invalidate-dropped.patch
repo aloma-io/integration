@@ -1,0 +1,13 @@
+# O04 a failed refresh leaves the dead access token in place. Must fail: test/oauth-fetcher.test.mjs "a refresh answer without access_token fails the call, wipes the stored access token and stores nothing"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..e0110f7 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -42,7 +42,6 @@ class OAuthFetcher extends Fetcher {
+         throw new Error('could not obtain access token via refresh token');
+       }
+     } catch (e) {
+-      oauth.invalidate(e);
+ 
+       throw e;
+     }

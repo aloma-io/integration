@@ -1,0 +1,14 @@
+# R05 a POST is no longer retried. Must fail: test/fetcher-retry.test.mjs "PINS SUSPECT BEHAVIOUR: a POST is retried after a 5xx with the same body (duplicate writes)"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 84d8596..41c3608 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -207,7 +207,7 @@ export default class Fetcher {
+       // without the query string: its values may hold ids or emails
+       console.log(theURL.split('?')[0], e);
+ 
+-      if (retries <= 0) throw e;
++      if (retries <= 0 || options0.method === 'POST') throw e;
+ 
+       return local.onError(e, url, options0, retries, args);
+     }

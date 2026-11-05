@@ -1,0 +1,14 @@
+# R01 one attempt too many before the error is thrown. Must fail: test/fetcher-retry.test.mjs "a 5xx is retried; `retry` is the total number of attempts, 500 ms apart"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 84d8596..da2ed16 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -207,7 +207,7 @@ export default class Fetcher {
+       // without the query string: its values may hold ids or emails
+       console.log(theURL.split('?')[0], e);
+ 
+-      if (retries <= 0) throw e;
++      if (retries < 0) throw e;
+ 
+       return local.onError(e, url, options0, retries, args);
+     }

@@ -1,0 +1,13 @@
+# J06 a value that fails to decrypt is passed on as config. Must fail: test/jwe-config.test.mjs "decryptConfig drops a value that fails to decrypt (wrong key, tampered, expired, wrong audience) and keeps the rest"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts b/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
+index f3e2119..b3faa73 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
+@@ -19,6 +19,7 @@ export const decryptConfig = async ({configSchema, config, secrets}) => {
+       } catch (e) {
+         const errorMsg = String(e).replaceAll(value, '***');
+         console.log('failed to decrypt key', key, config.id(), errorMsg);
++        decrypted[key] = value;
+       }
+     }
+   }

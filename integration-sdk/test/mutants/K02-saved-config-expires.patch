@@ -1,0 +1,14 @@
+# K02 the stored OAuth result expires after 7 days. Must fail: test/oauth-fetcher.test.mjs "the saved OAuth result goes out as a connector.config-update packet holding a JWE for this connector, without expiry"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+index 4d4b1dd..17c8eb1 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -15,7 +15,7 @@ export const makeOAuth = async ({
+ }) => {
+   const saveOAuthResult = async (what) => {
+     const jwe = await config.validateKeys('RSA-OAEP-256');
+-    const value = await jwe.encrypt(what, 'none', config.id());
++    const value = await jwe.encrypt(what, '7d', config.id());
+ 
+     const packet = transport.newPacket({});
+ 

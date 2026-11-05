@@ -1,0 +1,13 @@
+# J04 the token expiry is not enforced. Must fail: test/jwe-config.test.mjs "an expired token is refused with a JWTExpired error"
+diff --git a/integration-sdk/src/internal/util/jwe/index.mts b/integration-sdk/src/internal/util/jwe/index.mts
+index ac5fe0b..f3c4f0e 100644
+--- a/integration-sdk/src/internal/util/jwe/index.mts
++++ b/integration-sdk/src/internal/util/jwe/index.mts
+@@ -63,6 +63,7 @@ class JWE {
+     const {payload, protectedHeader} = await jose.jwtDecrypt(what, this.pair!.privateKey, {
+       issuer: this.issuer,
+       audience,
++      currentDate: new Date(0),
+     });
+ 
+     return payload._data;
