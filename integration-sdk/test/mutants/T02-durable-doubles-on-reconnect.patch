@@ -1,0 +1,16 @@
+# T02 the held messages are sent but never removed, so every reconnect sends them again. Must fail: test/websocket-durable.test.mjs "queue: after a disconnect and a reconnect nothing already delivered is sent again"
+diff --git a/integration-sdk/src/internal/websocket/transport/durable.mjs b/integration-sdk/src/internal/websocket/transport/durable.mjs
+index ac48713..cb91a95 100755
+--- a/integration-sdk/src/internal/websocket/transport/durable.mjs
++++ b/integration-sdk/src/internal/websocket/transport/durable.mjs
+@@ -36,9 +36,7 @@ class DurableWebsocket {
+ 
+       var item;
+ 
+-      while ((item = local.failed.shift())) {
+-        local.send(item);
+-      }
++      local.failed.forEach((i) => local.send(i));
+ 
+       local.onConnect(local);
+     });

@@ -1,0 +1,13 @@
+# T06 the processor drops a handler error without logging it. Must fail: test/websocket-transport.test.mjs "processor: a handler that throws is logged with the packet, the other packets of the frame are still processed"
+diff --git a/integration-sdk/src/internal/websocket/transport/processor.mjs b/integration-sdk/src/internal/websocket/transport/processor.mjs
+index 1cf624b..348f927 100755
+--- a/integration-sdk/src/internal/websocket/transport/processor.mjs
++++ b/integration-sdk/src/internal/websocket/transport/processor.mjs
+@@ -57,7 +57,6 @@ class Processor {
+ 
+         local.transport.send(reply);
+       } catch (e) {
+-        console.log('error processing packet', e, packet);
+       }
+     }
+   }

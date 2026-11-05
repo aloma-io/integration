@@ -1,0 +1,14 @@
+# T10 clean() times out the young callbacks instead of the old ones. Must fail: test/websocket-transport.test.mjs "clean: callbacks older than 5 minutes get {error:"timeout"} and are removed, younger ones stay"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..ea4a152 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -157,7 +157,7 @@ class Transport {
+       const cb = cbs[key];
+       if (!cb) return;
+ 
+-      if (cb.created < then) {
++      if (cb.created > then) {
+         console.log('callback timeout', key);
+ 
+         try {

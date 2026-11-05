@@ -1,0 +1,14 @@
+# T13 the processor answers a wrapped packet under the inner callback key. Must fail: test/websocket-transport.test.mjs "processor: a packet that wraps another in args.packet is processed as the inner packet and answered under the outer callback key"
+diff --git a/integration-sdk/src/internal/websocket/transport/processor.mjs b/integration-sdk/src/internal/websocket/transport/processor.mjs
+index 1cf624b..12572cf 100755
+--- a/integration-sdk/src/internal/websocket/transport/processor.mjs
++++ b/integration-sdk/src/internal/websocket/transport/processor.mjs
+@@ -52,7 +52,7 @@ class Processor {
+         const reply = local.transport.newPacket({});
+ 
+         reply.method('connector.reply');
+-        reply.cb(original.cb());
++        reply.cb(packet.cb());
+         reply.args({...result});
+ 
+         local.transport.send(reply);

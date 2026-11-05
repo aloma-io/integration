@@ -1,0 +1,14 @@
+# T07 packets of a frame go out newest first. Must fail: test/websocket-transport.test.mjs "send: packets of one tick go out in one frame {p:[...]} in the order they were sent; nothing is sent twice"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..9a86d2a 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -39,7 +39,7 @@ class Transport {
+     if (!local.packets.length || !local.connected) return;
+ 
+     while ((packet = local.packets.shift())) {
+-      packets.push(packet.data);
++      packets.unshift(packet.data);
+     }
+ 
+     if (!packets.length) return;

@@ -1,0 +1,13 @@
+# T01 a message that cannot be sent is not kept for the reconnect. Must fail: test/websocket-durable.test.mjs "queue: messages sent before the socket is open are held and delivered in order, once, when it opens"
+diff --git a/integration-sdk/src/internal/websocket/transport/durable.mjs b/integration-sdk/src/internal/websocket/transport/durable.mjs
+index ac48713..678db9b 100755
+--- a/integration-sdk/src/internal/websocket/transport/durable.mjs
++++ b/integration-sdk/src/internal/websocket/transport/durable.mjs
+@@ -15,7 +15,6 @@ class DurableWebsocket {
+     try {
+       return await this.ws.send(JSON.stringify(what));
+     } catch (e) {
+-      this.failed.push(what);
+     }
+   }
+ 

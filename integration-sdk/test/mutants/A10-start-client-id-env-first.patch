@@ -1,0 +1,14 @@
+# A10 the client id from the environment beats the one the platform sent. Must fail: test/oauth-start-finish.test.mjs "start: client id comes from the config, then the environment, then the connector; the authorize URL and scope prefer the environment"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
+index 880fa6a..a835ab0 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
+@@ -7,7 +7,7 @@ export const patchStartOAuth = async ({dispatcher, decrypted}) => {
+ 
+     if (!authorizationURL) throw new Error('authorizationURL not configured');
+ 
+-    const clientId = decrypted.clientId || process.env.OAUTH_CLIENT_ID || dispatcher._oauth.clientId;
++    const clientId = process.env.OAUTH_CLIENT_ID || decrypted.clientId || dispatcher._oauth.clientId;
+ 
+     if (!clientId) throw new Error('clientId not configured');
+ 

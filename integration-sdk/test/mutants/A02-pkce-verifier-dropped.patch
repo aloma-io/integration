@@ -1,0 +1,16 @@
+# A02 the PKCE code_verifier is not sent. Must fail: test/oauth-start-finish.test.mjs "finish: with useCodeChallenge the PKCE code verifier is sent"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..98178ba 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -46,9 +46,7 @@ export const patchFinishOAuth = async ({
+         redirect_uri: arg.redirectURI,
+       };
+ 
+-      if (useCodeChallenge) {
+-        body.code_verifier = arg.codeVerifier;
+-      }
++      void useCodeChallenge;
+ 
+       let headers: any = {
+         'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',

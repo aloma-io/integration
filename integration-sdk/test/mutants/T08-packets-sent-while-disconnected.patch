@@ -1,0 +1,14 @@
+# T08 packets are taken off the queue although the socket is not connected. Must fail: test/websocket-transport.test.mjs "send: while the socket is not connected the packets stay queued, in order, and none is lost"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..396f552 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -36,7 +36,7 @@ class Transport {
+       packets = [],
+       packet;
+ 
+-    if (!local.packets.length || !local.connected) return;
++    if (!local.packets.length) return;
+ 
+     while ((packet = local.packets.shift())) {
+       packets.push(packet.data);

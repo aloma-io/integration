@@ -1,0 +1,13 @@
+# T14 a packet without an id does not get one. Must fail: test/websocket-transport.test.mjs "packet: gets a 32 character id, keeps a given one, and reads and writes method, callback, event and args"
+diff --git a/integration-sdk/src/internal/websocket/transport/packet.mjs b/integration-sdk/src/internal/websocket/transport/packet.mjs
+index 1d7274f..734aad0 100755
+--- a/integration-sdk/src/internal/websocket/transport/packet.mjs
++++ b/integration-sdk/src/internal/websocket/transport/packet.mjs
+@@ -4,7 +4,6 @@ const cuid = init({length: 32});
+ class Packet {
+   constructor(data = {}) {
+     this.data = data;
+-    this.data.id ||= cuid();
+   }
+ 
+   id() {

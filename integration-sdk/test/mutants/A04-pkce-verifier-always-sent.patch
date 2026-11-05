@@ -1,0 +1,14 @@
+# A04 the code_verifier is sent although the connector did not ask for PKCE. Must fail: test/oauth-start-finish.test.mjs "finish: without useCodeChallenge no code verifier is sent, even if the platform passes one"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..fde78c4 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -46,7 +46,7 @@ export const patchFinishOAuth = async ({
+         redirect_uri: arg.redirectURI,
+       };
+ 
+-      if (useCodeChallenge) {
++      if (true) {
+         body.code_verifier = arg.codeVerifier;
+       }
+ 

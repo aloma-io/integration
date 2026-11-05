@@ -1,0 +1,14 @@
+# A06 a 4xx from the token endpoint is read as an answer. Must fail: test/oauth-start-finish.test.mjs "finish: an error status from the token endpoint throws "<status> <body>", after one request and no retry"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..2588ab0 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -78,7 +78,7 @@ export const patchFinishOAuth = async ({
+       const status = await response.status;
+       const text = await response.text();
+ 
+-      if (status === 200) {
++      if (status < 500) {
+         const ret = JSON.parse(text);
+         if (ret.error) {
+           throw new Error(`${status} ${ret.error} ${ret.error_description || ''}`);

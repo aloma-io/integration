@@ -1,0 +1,14 @@
+# T11 close() terminates the socket (the undefined `local` is fixed; the pin must fail). Must fail: test/websocket-transport.test.mjs "close: PINS SUSPECT BEHAVIOUR: close() never terminates the socket (it uses an undefined variable inside a try)"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..bc525c9 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -184,7 +184,7 @@ class Transport {
+     this.connected = false;
+ 
+     try {
+-      local.ws.terminate();
++      this.ws.terminate();
+     } catch (e) {
+       // blank
+     }
