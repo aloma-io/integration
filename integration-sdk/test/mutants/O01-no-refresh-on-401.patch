@@ -1,0 +1,14 @@
+# O01 a 401 no longer triggers a token refresh. Must fail: test/oauth-fetcher.test.mjs "a 401 makes the next attempt refresh the token (after 500 ms) and retry with the new one"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..11c97d7 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -57,7 +57,7 @@ class OAuthFetcher extends Fetcher {
+           try {
+             resolve(
+               await local.fetch(url, options, retries, {
+-                forceTokenRefresh: e.status === 401,
++                forceTokenRefresh: false,
+               })
+             );
+           } catch (e) {

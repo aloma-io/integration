@@ -1,0 +1,14 @@
+# J07 the failure log keeps the token that the error quoted. Must fail: test/jwe-config.test.mjs "the token is masked as *** where a library error message would have quoted it"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts b/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
+index f3e2119..0f3e743 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/decrypt-config.mts
+@@ -17,7 +17,7 @@ export const decryptConfig = async ({configSchema, config, secrets}) => {
+       try {
+         decrypted[key] = await jwe.decrypt(value, config.id());
+       } catch (e) {
+-        const errorMsg = String(e).replaceAll(value, '***');
++        const errorMsg = String(e);
+         console.log('failed to decrypt key', key, config.id(), errorMsg);
+       }
+     }

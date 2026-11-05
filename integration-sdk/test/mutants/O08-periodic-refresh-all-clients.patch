@@ -1,0 +1,14 @@
+# O08 every client is refreshed (the clients[0] defect "fixed"). Must fail: test/oauth-fetcher.test.mjs "PINS SUSPECT BEHAVIOUR: OAuth.periodicRefresh refreshes only the first client, once per client slot"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..3fc63e2 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -135,7 +135,7 @@ export class OAuth {
+     console.log('refreshing oauth clients', clients.length);
+ 
+     for (let i = 0; i < clients.length; ++i) {
+-      const client = clients[0];
++      const client = clients[i];
+ 
+       await client.periodicRefresh();
+     }

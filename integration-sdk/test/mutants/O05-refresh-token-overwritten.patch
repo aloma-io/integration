@@ -1,0 +1,14 @@
+# O05 a refresh answer without refresh_token erases the stored one. Must fail: test/oauth-fetcher.test.mjs "an answer without a new refresh_token keeps the old one"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index f90e4aa..903282b 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -122,7 +122,7 @@ export class OAuth {
+   async update(accessToken, refreshToken) {
+     this._data.access_token = accessToken;
+ 
+-    if (refreshToken) {
++    if (true) {
+       this._data.refresh_token = refreshToken;
+     }
+ 
