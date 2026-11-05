@@ -1,0 +1,13 @@
+# T12 the durable socket does not reconnect after a close. Must fail: test/websocket-durable.test.mjs "reconnect: a close from the server schedules a new connection after 5 s; it opens, onConnect runs again and the failure count resets"
+diff --git a/integration-sdk/src/internal/websocket/transport/durable.mjs b/integration-sdk/src/internal/websocket/transport/durable.mjs
+index ac48713..3883acd 100755
+--- a/integration-sdk/src/internal/websocket/transport/durable.mjs
++++ b/integration-sdk/src/internal/websocket/transport/durable.mjs
+@@ -56,7 +56,6 @@ class DurableWebsocket {
+     ws.on('close', (message) => {
+       local.connecting = false;
+ 
+-      if (!local.closed) setTimeout(() => local.start(), 5000);
+     });
+   }
+ 

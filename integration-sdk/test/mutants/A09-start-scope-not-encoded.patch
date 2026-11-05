@@ -1,0 +1,14 @@
+# A09 the scope is put in the authorize URL without URL-encoding. Must fail: test/oauth-start-finish.test.mjs "start: the authorize URL carries the client id and the scopes, URL-encoded, and says whether PKCE is used"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
+index 880fa6a..f27dc2b 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/start-oauth.mts
+@@ -17,7 +17,7 @@ export const patchStartOAuth = async ({dispatcher, decrypted}) => {
+     return {
+       url: authorizationURL
+         .replace(/\{\{clientId\}\}/gi, encodeURIComponent(clientId))
+-        .replace(/\{\{scope\}\}/gi, encodeURIComponent(scopes)),
++        .replace(/\{\{scope\}\}/gi, scopes),
+       useCodeChallenge,
+     };
+   };

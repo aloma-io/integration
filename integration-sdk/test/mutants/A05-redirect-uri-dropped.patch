@@ -1,0 +1,13 @@
+# A05 redirect_uri is not sent to the token endpoint. Must fail: test/oauth-start-finish.test.mjs "finish: the code is exchanged once, with a form POST holding grant type, code, redirect URI, client id and secret"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..26ee30e 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -43,7 +43,6 @@ export const patchFinishOAuth = async ({
+         grant_type: 'authorization_code',
+         ...additionalTokenArgs,
+         code: arg.code,
+-        redirect_uri: arg.redirectURI,
+       };
+ 
+       if (useCodeChallenge) {

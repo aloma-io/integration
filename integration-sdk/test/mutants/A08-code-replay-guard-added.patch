@@ -1,0 +1,15 @@
+# A08 a used code is refused on a second exchange (no guard exists today; the pin must fail). Must fail: test/oauth-start-finish.test.mjs "finish: PINS SUSPECT BEHAVIOUR: the same code can be exchanged again, the SDK keeps no record of used codes"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..a0febe3 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -27,6 +27,9 @@ export const patchFinishOAuth = async ({
+ 
+     const doFinish = async () => {
+       if (!arg.code || !arg.redirectURI) throw new Error('need code and redirectUri');
++      const used = ((dispatcher as any)._usedCodes ||= new Set());
++      if (used.has(arg.code)) throw new Error('code already used');
++      used.add(arg.code);
+ 
+       const clientId = decrypted.clientId || process.env.OAUTH_CLIENT_ID || dispatcher._oauth.clientId;
+ 

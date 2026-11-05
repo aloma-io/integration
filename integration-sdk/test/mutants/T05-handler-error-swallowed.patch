@@ -1,0 +1,13 @@
+# T05 a handler error gets no error reply and is not logged as a packet error. Must fail: test/websocket-transport.test.mjs "handler: a message type nobody handles (the dispatcher throws) is answered with an error and the connector keeps going"
+diff --git a/integration-sdk/src/internal/connector/server/on-message.mts b/integration-sdk/src/internal/connector/server/on-message.mts
+index f50279b..a9afa62 100755
+--- a/integration-sdk/src/internal/connector/server/on-message.mts
++++ b/integration-sdk/src/internal/connector/server/on-message.mts
+@@ -7,7 +7,6 @@ export const onMessage = (processPacket: any) => {
+       if (ret) reply(ret, packet, transport);
+     } catch (e) {
+       console.log(e);
+-      handlePacketError(packet, e, transport);
+     }
+   };
+ };

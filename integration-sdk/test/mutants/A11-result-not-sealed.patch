@@ -1,0 +1,13 @@
+# A11 finish returns the plain access token instead of the sealed result. Must fail: test/oauth-start-finish.test.mjs "finish: returns the token answer sealed for this connector in {value}; the plain token is not in the return value"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..cbdf189 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -104,6 +104,6 @@ export const patchFinishOAuth = async ({
+ 
+     const jwe = await config.validateKeys('RSA-OAEP-256');
+ 
+-    return {value: await jwe.encrypt(data, 'none', config.id())};
++    return {value: (data as any).access_token};
+   };
+ };

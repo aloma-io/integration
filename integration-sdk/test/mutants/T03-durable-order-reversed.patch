@@ -1,0 +1,14 @@
+# T03 held messages are sent newest first. Must fail: test/websocket-durable.test.mjs "queue: messages sent before the socket is open are held and delivered in order, once, when it opens"
+diff --git a/integration-sdk/src/internal/websocket/transport/durable.mjs b/integration-sdk/src/internal/websocket/transport/durable.mjs
+index ac48713..f8656c5 100755
+--- a/integration-sdk/src/internal/websocket/transport/durable.mjs
++++ b/integration-sdk/src/internal/websocket/transport/durable.mjs
+@@ -36,7 +36,7 @@ class DurableWebsocket {
+ 
+       var item;
+ 
+-      while ((item = local.failed.shift())) {
++      while ((item = local.failed.pop())) {
+         local.send(item);
+       }
+ 

@@ -1,0 +1,14 @@
+# T04 a try/catch is added around the frame parse (nothing catches a malformed frame today; the pin must fail). Must fail: test/websocket-transport.test.mjs "receive: PINS SUSPECT BEHAVIOUR: a frame that is not JSON throws out of a timer callback (uncaught); the next good frame still works"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..c639cd1 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -81,7 +81,7 @@ class Transport {
+     });
+ 
+     ws.on('message', (message) => {
+-      setTimeout(() => local.onMessages(JSON.parse(message)), 0);
++      setTimeout(() => { try { local.onMessages(JSON.parse(message)); } catch (e) {} }, 0);
+     });
+ 
+     ws.on('ping', () => ws.onPing());

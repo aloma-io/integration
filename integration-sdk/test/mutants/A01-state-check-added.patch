@@ -1,0 +1,13 @@
+# A01 a state check is added to finishOAuth (none exists today; the pin must fail). Must fail: test/oauth-start-finish.test.mjs "finish: PINS SUSPECT BEHAVIOUR: there is no state check, the exchange runs for whatever is passed and "state" is neither required nor sent"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..ef4d0a2 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -23,6 +23,7 @@ export const patchFinishOAuth = async ({
+     if (!dispatcher._oauth) throw new Error('oauth not configured');
+     if (!tokenURL && !dispatcher._oauth.finishOAuth) throw new Error('need tokenURL or finishOAuth(arg)');
+ 
++    if (!(arg as any).state) throw new Error('state missing');
+     var data = null;
+ 
+     const doFinish = async () => {

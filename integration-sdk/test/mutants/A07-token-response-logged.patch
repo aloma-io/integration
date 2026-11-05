@@ -1,0 +1,13 @@
+# A07 the token endpoint answer (tokens) is written to the log. Must fail: test/oauth-start-finish.test.mjs "finish: neither the code, the secret nor the tokens are logged, on success or on failure"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..22a3655 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -77,6 +77,7 @@ export const patchFinishOAuth = async ({
+ 
+       const status = await response.status;
+       const text = await response.text();
++      console.log('token response', text);
+ 
+       if (status === 200) {
+         const ret = JSON.parse(text);

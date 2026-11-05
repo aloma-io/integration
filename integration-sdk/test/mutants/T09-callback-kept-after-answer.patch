@@ -1,0 +1,13 @@
+# T09 a callback is not removed after it was answered. Must fail: test/websocket-transport.test.mjs "receive: an answer to a connector request goes to its callback with the packet args, once, and the callback is then forgotten"
+diff --git a/integration-sdk/src/internal/websocket/transport/index.mjs b/integration-sdk/src/internal/websocket/transport/index.mjs
+index 85d83a4..47788f1 100755
+--- a/integration-sdk/src/internal/websocket/transport/index.mjs
++++ b/integration-sdk/src/internal/websocket/transport/index.mjs
+@@ -128,7 +128,6 @@ class Transport {
+       } catch (e) {
+         console.log('error processing packet', e, packet);
+       } finally {
+-        delete this.callbacks[packet.cb()];
+       }
+ 
+       return;

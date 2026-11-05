@@ -1,0 +1,14 @@
+# A03 the token request auth form is flipped (header when not asked, body when asked). Must fail: test/oauth-start-finish.test.mjs "finish: the code is exchanged once, with a form POST holding grant type, code, redirect URI, client id and secret"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+index 5898411..0a45c6b 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/finish-oauth.mts
+@@ -55,7 +55,7 @@ export const patchFinishOAuth = async ({
+         Accept: 'application/json',
+       };
+ 
+-      if (useAuthHeader) {
++      if (!useAuthHeader) {
+         headers = {
+           ...headers,
+           Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
