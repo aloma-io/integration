@@ -1,8 +1,8 @@
 // PLAT-23: the websocket transport of the connector (transport/index.mjs, packet.mjs, processor.mjs) and the
 // on-message wrapper, against a websocket server on 127.0.0.1 or against a stub socket. Standalone script (no mocha).
 // Nothing waits for real: the only delays are short polls of a loopback socket; the 5 min / 30 s / 45 s timers of the
-// transport are driven by hand (clean() with a fake Date.now) or never started. Tests marked PINS SUSPECT BEHAVIOUR
-// pin behaviour that looks wrong and must change on purpose when it is fixed.
+// transport are driven by hand (clean() with a fake Date.now) or never started. Tests marked "pins current behaviour"
+// fix it as it is now, so a deliberate change to it updates the test with it.
 import {Transport} from '../build/internal/websocket/transport/index.mjs';
 import {Packet, Callback} from '../build/internal/websocket/transport/packet.mjs';
 import {Processor} from '../build/internal/websocket/transport/processor.mjs';
@@ -129,8 +129,8 @@ await test('send: while the socket is not connected the packets stay queued, in 
   assertEqual(frames.map((f) => f.p.map((x) => x.m)), [['a', 'b', 'c']], 'the next send carries the whole queue in order');
 });
 
-await test('send: PINS SUSPECT BEHAVIOUR: packets queued before the socket opens wait for the next send(), opening does not flush them', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:73-80 the 'open' handler does not call schedule(). A packet sent while
+await test('send: pins current behaviour: packets queued before the socket opens wait for the next send(), opening does not flush them', async () => {
+  // pins current behaviour: transport/index.mjs:73-80 the 'open' handler does not call schedule(). A packet sent while
   // disconnected (a health check, a task) is stuck until some other packet is sent. Internal timing, not reachable
   // from outside.
   const server = await wsServer();
@@ -154,8 +154,8 @@ await test('send: PINS SUSPECT BEHAVIOUR: packets queued before the socket opens
   }
 });
 
-await test('send: PINS SUSPECT BEHAVIOUR: when the socket throws, the packet is put back as bare data and the next frame carries null in its place', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:49-52 pushes packet.data objects back with unshift, but schedule0
+await test('send: pins current behaviour: when the socket throws, the packet is put back as bare data and the next frame carries null in its place', async () => {
+  // pins current behaviour: transport/index.mjs:49-52 pushes packet.data objects back with unshift, but schedule0
   // reads packet.data again (:41), which is undefined for them: the packet is lost, and with several packets in the
   // queue each failed pass corrupts the queue further. Reachable by a socket that throws on send (a half-open
   // connection); the platform never gets those replies.
@@ -231,8 +231,8 @@ await test('receive: a callback that throws is logged with the packet and does n
   assertEqual(Object.keys(t.callbacks), [], 'forgotten');
 });
 
-await test('receive: PINS SUSPECT BEHAVIOUR: an answer that arrives after its callback timed out is handled like a request', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:124-137 anything with an unknown c goes to the handler, which for the
+await test('receive: pins current behaviour: an answer that arrives after its callback timed out is handled like a request', async () => {
+  // pins current behaviour: transport/index.mjs:124-137 anything with an unknown c goes to the handler, which for the
   // dispatcher answers "cannot handle packet" to the platform. Reachable from the platform (a late reply).
   const { t } = await stubbed();
   const handled = [];
@@ -268,8 +268,8 @@ await test('clean: callbacks older than 5 minutes get {error:"timeout"} and are 
   }
 });
 
-await test('receive: PINS SUSPECT BEHAVIOUR: a frame that is not JSON throws out of a timer callback (uncaught); the next good frame still works', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:84 JSON.parse is not in a try. In a connector started with makeServer a
+await test('receive: pins current behaviour: a frame that is not JSON throws out of a timer callback (uncaught); the next good frame still works', async () => {
+  // pins current behaviour: transport/index.mjs:84 JSON.parse is not in a try. In a connector started with makeServer a
   // process-wide 'uncaughtException' handler logs it, so the connector survives; a bare Transport would exit.
   // Reachable from the platform (the authenticated peer) or anything that can inject into the stream.
   const l = await live();
@@ -288,8 +288,8 @@ await test('receive: PINS SUSPECT BEHAVIOUR: a frame that is not JSON throws out
   }
 });
 
-await test('receive: PINS SUSPECT BEHAVIOUR: one item that is not an object aborts the rest of its frame (the packets after it are lost)', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:114-116 forEach with new Packet(item) throwing a TypeError on a string.
+await test('receive: pins current behaviour: one item that is not an object aborts the rest of its frame (the packets after it are lost)', async () => {
+  // pins current behaviour: transport/index.mjs:114-116 forEach with new Packet(item) throwing a TypeError on a string.
   // Reachable from the platform; the packets behind the bad item are dropped without a trace in the log.
   const { t } = await stubbed();
   const got = [];
@@ -354,8 +354,8 @@ await test('start: after leaving() a close does not ask to reconnect, and start(
   }
 });
 
-await test('start: PINS SUSPECT BEHAVIOUR: start() calls close() first, which clears the callback cleaner, so callbacks never time out on their own', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:60 and :178-183. close() clears this.cleaner (set once in the
+await test('start: pins current behaviour: start() calls close() first, which clears the callback cleaner, so callbacks never time out on their own', async () => {
+  // pins current behaviour: transport/index.mjs:60 and :178-183. close() clears this.cleaner (set once in the
   // constructor) and start() is always called first, so clean() never runs from the timer. Callbacks of answers that
   // never come stay for the life of the process. Internal.
   const realSet = globalThis.setInterval;
@@ -390,8 +390,8 @@ await test('start: PINS SUSPECT BEHAVIOUR: start() calls close() first, which cl
   }
 });
 
-await test('close: PINS SUSPECT BEHAVIOUR: close() never terminates the socket (it uses an undefined variable inside a try)', async () => {
-  // PINS SUSPECT BEHAVIOUR: transport/index.mjs:187 local.ws.terminate() with no `local` in scope: ReferenceError,
+await test('close: pins current behaviour: close() never terminates the socket (it uses an undefined variable inside a try)', async () => {
+  // pins current behaviour: transport/index.mjs:187 local.ws.terminate() with no `local` in scope: ReferenceError,
   // swallowed. start() relies on close() to drop the old socket, so a reconnect leaves the previous one to die on its own.
   const { t } = await stubbed();
   t.close();
@@ -505,8 +505,8 @@ await test('processor: a handler that throws is logged with the packet, the othe
   assertEqual(frames.flatMap((f) => f.p).map((x) => x.c), ['test-cb-2'], 'the second packet was answered');
 });
 
-await test('processor: PINS SUSPECT BEHAVIOUR: the caller of a failed packet gets no answer at all (no error reply), and an unknown type fails the same way', async () => {
-  // PINS SUSPECT BEHAVIOUR: processor.mjs:59-61 only logs. The platform waits for a reply that never comes (until its
+await test('processor: pins current behaviour: the caller of a failed packet gets no answer at all (no error reply), and an unknown type fails the same way', async () => {
+  // pins current behaviour: processor.mjs:59-61 only logs. The platform waits for a reply that never comes (until its
   // own timeout). The Processor is not used by the connector today (the Transport + on-message path answers errors);
   // this pins the class for whoever wires it in.
   const { frames, processor } = await processing(async (packet) => {
@@ -520,8 +520,8 @@ await test('processor: PINS SUSPECT BEHAVIOUR: the caller of a failed packet get
   assertEqual(frames, [], 'nothing sent back');
 });
 
-await test('processor: PINS SUSPECT BEHAVIOUR: a packet without args rejects the whole onMessages call (the others still run)', async () => {
-  // PINS SUSPECT BEHAVIOUR: processor.mjs:28 packet.args().packet on undefined args: TypeError out of processPacket,
+await test('processor: pins current behaviour: a packet without args rejects the whole onMessages call (the others still run)', async () => {
+  // pins current behaviour: processor.mjs:28 packet.args().packet on undefined args: TypeError out of processPacket,
   // not caught by processPacket0. Reachable from the platform, if the Processor were wired in.
   const { processor, frames } = await processing(async () => ({ok: true}));
   let error;
@@ -548,8 +548,8 @@ await test('processor: event packets are only logged and not answered', async ()
   assertEqual([handled.length, frames.length], [0, 0], 'not handled, not answered');
 });
 
-await test('processor: PINS SUSPECT BEHAVIOUR: the callbacks the Transport registers are Callback objects, so an answer routed through the Processor never reaches them', async () => {
-  // PINS SUSPECT BEHAVIOUR: processor.mjs:41 calls callbacks[key](args) but Transport stores new Callback({cb}); the
+await test('processor: pins current behaviour: the callbacks the Transport registers are Callback objects, so an answer routed through the Processor never reaches them', async () => {
+  // pins current behaviour: processor.mjs:41 calls callbacks[key](args) but Transport stores new Callback({cb}); the
   // TypeError is caught and logged, the callback is deleted unanswered. Internal (the Processor is not wired in).
   const { t, processor } = await processing(async () => ({}));
   const seen = [];

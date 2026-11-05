@@ -196,7 +196,7 @@ describe('connector test harness', function () {
       harness.vendor.get(`${VENDOR}/items/1`, {json: {}});
       await harness.call('getItem', {id: 1});
 
-      // PINS SUSPECT BEHAVIOUR: Fetcher joins baseUrl + path and then collapses every run of slashes with
+      // pins current behaviour: Fetcher joins baseUrl + path and then collapses every run of slashes with
       // .replace(/\/\/+/g, '/'), so "https://host" becomes "https:/host". Node's URL parser repairs
       // this for http(s), but the same replace would also damage a "//" inside a query value.
       expect(harness.vendor.requests[0].url).to.equal('https://api.vendor.example.test/items/1');
@@ -318,7 +318,7 @@ describe('connector test harness', function () {
 
   describe('pinned SDK behaviour', () => {
     it('Transport.close() never terminates the websocket', () => {
-      // PINS SUSPECT BEHAVIOUR: Transport.close() calls local.ws.terminate(), but `local` is not defined in
+      // pins current behaviour: Transport.close() calls local.ws.terminate(), but `local` is not defined in
       // close() (it is only defined in the other methods). The ReferenceError is swallowed by the try/catch,
       // so close() clears its timers and flags but leaves the socket open. Today a closed connector relies on
       // the server side (or process exit) to drop the connection.

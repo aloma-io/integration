@@ -1,6 +1,6 @@
 // PLAT-23: JWE config decryption (util/jwe, Config.validateKeys, decryptConfig). Standalone script (no mocha). Every
 // key is generated here at run time and exists only in this process; nothing is committed or sent anywhere.
-// Tests marked PINS SUSPECT BEHAVIOUR pin behaviour that looks wrong and must change on purpose when it is fixed.
+// Tests marked "pins current behaviour" fix it as it is now, so a deliberate change to it updates the test with it.
 import crypto from 'node:crypto';
 import * as jose from 'jose';
 import JWE from '../build/internal/util/jwe/index.mjs';
@@ -162,7 +162,7 @@ await test('an unsigned or signed (JWS) token is refused', async () => {
   for (const token of [jws, unsecured]) assert(await rejected(jwe.decrypt(token, AUD)), 'accepted');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: there is no allow-list of algorithms; another content encryption (A128GCM) is accepted', async () => {
+await test('pins current behaviour: there is no allow-list of algorithms; another content encryption (A128GCM) is accepted', async () => {
   // jwe/index.mts:63 passes no keyManagementAlgorithms / contentEncryptionAlgorithms to jwtDecrypt. Reachable from
   // outside as platform input (a token for the connector's public key), but only the public key holder can make one.
   const jwe = await newJwe();
@@ -174,7 +174,7 @@ await test('PINS SUSPECT BEHAVIOUR: there is no allow-list of algorithms; anothe
   assertEqual(await jwe.decrypt(token, AUD), {a: 1}, 'accepted');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: anyone holding the public key can mint a config the connector accepts (no sender proof)', async () => {
+await test('pins current behaviour: anyone holding the public key can mint a config the connector accepts (no sender proof)', async () => {
   // the token is encrypted, not signed: jwe/index.mts:50-60. Only the authenticated transport says who sent it.
   const jwe = await newJwe();
   const pair = await jwe.exportPair();
@@ -200,7 +200,7 @@ await test('validateKeys loads the base64 pair so that the connector can decrypt
   assertEqual(await loaded.decrypt(await jwe.encrypt({a: 1}, '1h', AUD), AUD), {a: 1}, 'data');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: unreadable keys pass validateKeys and fail later as an unhandled rejection', async () => {
+await test('pins current behaviour: unreadable keys pass validateKeys and fail later as an unhandled rejection', async () => {
   // jwe/index.mts:43 calls importPair without await, so connector/config.mts:21 never reaches its "keys could not be
   // loaded" help. Internal only (the operator's own PRIVATE_KEY / PUBLIC_KEY).
   const jwe = await newJwe();

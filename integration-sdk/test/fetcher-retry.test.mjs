@@ -1,7 +1,7 @@
 // PLAT-23: the plain Fetcher against a local vendor mock on 127.0.0.1: request building, retries, 429, timeouts and
 // the error a step sees. Standalone script (no mocha). Back-off timers are faked (see helpers/mini.mjs), so nothing
 // waits; the only real waits are the 150 ms request timeouts. These tests describe today's behaviour; the ones marked
-// PINS SUSPECT BEHAVIOUR pin behaviour that looks wrong and must change on purpose when it is fixed.
+// "pins current behaviour" fix it as it is now, so a deliberate change to it updates the test with it.
 import Fetcher from '../build/internal/fetcher/fetcher.mjs';
 import {assert, assertEqual, captureLog, closedPort, fakeTimers, json, outcome, suite, vendor} from './helpers/mini.mjs';
 
@@ -118,7 +118,7 @@ await test('an error status throws "<status> <body>" with .status, and onRespons
   assert(!called, 'onResponse is for successful answers only');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a 200 with a non-JSON body escapes as a bare string holding the whole body, unretried', async () => {
+await test('pins current behaviour: a 200 with a non-JSON body escapes as a bare string holding the whole body, unretried', async () => {
   // fetcher.mts:191 `return unwrap(...)` is not awaited inside the try, so the catch (and the retry) never see it
   const {result, v} = await withVendor(
     (q, res) => res.writeHead(200).end('<html>maintenance</html>'),
@@ -190,7 +190,7 @@ await test('a failed attempt is logged with the url without its query string', a
   assert(!lines.some((l) => l.includes('abc')), `query leaked: ${lines.join(' | ')}`);
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a POST is retried after a 5xx with the same body (duplicate writes)', async () => {
+await test('pins current behaviour: a POST is retried after a 5xx with the same body (duplicate writes)', async () => {
   // fetcher.mts:205-212 retries every method; a vendor that processed the POST and then failed sees it twice
   const {v} = await withVendor((q, res) => res.writeHead(500).end('x'), {retry: 3}, (f) =>
     outcome(f.fetch('/orders', {method: 'POST', body: {sku: 1}}))
@@ -198,7 +198,7 @@ await test('PINS SUSPECT BEHAVIOUR: a POST is retried after a 5xx with the same 
   assertEqual(v.requests.map((r) => `${r.method} ${r.body}`), ['POST {"sku":1}', 'POST {"sku":1}', 'POST {"sku":1}'], 'requests');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: 401, 403 and 404 are retried like a 5xx on the plain Fetcher', async () => {
+await test('pins current behaviour: 401, 403 and 404 are retried like a 5xx on the plain Fetcher', async () => {
   // fetcher.mts:201 only exempts 400 and 422
   for (const status of [401, 403, 404]) {
     const {v} = await withVendor((q, res) => res.writeHead(status).end('no'), {retry: 3}, (f) =>
@@ -220,7 +220,7 @@ await test('a 429 is retried after 10 s, and the retry succeeds', async () => {
   assertEqual(timers.delays, [10000], 'rate-limit back-off is 10 s');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a 429 does not use up `retry`; a vendor answering 429 forever is retried without end', async () => {
+await test('pins current behaviour: a 429 does not use up `retry`; a vendor answering 429 forever is retried without end', async () => {
   // fetcher.mts:196-198 returns before `--retries`; retry: 1 would otherwise allow a single attempt
   const v = await vendor((q, res) => res.writeHead(429).end('slow down'));
   const timers = fakeTimers({limit: 12});
@@ -236,7 +236,7 @@ await test('PINS SUSPECT BEHAVIOUR: a 429 does not use up `retry`; a vendor answ
   }
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a Retry-After header on a 429 is ignored; the wait is always 10 s', async () => {
+await test('pins current behaviour: a Retry-After header on a 429 is ignored; the wait is always 10 s', async () => {
   // fetcher.mts:86 and oauth-fetcher.mts:67 have a fixed 10000; nothing reads Retry-After
   const {timers} = await withVendor(
     (req, res, info) => (info.n === 1 ? res.writeHead(429, {'Retry-After': '1'}).end('x') : ok(req, res)),
@@ -246,7 +246,7 @@ await test('PINS SUSPECT BEHAVIOUR: a Retry-After header on a 429 is ignored; th
   assertEqual(timers.delays, [10000], 'waited 10 s although the vendor said 1 s');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a long Retry-After (an hour) is not honoured either', async () => {
+await test('pins current behaviour: a long Retry-After (an hour) is not honoured either', async () => {
   const {timers} = await withVendor(
     (req, res, info) => (info.n === 1 ? res.writeHead(429, {'Retry-After': '3600'}).end('x') : ok(req, res)),
     {retry: 2},

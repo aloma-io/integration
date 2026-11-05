@@ -1,6 +1,6 @@
 // PLAT-23: the OAuth fetcher (token refresh) and the refresh request of makeOAuth, against local mocks on 127.0.0.1.
 // Standalone script (no mocha). Back-off timers are faked. Tokens are made-up strings; the "config-update" JWE is made
-// with a key pair generated at run time. Tests marked PINS SUSPECT BEHAVIOUR pin behaviour that looks wrong.
+// with a key pair generated at run time. Tests marked "pins current behaviour" fix it as it is now.
 import JWE from '../build/internal/util/jwe/index.mjs';
 import Dispatcher from '../build/internal/dispatcher/index.mjs';
 import {OAuth} from '../build/internal/fetcher/oauth-fetcher.mjs';
@@ -180,7 +180,7 @@ await test('a refresh that throws invalidates the access token and the error rea
   assertEqual(oauth.accessToken(), null, 'access token invalidated');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a failed refresh has no status, so it is retried `retry` times against the token endpoint', async () => {
+await test('pins current behaviour: a failed refresh has no status, so it is retried `retry` times against the token endpoint', async () => {
   // oauth-fetcher.mts:44-47 rethrows; fetcher.mts:205-212 retries anything without a 400/422/429 status,
   // invalid_grant included. Reachable from outside: the token endpoint is the vendor's.
   const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, () => ({error: 'invalid_grant'}));
@@ -191,7 +191,7 @@ await test('PINS SUSPECT BEHAVIOUR: a failed refresh has no status, so it is ret
   assertEqual(timers.delays.length, 3, 'back-offs');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: concurrent calls each refresh (no single flight); the refreshed token is used by all', async () => {
+await test('pins current behaviour: concurrent calls each refresh (no single flight); the refreshed token is used by all', async () => {
   // oauth-fetcher.mts:18-48 has no shared in-flight refresh. With a single-use refresh token the second refresh
   // would fail at the vendor, and invalidate() would wipe the good token. Reachable from outside (parallel steps).
   const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, async (t, n) => {
@@ -239,7 +239,7 @@ await test('periodicRefresh refreshes a client that has a refresh token and skip
   assertEqual(without.refreshed, [], 'skipped');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: OAuth.periodicRefresh refreshes only the first client, once per client slot', async () => {
+await test('pins current behaviour: OAuth.periodicRefresh refreshes only the first client, once per client slot', async () => {
   // oauth-fetcher.mts:138 reads clients[0] instead of clients[i]. Internal only (own client list).
   const {oauth} = makeOAuth0({refresh_token: OLD_REFRESH}, () => ({access_token: NEW_ACCESS}));
   const a = oauth.getClient({});
@@ -441,7 +441,7 @@ await test('a token endpoint answering 200 gives the parsed JSON; any other stat
   assertEqual(result.bad, 'could not get refresh token 400 {"error":"invalid_grant"}', 'error');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: a token endpoint that echoes the refresh token puts it in the thrown error and the log', async () => {
+await test('pins current behaviour: a token endpoint that echoes the refresh token puts it in the thrown error and the log', async () => {
   // make-oauth.mts:72 throws the endpoint's body unfiltered; fetcher.mts:208 logs the error. Reachable from outside:
   // only if the vendor's error body contains the token (some vendors echo the request).
   const { lines, result } = await withTokenServer(
@@ -503,7 +503,7 @@ await test('the OAuth object starts from decrypted.oauthResult', async () => {
   assertEqual([s.theOAuth.accessToken(), s.theOAuth.refreshToken()], [OLD_ACCESS, OLD_REFRESH], 'tokens');
 });
 
-await test('PINS SUSPECT BEHAVIOUR: the periodic refresh runs unless noPeriodicTokenRefresh is exactly false, every 60 h by default', async () => {
+await test('pins current behaviour: the periodic refresh runs unless noPeriodicTokenRefresh is exactly false, every 60 h by default', async () => {
   // make-oauth.mts:81 `!(x === false)` is inverted for a flag named "no..."; :91 15000 ms per "second"
   // makes 4*60*60*15000 ms = 60 h. Internal only (connector author's own setting).
   const rows = {};
