@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node: ['18', '20', '22', '24']
+        node: ['22', '24', '26']
     defaults:
       run:
         working-directory: integration-sdk
@@ -67,3 +67,21 @@ jobs:
 
       - name: Build
         run: npx yarn@1.22.22 build
+
+  # One check that stands for the whole run: it needs every job above and fails unless each one succeeded
+  # (a skipped or cancelled job counts as a failure). Require this check, not the individual matrix names.
+  ci-passed:
+    name: ci-passed
+    needs: [integration_sdk, workspace_sdk]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to have succeeded
+        env:
+          INTEGRATION_SDK: ${{ needs.integration_sdk.result }}
+          WORKSPACE_SDK: ${{ needs.workspace_sdk.result }}
+        run: |
+          echo "integration_sdk: $INTEGRATION_SDK"
+          echo "workspace_sdk: $WORKSPACE_SDK"
+          test "$INTEGRATION_SDK" = success && test "$WORKSPACE_SDK" = success

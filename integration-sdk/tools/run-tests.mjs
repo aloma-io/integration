@@ -48,7 +48,7 @@ const run = (label, cmd, args) => {
 
 if (mochaFiles.length) {
   run(`mocha (${mochaFiles.length} files)`, process.execPath, [
-    path.join(root, 'node_modules/mocha/bin/_mocha'),
+    path.join(root, 'node_modules/mocha/bin/mocha.js'),
     '--exit',
     ...mochaFiles,
   ]);
