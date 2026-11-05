@@ -1,0 +1,14 @@
+# R18 a non-JSON 200 body is raised as a bare string. Must fail: test/fetcher-retry.test.mjs "a 200 with a non-JSON body is a ResponseParseError with the status and the first 200 characters, not retried"
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..907d522 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -55,7 +55,7 @@ export const unwrap = async (ret, options) => {
+   try {
+     return unwrap0(ret, JSON.parse(text), options);
+   } catch (e) {
+-    throw new ResponseParseError(ret.status, text);
++    throw e + ' ' + text;
+   }
+ };
+ 

@@ -1,0 +1,14 @@
+# R23 the OAuth fetcher does not retry a 401. Must fail: test/oauth-fetcher.test.mjs "a 401 makes the next attempt refresh the token (after 500 ms) and retry with the new one"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+index 10207be..a1daf02 100644
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -50,7 +50,7 @@ class OAuthFetcher extends Fetcher {
+ 
+   // a 401 is retried with a refreshed token
+   protected retryable(e: any, options: any): boolean {
+-    return e.status === 401 || super.retryable(e, options);
++    return super.retryable(e, options);
+   }
+ 
+   async onError(e, url, options, retries, args, wait: number = 500) {

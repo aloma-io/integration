@@ -48,7 +48,12 @@ class OAuthFetcher extends Fetcher {
     }
   }
 
-  async onError(e, url, options, retries, args, rateLimit) {
+  // a 401 is retried with a refreshed token
+  protected retryable(e: any, options: any): boolean {
+    return e.status === 401 || super.retryable(e, options);
+  }
+
+  async onError(e, url, options, retries, args, wait: number = 500) {
     var local = this;
 
     return new Promise((resolve, reject) => {
@@ -64,7 +69,7 @@ class OAuthFetcher extends Fetcher {
             reject(e);
           }
         },
-        rateLimit ? 10000 : 500
+        wait
       );
     });
   }

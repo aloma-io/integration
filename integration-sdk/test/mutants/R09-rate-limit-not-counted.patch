@@ -1,0 +1,14 @@
+# R09 a 429 does not count against the retry limit. Must fail: test/fetcher-retry.test.mjs "a 429 counts against `retry`: with retry 1 there is one request and no wait"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..6f88d59 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -250,7 +250,7 @@ export default class Fetcher {
+       // client errors other than 408 and 429, and unsafe methods without retryUnsafe
+       if (!local.retryable(e, options0)) throw e;
+ 
+-      --retries;
++      if (e.status !== 429) --retries;
+ 
+       // without the query string: its values may hold ids or emails
+       console.log(theURL.split('?')[0], e);

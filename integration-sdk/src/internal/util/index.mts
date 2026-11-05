@@ -24,6 +24,20 @@ export const unwrap0 = (ret, body, options) => {
   }
 };
 
+/**
+ * a response whose body should be JSON but is not; carries the response status and at most the first 200 characters
+ * of the body
+ */
+export class ResponseParseError extends Error {
+  status: number;
+
+  constructor(status: number, text: string) {
+    super(`invalid JSON in ${status} response: ${text.slice(0, 200)}`);
+    this.name = 'ResponseParseError';
+    this.status = status;
+  }
+}
+
 export const unwrap = async (ret, options) => {
   if (options?.text) return unwrap0(ret, await ret.text(), options);
   if (options?.base64) {
@@ -41,7 +55,7 @@ export const unwrap = async (ret, options) => {
   try {
     return unwrap0(ret, JSON.parse(text), options);
   } catch (e) {
-    throw e + ' ' + text;
+    throw new ResponseParseError(ret.status, text);
   }
 };
 

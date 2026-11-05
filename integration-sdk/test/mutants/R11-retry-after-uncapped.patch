@@ -1,0 +1,14 @@
+# R11 Retry-After is not capped at 60 s. Must fail: test/fetcher-retry.test.mjs "Retry-After is capped at 60 s"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..0027541 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -63,7 +63,7 @@ const retryAfterMs = (value?: string | null): number | undefined => {
+     return undefined;
+   }
+ 
+-  return Math.min(ms, RETRY_AFTER_MAX);
++  return ms;
+ };
+ 
+ /**

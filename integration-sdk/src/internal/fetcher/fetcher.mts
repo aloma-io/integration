@@ -38,6 +38,34 @@ const withQuery = (url: string, query: string): string => {
   return base + sep + query + (hash < 0 ? '' : url.slice(hash));
 };
 
+const REQUEST_TIMEOUT_MAX = 30 * 60 * 1000;
+const RETRY_AFTER_MAX = 60 * 1000;
+const RATE_LIMIT_WAIT = 10000;
+const RETRY_WAIT = 500;
+
+// methods that may be sent again after a 5xx, a timeout or a network error without the caller opting in
+const REPEATABLE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
+
+/**
+ * the wait in ms asked for by a Retry-After header (seconds or an HTTP date), capped at 60 s;
+ * undefined when the header is absent or not usable
+ */
+const retryAfterMs = (value?: string | null): number | undefined => {
+  const text = value?.trim();
+  if (!text) return undefined;
+
+  let ms: number;
+  if (/^\d+$/.test(text)) {
+    ms = Number(text) * 1000;
+  } else if (/[a-z]/i.test(text) && !Number.isNaN(Date.parse(text))) {
+    ms = Math.max(0, Date.parse(text) - Date.now());
+  } else {
+    return undefined;
+  }
+
+  return Math.min(ms, RETRY_AFTER_MAX);
+};
+
 /**
  * http request fetcher
  */
@@ -71,7 +99,28 @@ export default class Fetcher {
     if (this.customize0) await this.customize0(options, args);
   }
 
-  protected async onError(e: any, url: string, options: any, retries: number, args: any, rateLimit?) {
+  /**
+   * whether a failed attempt is tried again: 429 and 408 always (the vendor did not process the request);
+   * other 4xx never; a 5xx, a timeout or a network error for GET, HEAD, OPTIONS, PUT and DELETE, and for other
+   * methods only when the request sets retryUnsafe
+   */
+  protected retryable(e: any, options: any): boolean {
+    if (e.status === 429 || e.status === 408) return true;
+    if (e.status != null && e.status < 500) return false;
+
+    const method = String(options?.method || 'GET').toUpperCase();
+
+    return REPEATABLE_METHODS.includes(method) || options?.retryUnsafe === true;
+  }
+
+  /** ms to wait before the next attempt: the vendor's Retry-After, else 10 s for a 429, else 500 ms */
+  protected waitBefore(e: any): number {
+    if (e.retryAfter != null) return e.retryAfter;
+
+    return e.status === 429 ? RATE_LIMIT_WAIT : RETRY_WAIT;
+  }
+
+  protected async onError(e: any, url: string, options: any, retries: number, args: any, wait: number = RETRY_WAIT) {
     var local = this;
 
     return new Promise((resolve, reject) => {
@@ -83,7 +132,7 @@ export default class Fetcher {
             reject(e);
           }
         },
-        rateLimit ? 10000 : 500
+        wait
       );
     });
   }
@@ -116,6 +165,11 @@ export default class Fetcher {
        * undefined and null are skipped, arrays become repeated keys, objects are refused
        */
       params?: {[key: string]: any} | URLSearchParams;
+      /**
+       * retry a POST or PATCH (or any other method that is not GET, HEAD, OPTIONS, PUT or DELETE) after a 5xx,
+       * a timeout or a network error; off by default, because the vendor may already have processed the request
+       */
+      retryUnsafe?: boolean;
     },
     retries?: number,
     args: any = {}
@@ -177,6 +231,7 @@ export default class Fetcher {
         const e: any = new Error(status + ' ' + text);
 
         e.status = status;
+        e.retryAfter = retryAfterMs(ret.headers.get('retry-after'));
         throw e;
       }
 
@@ -188,19 +243,12 @@ export default class Fetcher {
         return {ok: true};
       }
 
-      return unwrap(ret, options0);
+      return await unwrap(ret, options0);
     } catch (e: any) {
       if (e instanceof ParamsError) throw e;
 
-      // too many requests
-      if (e.status === 429) {
-        return local.onError(e, url, options0, retries, args, true);
-      }
-
-      // bad request
-      if (e.status === 400 || e.status === 422) {
-        throw e;
-      }
+      // client errors other than 408 and 429, and unsafe methods without retryUnsafe
+      if (!local.retryable(e, options0)) throw e;
 
       --retries;
 
@@ -209,7 +257,7 @@ export default class Fetcher {
 
       if (retries <= 0) throw e;
 
-      return local.onError(e, url, options0, retries, args);
+      return local.onError(e, url, options0, retries, args, local.waitBefore(e));
     }
   }
 }

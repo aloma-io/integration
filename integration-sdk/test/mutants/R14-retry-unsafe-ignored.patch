@@ -1,0 +1,14 @@
+# R14 retryUnsafe has no effect. Must fail: test/fetcher-retry.test.mjs "POST and PATCH are retried after a 5xx, with the same body, when the caller sets retryUnsafe"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..87dc19c 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -110,7 +110,7 @@ export default class Fetcher {
+ 
+     const method = String(options?.method || 'GET').toUpperCase();
+ 
+-    return REPEATABLE_METHODS.includes(method) || options?.retryUnsafe === true;
++    return REPEATABLE_METHODS.includes(method);
+   }
+ 
+   /** ms to wait before the next attempt: the vendor's Retry-After, else 10 s for a 429, else 500 ms */

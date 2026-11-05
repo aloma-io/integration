@@ -1,0 +1,14 @@
+# R15 PUT is not retried by default. Must fail: test/fetcher-retry.test.mjs "GET, HEAD, OPTIONS, PUT and DELETE are retried after a 5xx"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..0441af6 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -44,7 +44,7 @@ const RATE_LIMIT_WAIT = 10000;
+ const RETRY_WAIT = 500;
+ 
+ // methods that may be sent again after a 5xx, a timeout or a network error without the caller opting in
+-const REPEATABLE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE'];
++const REPEATABLE_METHODS = ['GET', 'HEAD', 'OPTIONS', 'DELETE'];
+ 
+ /**
+  * the wait in ms asked for by a Retry-After header (seconds or an HTTP date), capped at 60 s;

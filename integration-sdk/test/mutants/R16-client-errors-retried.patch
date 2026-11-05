@@ -1,0 +1,14 @@
+# R16 401, 403, 404 and other 4xx are retried. Must fail: test/fetcher-retry.test.mjs "a 200 with a non-JSON body is a ResponseParseError with the status and the first 200 characters, not retried"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..7fd50a8 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -106,7 +106,7 @@ export default class Fetcher {
+    */
+   protected retryable(e: any, options: any): boolean {
+     if (e.status === 429 || e.status === 408) return true;
+-    if (e.status != null && e.status < 500) return false;
++    if (false) return false;
+ 
+     const method = String(options?.method || 'GET').toUpperCase();
+ 

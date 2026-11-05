@@ -1,13 +1,13 @@
 # R08 the thrown error carries no status. Must fail: test/fetcher-retry.test.mjs "an error status throws "<status> <body>" with .status, and onResponse is not called"
 diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
-index 84d8596..dfe4b20 100644
+index 0f81fdd..c80e5f9 100644
 --- a/integration-sdk/src/internal/fetcher/fetcher.mts
 +++ b/integration-sdk/src/internal/fetcher/fetcher.mts
-@@ -176,7 +176,6 @@ export default class Fetcher {
+@@ -230,7 +230,6 @@ export default class Fetcher {
          const text = await ret.text();
          const e: any = new Error(status + ' ' + text);
  
 -        e.status = status;
+         e.retryAfter = retryAfterMs(ret.headers.get('retry-after'));
          throw e;
        }
- 

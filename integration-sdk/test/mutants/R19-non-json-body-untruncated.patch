@@ -1,0 +1,14 @@
+# R19 the whole non-JSON body is put in the error. Must fail: test/fetcher-retry.test.mjs "a 200 with a non-JSON body is a ResponseParseError with the status and the first 200 characters, not retried"
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..61222ba 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -32,7 +32,7 @@ export class ResponseParseError extends Error {
+   status: number;
+ 
+   constructor(status: number, text: string) {
+-    super(`invalid JSON in ${status} response: ${text.slice(0, 200)}`);
++    super(`invalid JSON in ${status} response: ${text}`);
+     this.name = 'ResponseParseError';
+     this.status = status;
+   }
