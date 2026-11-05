@@ -1,0 +1,13 @@
+# O14 a failing client stops the periodic refresh of the others. Must fail: test/oauth-fetcher.test.mjs "OAuth.periodicRefresh reaches the remaining clients when one fails and then reports the failure"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -183,7 +183,7 @@
+       try {
+         await client.periodicRefresh();
+       } catch (e) {
+-        failure ||= e;
++        throw e;
+       }
+     }
+ 

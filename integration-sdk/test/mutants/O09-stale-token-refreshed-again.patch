@@ -1,0 +1,13 @@
+# O09 a call whose 401 arrives after another call refreshed runs its own refresh. Must fail: test/oauth-fetcher.test.mjs "a call whose 401 arrives after another call refreshed uses that token without refreshing again"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -30,7 +30,7 @@
+ 
+     const current = oauth.accessToken();
+ 
+-    if (current && (!force || (staleToken && current !== staleToken))) return current;
++    if (current && (!force || false)) return current;
+ 
+     return oauth.refreshAccessToken();
+   }

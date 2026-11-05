@@ -1,0 +1,13 @@
+# K03 a 4xx from the token endpoint is not marked final. Must fail: test/oauth-fetcher.test.mjs "a 4xx from the token endpoint, including 401, 408 and 429, is requested once even with retries left"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -91,7 +91,7 @@
+     const error: any = new Error(message);
+ 
+     // a refusal from the token endpoint is final: the same request would be refused again
+-    if (status >= 400 && status < 500) error.noRetry = true;
++    
+ 
+     console.log(message);
+ 

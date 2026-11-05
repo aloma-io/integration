@@ -1,0 +1,13 @@
+# K04 the token endpoint body is part of the thrown error. Must fail: test/oauth-fetcher.test.mjs "a token endpoint that echoes the refresh token does not put it in the thrown error or the log; status and error code are logged"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -87,7 +87,7 @@
+ 
+     // only the status and the OAuth error code are kept; the body may repeat what was sent
+     const code = oauthErrorCode(text);
+-    const message = 'could not get refresh token ' + status + (code ? ' ' + code : '');
++    const message = 'could not get refresh token ' + status + ' ' + text;
+     const error: any = new Error(message);
+ 
+     // a refusal from the token endpoint is final: the same request would be refused again

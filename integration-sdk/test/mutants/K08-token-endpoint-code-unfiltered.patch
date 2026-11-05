@@ -1,0 +1,13 @@
+# K08 any error member of the token endpoint answer is kept. Must fail: test/oauth-fetcher.test.mjs "a token endpoint error without a usable error code gives the status alone"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -7,7 +7,7 @@
+   try {
+     const code = JSON.parse(text)?.error;
+ 
+-    return typeof code === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(code) ? code : undefined;
++    return typeof code === 'string' ? code : undefined;
+   } catch {
+     return undefined;
+   }

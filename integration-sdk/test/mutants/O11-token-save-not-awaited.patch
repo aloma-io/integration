@@ -1,0 +1,13 @@
+# O11 the token save is not awaited. Must fail: test/oauth-fetcher.test.mjs "the token is saved before the call continues, and a failing save surfaces as an error"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -152,7 +152,7 @@
+       }
+ 
+       try {
+-        await this.update(ret.access_token, ret.refresh_token);
++        this.update(ret.access_token, ret.refresh_token);
+       } catch (e: any) {
+         // the stored token is not repeated by a retry
+         if (e && typeof e === 'object') e.noRetry = true;

@@ -1,6 +1,6 @@
 // PLAT-23: the OAuth fetcher (token refresh) and the refresh request of makeOAuth, against local mocks on 127.0.0.1.
 // Standalone script (no mocha). Back-off timers are faked. Tokens are made-up strings; the "config-update" JWE is made
-// with a key pair generated at run time. Tests marked "pins current behaviour" fix it as it is now.
+// with a key pair generated at run time.
 import JWE from '../build/internal/util/jwe/index.mjs';
 import Dispatcher from '../build/internal/dispatcher/index.mjs';
 import {OAuth} from '../build/internal/fetcher/oauth-fetcher.mjs';
@@ -180,10 +180,22 @@ await test('a refresh that throws invalidates the access token and the error rea
   assertEqual(oauth.accessToken(), null, 'access token invalidated');
 });
 
-await test('pins current behaviour: a failed refresh has no status, so it is retried `retry` times against the token endpoint', async () => {
-  // oauth-fetcher.mts:44-47 rethrows; fetcher.mts:205-212 retries anything without a 400/422/429 status,
-  // invalid_grant included. Reachable from outside: the token endpoint is the vendor's.
-  const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, () => ({error: 'invalid_grant'}));
+await test('a refresh that fails with a 4xx from the token endpoint is attempted once and not retried', async () => {
+  const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, () => {
+    throw Object.assign(new Error('could not get refresh token 400 invalid_grant'), {status: 400});
+  });
+  const {result, timers} = await run(apiFor('x'), (v) =>
+    outcome(oauth.getClient({baseUrl: v.baseUrl, retry: 4}).fetch('/a', {method: 'GET'}))
+  );
+  assertEqual(refreshed.length, 1, 'refresh attempts');
+  assertEqual(timers.delays, [], 'no back-off');
+  assertEqual(result.error.message, 'could not get refresh token 400 invalid_grant', 'message');
+});
+
+await test('a refresh that fails without a status is retried `retry` times', async () => {
+  const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, () => {
+    throw new Error('token endpoint down');
+  });
   const {timers} = await run(apiFor('x'), (v) =>
     outcome(oauth.getClient({baseUrl: v.baseUrl, retry: 4}).fetch('/a', {method: 'GET'}))
   );
@@ -191,9 +203,7 @@ await test('pins current behaviour: a failed refresh has no status, so it is ret
   assertEqual(timers.delays.length, 3, 'back-offs');
 });
 
-await test('pins current behaviour: concurrent calls each refresh (no single flight); the refreshed token is used by all', async () => {
-  // oauth-fetcher.mts:18-48 has no shared in-flight refresh. With a single-use refresh token the second refresh
-  // would fail at the vendor, and invalidate() would wipe the good token. Reachable from outside (parallel steps).
+await test('concurrent calls without an access token share one refresh and all use the new token', async () => {
   const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, async (t, n) => {
     await new Promise((r) => setImmediate(r));
     return {access_token: `${NEW_ACCESS}-${n}`};
@@ -205,8 +215,116 @@ await test('pins current behaviour: concurrent calls each refresh (no single fli
       await Promise.all([1, 2, 3].map((i) => client.fetch(`/c${i}`, {method: 'GET'})));
     }
   );
-  assertEqual(refreshed.length, 3, 'three refreshes for three concurrent calls');
-  assertEqual(new Set(v.requests.map((r) => r.headers.authorization)).size, 3, 'each call got its own token');
+  assertEqual(refreshed.length, 1, 'one refresh for three concurrent calls');
+  assertEqual(v.requests.map((r) => r.headers.authorization), Array(3).fill(`Bearer ${NEW_ACCESS}-1`), 'tokens');
+});
+
+await test('concurrent 401s make one refresh and every call is retried with the new token', async () => {
+  const {oauth, refreshed, saved} = makeOAuth0({access_token: OLD_ACCESS, refresh_token: OLD_REFRESH}, async (t, n) => {
+    await new Promise((r) => setImmediate(r));
+    return {access_token: `${NEW_ACCESS}-${n}`, refresh_token: `${NEW_REFRESH}-${n}`};
+  });
+  const {result, v} = await run(apiFor(`${NEW_ACCESS}-1`), async (v) => {
+    const a = oauth.getClient({baseUrl: v.baseUrl, retry: 2});
+    const b = oauth.getClient({baseUrl: v.baseUrl, retry: 2});
+    return Promise.all([a.fetch('/1', {method: 'GET'}), b.fetch('/2', {method: 'GET'}), a.fetch('/3', {method: 'GET'})]);
+  });
+  assertEqual(result, [{ok: true}, {ok: true}, {ok: true}], 'results');
+  assertEqual(refreshed, [OLD_REFRESH], 'one refresh');
+  assertEqual(saved.length, 1, 'saved once');
+  assertEqual(
+    v.requests.map((r) => r.headers.authorization),
+    [...Array(3).fill(`Bearer ${OLD_ACCESS}`), ...Array(3).fill(`Bearer ${NEW_ACCESS}-1`)],
+    'tokens'
+  );
+});
+
+await test('a call whose 401 arrives after another call refreshed uses that token without refreshing again', async () => {
+  const {oauth, refreshed} = makeOAuth0({access_token: OLD_ACCESS, refresh_token: OLD_REFRESH}, (t, n) => ({
+    access_token: `${NEW_ACCESS}-${n}`,
+  }));
+  const {result, v} = await run(apiFor(`${NEW_ACCESS}-1`), async (v) => {
+    const client = oauth.getClient({baseUrl: v.baseUrl, retry: 2});
+    await client.fetch('/first', {method: 'GET'});
+    // a request that was sent with the old token before the refresh and is answered with 401 only now
+    return client.onError(Object.assign(new Error('401 late'), {status: 401}), '/late', {method: 'GET', headers: {Authorization: `Bearer ${OLD_ACCESS}`}}, 2, {});
+  });
+  assertEqual(result, {ok: true}, 'result');
+  assertEqual(refreshed.length, 1, 'refreshed once');
+  assertEqual(v.requests.at(-1).headers.authorization, `Bearer ${NEW_ACCESS}-1`, 'token of the late retry');
+});
+
+await test('a failed refresh does not invalidate a token that another caller refreshed in the meantime', async () => {
+  let release;
+  const gate = new Promise((r) => (release = r));
+  const {oauth} = makeOAuth0({access_token: OLD_ACCESS, refresh_token: OLD_REFRESH}, async () => {
+    await gate;
+    throw new Error('token endpoint down');
+  });
+  const client = oauth.getClient({});
+  const failing = outcome(client.getToken(true));
+  await new Promise((r) => setImmediate(r));
+  await oauth.update(NEW_ACCESS, NEW_REFRESH); // another caller stored a token while the refresh was in flight
+  release();
+  const {error} = await failing;
+  assertEqual(error?.message, 'token endpoint down', 'the failure reaches the caller');
+  assertEqual(oauth.accessToken(), NEW_ACCESS, 'access token kept');
+  assertEqual(oauth.refreshToken(), NEW_REFRESH, 'refresh token kept');
+});
+
+await test('the next call after a failed refresh starts a new refresh', async () => {
+  const {oauth, refreshed} = makeOAuth0({refresh_token: OLD_REFRESH}, (t, n) => {
+    if (n === 1) throw new Error('token endpoint down');
+    return {access_token: NEW_ACCESS};
+  });
+  const client = oauth.getClient({});
+  const first = await outcome(client.getToken(false));
+  assertEqual(first.error?.message, 'token endpoint down', 'first');
+  assertEqual(await client.getToken(false), NEW_ACCESS, 'second');
+  assertEqual(refreshed.length, 2, 'refresh calls');
+});
+
+await test('the token is saved before the call continues, and a failing save surfaces as an error', async () => {
+  const order = [];
+  const oauth = new OAuth(
+    {refresh_token: OLD_REFRESH},
+    async () => {
+      await new Promise((r) => setImmediate(r));
+      order.push('saved');
+    },
+    async () => ({access_token: NEW_ACCESS})
+  );
+  assertEqual(await oauth.getClient({}).getToken(false), NEW_ACCESS, 'token');
+  order.push('returned');
+  assertEqual(order, ['saved', 'returned'], 'save finished first');
+
+  const failing = new OAuth(
+    {refresh_token: OLD_REFRESH},
+    async () => {
+      throw new Error('save failed');
+    },
+    async () => ({access_token: NEW_ACCESS})
+  );
+  const {error} = await outcome(failing.getClient({}).getToken(false));
+  assertEqual(error?.message, 'save failed', 'getToken error');
+  assertEqual((await outcome(failing.update('a', 'b'))).error?.message, 'save failed', 'update error');
+});
+
+await test('a failing save reaches the caller of fetch and is not retried', async () => {
+  let saves = 0;
+  const oauth = new OAuth(
+    {refresh_token: OLD_REFRESH},
+    async () => {
+      ++saves;
+      throw new Error('save failed');
+    },
+    async () => ({access_token: NEW_ACCESS})
+  );
+  const {result} = await run(apiFor(NEW_ACCESS), (v) =>
+    outcome(oauth.getClient({baseUrl: v.baseUrl, retry: 3}).fetch('/a', {method: 'GET'}))
+  );
+  assertEqual(result.error?.message, 'save failed', 'message');
+  assertEqual(saves, 1, 'save attempts');
 });
 
 await test('__healthCheck fails once the client was used and the access token is gone', async () => {
@@ -239,16 +357,32 @@ await test('periodicRefresh refreshes a client that has a refresh token and skip
   assertEqual(without.refreshed, [], 'skipped');
 });
 
-await test('pins current behaviour: OAuth.periodicRefresh refreshes only the first client, once per client slot', async () => {
-  // oauth-fetcher.mts:138 reads clients[0] instead of clients[i]. Internal only (own client list).
+await test('OAuth.periodicRefresh refreshes every client', async () => {
   const {oauth} = makeOAuth0({refresh_token: OLD_REFRESH}, () => ({access_token: NEW_ACCESS}));
   const a = oauth.getClient({});
   const b = oauth.getClient({});
+  const c = oauth.getClient({});
   const calls = [];
   a.periodicRefresh = async () => calls.push('a');
   b.periodicRefresh = async () => calls.push('b');
+  c.periodicRefresh = async () => calls.push('c');
   await captureLog(() => oauth.periodicRefresh());
-  assertEqual(calls, ['a', 'a'], 'the first client twice, the second never');
+  assertEqual(calls, ['a', 'b', 'c'], 'every client once');
+});
+
+await test('OAuth.periodicRefresh reaches the remaining clients when one fails and then reports the failure', async () => {
+  const {oauth} = makeOAuth0({refresh_token: OLD_REFRESH}, () => ({access_token: NEW_ACCESS}));
+  const calls = [];
+  const a = oauth.getClient({});
+  a.periodicRefresh = async () => {
+    calls.push('a');
+    throw new Error('refresh failed');
+  };
+  const b = oauth.getClient({});
+  b.periodicRefresh = async () => calls.push('b');
+  const {result} = await captureLog(() => outcome(oauth.periodicRefresh()));
+  assertEqual(calls, ['a', 'b'], 'both clients');
+  assertEqual(result.error?.message, 'refresh failed', 'error');
 });
 
 // --- no token or key in a log line or an error ---
@@ -428,7 +562,7 @@ await test('a missing client id or client secret is refused before any request',
   }
 });
 
-await test('a token endpoint answering 200 gives the parsed JSON; any other status throws "could not get refresh token <status> <body>"', async () => {
+await test('a token endpoint answering 200 gives the parsed JSON; any other status throws "could not get refresh token <status> <error code>"', async () => {
   const { s, v, result } = await withTokenServer(
     (req, res, info) => (info.n === 1 ? grant(req, res) : res.writeHead(400).end('{"error":"invalid_grant"}')),
     (v) => ({decrypted: {clientId: 'c', clientSecret: 's'}, oauthOptions: {tokenURL: `${v.baseUrl}/t`}}),
@@ -438,28 +572,67 @@ await test('a token endpoint answering 200 gives the parsed JSON; any other stat
     })
   );
   assertEqual(result.ok, {access_token: NEW_ACCESS, refresh_token: NEW_REFRESH}, 'ok');
-  assertEqual(result.bad, 'could not get refresh token 400 {"error":"invalid_grant"}', 'error');
+  assertEqual(result.bad, 'could not get refresh token 400 invalid_grant', 'error');
 });
 
-await test('pins current behaviour: a token endpoint that echoes the refresh token puts it in the thrown error and the log', async () => {
-  // make-oauth.mts:72 throws the endpoint's body unfiltered; fetcher.mts:208 logs the error. Reachable from outside:
-  // only if the vendor's error body contains the token (some vendors echo the request).
-  const { lines, result } = await withTokenServer(
-    (req, res) => res.writeHead(500).end(`upstream failed for ${OLD_REFRESH}`),
+// a GET through a client of makeOAuth whose token endpoint answers with `handler`; the API call needs a refresh first
+const fetchViaTokenServer = (handler, retry) =>
+  withTokenServer(
+    handler,
     (v) => ({decrypted: {clientId: 'c', clientSecret: 's', oauthResult: {refresh_token: OLD_REFRESH}}, oauthOptions: {tokenURL: `${v.baseUrl}/t`}}),
     async (s) => {
       const api = await vendor(apiFor('never'));
       const timers = fakeTimers();
       try {
-        return (await outcome(s.theOAuth.getClient({baseUrl: api.baseUrl, retry: 1}).fetch('/x', {method: 'GET'}))).error.message;
+        return (await outcome(s.theOAuth.getClient({baseUrl: api.baseUrl, retry}).fetch('/x', {method: 'GET'}))).error.message;
       } finally {
         timers.restore();
         await api.close();
       }
     }
   );
-  assert(result.includes(OLD_REFRESH), `error: ${result}`);
-  assert(lines.some((l) => l.includes(OLD_REFRESH)), 'the log line holds the token');
+
+await test('a token endpoint that echoes the refresh token does not put it in the thrown error or the log; status and error code are logged', async () => {
+  const { lines, result } = await fetchViaTokenServer(
+    (req, res) => res.writeHead(400).end(`{"error":"invalid_grant","error_description":"rejected ${OLD_REFRESH}"}`),
+    3
+  );
+  assertEqual(result, 'could not get refresh token 400 invalid_grant', 'error');
+  assert(!lines.some((l) => l.includes(OLD_REFRESH) || l.includes('error_description')), `log: ${lines.join(' | ')}`);
+  assert(lines.some((l) => l.includes('400') && l.includes('invalid_grant')), `status and code logged: ${lines.join(' | ')}`);
+});
+
+await test('a 5xx body from the token endpoint stays out of the thrown error and the log', async () => {
+  const { lines, result } = await fetchViaTokenServer((req, res) => res.writeHead(502).end(`upstream failed for ${OLD_REFRESH}`), 2);
+  assertEqual(result, 'could not get refresh token 502', 'error');
+  assert(!lines.some((l) => l.includes(OLD_REFRESH) || l.includes('upstream failed')), `log: ${lines.join(' | ')}`);
+});
+
+await test('a token endpoint error without a usable error code gives the status alone', async () => {
+  const bodies = ['', 'upstream failed', '<html>gateway</html>', '{"error":{"nested":"x"}}', `{"error":"has spaces and ${OLD_REFRESH}"}`];
+  const messages = [];
+  for (const body of bodies) {
+    messages.push((await fetchViaTokenServer((req, res) => res.writeHead(400).end(body), 1)).result);
+  }
+  assertEqual(messages, Array(bodies.length).fill('could not get refresh token 400'), 'messages');
+});
+
+await test('a token endpoint answer of 200 that is not JSON fails without quoting the answer', async () => {
+  const { lines, result } = await fetchViaTokenServer((req, res) => res.writeHead(200).end(`not json ${OLD_REFRESH}`), 1);
+  assert(!result.includes(OLD_REFRESH) && !result.includes('not json'), `error: ${result}`);
+  assert(!lines.some((l) => l.includes(OLD_REFRESH) || l.includes('not json')), `log: ${lines.join(' | ')}`);
+});
+
+await test('a 4xx from the token endpoint, including 401, 408 and 429, is requested once even with retries left', async () => {
+  for (const status of [400, 401, 408, 429]) {
+    const { v } = await fetchViaTokenServer((req, res) => res.writeHead(status).end('{"error":"invalid_grant"}'), 4);
+    assertEqual(v.requests.length, 1, `token endpoint requests after a ${status}`);
+  }
+});
+
+await test('a 5xx from the token endpoint is retried', async () => {
+  const { v } = await fetchViaTokenServer((req, res) => res.writeHead(503).end('{"error":"temporarily_unavailable"}'), 3);
+  assertEqual(v.requests.length, 3, 'token endpoint requests');
 });
 
 await test('the refresh request does not log the refresh token or the client secret', async () => {
@@ -503,19 +676,40 @@ await test('the OAuth object starts from decrypted.oauthResult', async () => {
   assertEqual([s.theOAuth.accessToken(), s.theOAuth.refreshToken()], [OLD_ACCESS, OLD_REFRESH], 'tokens');
 });
 
-await test('pins current behaviour: the periodic refresh runs unless noPeriodicTokenRefresh is exactly false, every 60 h by default', async () => {
-  // make-oauth.mts:81 `!(x === false)` is inverted for a flag named "no..."; :91 15000 ms per "second"
-  // makes 4*60*60*15000 ms = 60 h. Internal only (connector author's own setting).
+await test('noPeriodicTokenRefresh: true turns the periodic refresh off; false or unset leaves it on, every 4 h by default', async () => {
   const rows = {};
   for (const [name, flag] of [['unset', undefined], ['true', true], ['false', false]]) {
     const s = await setup({oauthOptions: {tokenURL: 'unset', noPeriodicTokenRefresh: flag}});
     s.restore();
     rows[name] = s.timers;
   }
-  assertEqual(rows.unset, [4 * 60 * 60 * 15000], 'installed when unset, period');
-  assertEqual(rows.true, [4 * 60 * 60 * 15000], 'still installed when set to true');
-  assertEqual(rows.false, [], 'not installed only when false');
-  assertEqual(4 * 60 * 60 * 15000 / 3600000, 60, 'hours');
+  assertEqual(rows.unset, [4 * 60 * 60 * 1000], 'installed when unset, period');
+  assertEqual(rows.false, [4 * 60 * 60 * 1000], 'installed when false, period');
+  assertEqual(rows.true, [], 'not installed when true');
+});
+
+await test('the periodic timer refreshes every client of the OAuth object', async () => {
+  const jwe = new JWE({algorithm: 'RSA-OAEP-256'});
+  await jwe.newPair();
+  const tick = [];
+  const real = {setInterval: globalThis.setInterval, clearInterval: globalThis.clearInterval};
+  globalThis.setInterval = (fn) => (tick.push(fn), 'interval-handle');
+  globalThis.clearInterval = () => {};
+  let theOAuth;
+  try {
+    theOAuth = await makeOAuth({
+      config: {id: () => 'connector-1', validateKeys: async () => jwe},
+      transport: {},
+      decrypted: {oauthResult: {access_token: OLD_ACCESS}},
+      dispatcher: dispatcherWith({tokenURL: 'unset'}),
+    });
+  } finally {
+    Object.assign(globalThis, real);
+  }
+  const calls = [];
+  for (const name of ['a', 'b', 'c']) theOAuth.getClient({}).periodicRefresh = async () => calls.push(name);
+  await captureLog(() => tick[0]());
+  assertEqual(calls, ['a', 'b', 'c'], 'clients refreshed by the timer');
 });
 
 await test('tokenRefreshPeriod overrides the interval', async () => {

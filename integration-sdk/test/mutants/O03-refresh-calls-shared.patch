@@ -1,15 +1,15 @@
-# O03 concurrent calls share one refresh (the missing single flight is "fixed"). Must fail: test/oauth-fetcher.test.mjs "pins current behaviour: concurrent calls each refresh (no single flight); the refreshed token is used by all"
+# O03 each concurrent call runs its own refresh. Must fail: test/oauth-fetcher.test.mjs "concurrent 401s make one refresh and every call is retried with the new token"
 diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
-index f90e4aa..ccb1bbe 100644
 --- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
 +++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
-@@ -32,7 +32,8 @@ class OAuthFetcher extends Fetcher {
-         throw new Error('have no access_token and no refresh_token');
-       }
+@@ -130,9 +130,7 @@
+    * running share it
+    */
+   refreshAccessToken(): Promise<string> {
+-    return (this.refreshing ||= this.exchange().finally(() => {
+-      this.refreshing = null;
+-    }));
++    return this.exchange();
+   }
  
--      const ret = await oauth.obtainViaRefreshToken(oauth.refreshToken());
-+      oauth._shared ||= oauth.obtainViaRefreshToken(oauth.refreshToken());
-+      const ret = await oauth._shared;
- 
-       if (ret.access_token) {
-         oauth.update(ret.access_token, ret.refresh_token);
+   private async exchange(): Promise<string> {
