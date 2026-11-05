@@ -70,7 +70,7 @@ const build = () => {
   const r = run('node', ['./node_modules/typescript/bin/tsc'], 120000);
   if (r.status !== 0) throw new Error('build failed:\n' + r.stdout + r.stderr);
 };
-const mocha = () => run('node', ['./node_modules/mocha/bin/_mocha', '--bail', '--exit', 'test/harness.test.mjs', 'test/harness-connector-smoke.test.mjs'], 150000);
+const mocha = () => run('node', ['./node_modules/mocha/bin/mocha.js', '--bail', '--exit', 'test/harness.test.mjs', 'test/harness-connector-smoke.test.mjs'], 150000);
 const fetcherTests = () => run('node', ['test/fetcher-query-params.test.mjs'], 150000);
 const testsFor = (id) => (id.startsWith('F') ? fetcherTests() : mocha());
 
