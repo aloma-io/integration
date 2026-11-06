@@ -1,0 +1,13 @@
+# W01 the publish job no longer waits for the test job. Must fail: test/publish-workflow.test.mjs "the publish job needs the test job"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 9af5cd3..b53f4dc 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -39,7 +39,6 @@ jobs:
+         run: npx yarn@1.22.22 test
+ 
+   publish:
+-    needs: test
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v6

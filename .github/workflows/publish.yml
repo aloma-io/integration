@@ -10,7 +10,36 @@ permissions:
   contents: read
 
 jobs:
+  # Runs the SDK build and tests on the tagged commit; the publish job needs it.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: integration-sdk
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+
+      - name: Build
+        run: npx yarn@1.22.22 build
+
+      - name: Test
+        run: npx yarn@1.22.22 test
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
