@@ -162,16 +162,16 @@ await test('an unsigned or signed (JWS) token is refused', async () => {
   for (const token of [jws, unsecured]) assert(await rejected(jwe.decrypt(token, AUD)), 'accepted');
 });
 
-await test('pins current behaviour: there is no allow-list of algorithms; another content encryption (A128GCM) is accepted', async () => {
-  // jwe/index.mts:63 passes no keyManagementAlgorithms / contentEncryptionAlgorithms to jwtDecrypt. Reachable from
-  // outside as platform input (a token for the connector's public key), but only the public key holder can make one.
+await test('only RSA-OAEP-256 with A256GCM is accepted: another content encryption or key-management algorithm is refused', async () => {
   const jwe = await newJwe();
-  const token = await new jose.EncryptJWT({_data: {a: 1}})
-    .setProtectedHeader({alg: 'RSA-OAEP-256', enc: 'A128GCM'})
-    .setIssuer('home.aloma.io')
-    .setAudience(AUD)
-    .encrypt(jwe.pair.publicKey);
-  assertEqual(await jwe.decrypt(token, AUD), {a: 1}, 'accepted');
+  for (const [alg, enc] of [['RSA-OAEP-256', 'A128GCM'], ['RSA-OAEP-256', 'A256CBC-HS512'], ['RSA-OAEP', 'A256GCM'], ['RSA-OAEP-384', 'A256GCM']]) {
+    const token = await new jose.EncryptJWT({_data: {a: 1}})
+      .setProtectedHeader({alg, enc})
+      .setIssuer('home.aloma.io')
+      .setAudience(AUD)
+      .encrypt(jwe.pair.publicKey);
+    assert(await rejected(jwe.decrypt(token, AUD)), `${alg} / ${enc} accepted`);
+  }
 });
 
 await test('pins current behaviour: anyone holding the public key can mint a config the connector accepts (no sender proof)', async () => {
@@ -200,17 +200,20 @@ await test('validateKeys loads the base64 pair so that the connector can decrypt
   assertEqual(await loaded.decrypt(await jwe.encrypt({a: 1}, '1h', AUD), AUD), {a: 1}, 'data');
 });
 
-await test('pins current behaviour: unreadable keys pass validateKeys and fail later as an unhandled rejection', async () => {
-  // jwe/index.mts:43 calls importPair without await, so connector/config.mts:21 never reaches its "keys could not be
-  // loaded" help. Internal only (the operator's own PRIVATE_KEY / PUBLIC_KEY).
+await test('validateKeys refuses keys that cannot be read, so the "keys could not be loaded" help is reached', async () => {
   const jwe = await newJwe();
-  const config = await configFor(jwe);
-  config._privateKey = b64('this is not a key');
-  const seen = new Promise((resolve) => process.once('unhandledRejection', resolve));
-  const ret = await config.validateKeys('RSA-OAEP-256');
-  assert(ret, 'validateKeys resolved');
-  const reason = await Promise.race([seen, new Promise((r) => setTimeout(() => r('none'), 1000))]);
-  assert(reason !== 'none', 'an unhandled rejection followed');
+  for (const field of ['_privateKey', '_publicKey']) {
+    const config = await configFor(jwe);
+    config[field] = b64('this is not a key');
+    const unhandled = [];
+    const onUnhandled = (reason) => unhandled.push(reason);
+    process.on('unhandledRejection', onUnhandled);
+    const error = await rejected(config.validateKeys('RSA-OAEP-256'));
+    await new Promise((r) => setTimeout(r, 200));
+    process.off('unhandledRejection', onUnhandled);
+    assert(error, `${field}: validateKeys resolved`);
+    assertEqual(unhandled.length, 0, `${field}: unhandled rejections`);
+  }
 });
 
 // --- decryptConfig (on-connect/decrypt-config.mts) ---
@@ -247,6 +250,20 @@ await test('decryptConfig drops a value that fails to decrypt (wrong key, tamper
   };
   const {result} = await captureLog(() => decryptConfig({configSchema: schema(), config, secrets: values}));
   assertEqual(result, {good: {v: 'good'}}, 'only the good value is kept');
+});
+
+await test('decryptConfig drops a value with another algorithm pair and keeps the RSA-OAEP-256 / A256GCM one', async () => {
+  const jwe = await newJwe();
+  const config = await configFor(jwe);
+  const other = await new jose.EncryptJWT({_data: {v: 1}})
+    .setProtectedHeader({alg: 'RSA-OAEP-256', enc: 'A128GCM'})
+    .setIssuer('home.aloma.io')
+    .setAudience(AUD)
+    .encrypt(jwe.pair.publicKey);
+  const values = {good: await jwe.encrypt({v: 'good'}, '7d', AUD), other};
+  const {result, lines} = await captureLog(() => decryptConfig({configSchema: schema(), config, secrets: values}));
+  assertEqual(result, {good: {v: 'good'}}, 'only the RSA-OAEP-256 / A256GCM value is kept');
+  assert(lines.some((l) => l.includes('failed to decrypt key') && l.includes('other')), `log: ${lines.join(' | ')}`);
 });
 
 await test('a decryption failure is logged with the key name and no token, no key and no payload', async () => {

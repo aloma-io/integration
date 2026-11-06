@@ -1,0 +1,13 @@
+# J08 the key-management allow-list also admits RSA-OAEP. Must fail: test/jwe-config.test.mjs "only RSA-OAEP-256 with A256GCM is accepted: another content encryption or key-management algorithm is refused"
+diff --git a/integration-sdk/src/internal/util/jwe/index.mts b/integration-sdk/src/internal/util/jwe/index.mts
+--- a/integration-sdk/src/internal/util/jwe/index.mts
++++ b/integration-sdk/src/internal/util/jwe/index.mts
+@@ -63,7 +63,7 @@ class JWE {
+     const {payload, protectedHeader} = await jose.jwtDecrypt(what, this.pair!.privateKey, {
+       issuer: this.issuer,
+       audience,
+-      keyManagementAlgorithms: ['RSA-OAEP-256'],
++      keyManagementAlgorithms: ['RSA-OAEP-256', 'RSA-OAEP'],
+       contentEncryptionAlgorithms: ['A256GCM'],
+     });
+ 
