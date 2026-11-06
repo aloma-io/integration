@@ -43,7 +43,7 @@ export const assertEqual = (actual, expected, message) => {
 const fromFetcher = (stack = '') => /build[\\/]internal[\\/]fetcher[\\/]/.test(stack);
 
 /**
- * Fake back-off timers: the fetchers wait 500 ms (retry) or 10 s (429) with setTimeout. Those two delays are recorded
+ * Fake back-off timers: the fetchers wait 500 ms (retry), 10 s (429) or the vendor's Retry-After with setTimeout. Those delays are recorded
  * and fire at once when the call comes from the SDK's fetcher modules (build/internal/fetcher/); every other timer is
  * left alone, whatever its delay. On Node 18 the built-in fetch sets its own 10 s connect timer through the global
  * setTimeout, which a match on the delay alone took for a rate-limit back-off.
@@ -54,7 +54,10 @@ export const fakeTimers = ({limit = 40} = {}) => {
   const delays = [];
 
   globalThis.setTimeout = (fn, ms, ...rest) => {
-    if ((ms !== 500 && ms !== 10000) || !fromFetcher(new Error().stack)) return real(fn, ms, ...rest);
+    const stack = new Error().stack;
+    // the two fixed waits, and any other wait the fetchers compute (Retry-After) from their onError
+    const wanted = ms === 500 || ms === 10000 || /onError/.test(stack);
+    if (!wanted || !fromFetcher(stack)) return real(fn, ms, ...rest);
     delays.push(ms);
     if (delays.length > limit) throw new Error(`RUNAWAY: more than ${limit} back-offs`);
     return real(fn, 0, ...rest);

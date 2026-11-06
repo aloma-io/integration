@@ -1,7 +1,6 @@
 // PLAT-23: the plain Fetcher against a local vendor mock on 127.0.0.1: request building, retries, 429, timeouts and
 // the error a step sees. Standalone script (no mocha). Back-off timers are faked (see helpers/mini.mjs), so nothing
-// waits; the only real waits are the 150 ms request timeouts. These tests describe today's behaviour; the ones marked
-// "pins current behaviour" fix it as it is now, so a deliberate change to it updates the test with it.
+// waits; the only real waits are the 150 ms request timeouts.
 import Fetcher from '../build/internal/fetcher/fetcher.mjs';
 import {assert, assertEqual, captureLog, closedPort, fakeTimers, json, outcome, suite, vendor} from './helpers/mini.mjs';
 
@@ -118,16 +117,33 @@ await test('an error status throws "<status> <body>" with .status, and onRespons
   assert(!called, 'onResponse is for successful answers only');
 });
 
-await test('pins current behaviour: a 200 with a non-JSON body escapes as a bare string holding the whole body, unretried', async () => {
-  // fetcher.mts:191 `return unwrap(...)` is not awaited inside the try, so the catch (and the retry) never see it
-  const {result, v} = await withVendor(
-    (q, res) => res.writeHead(200).end('<html>maintenance</html>'),
-    {retry: 3},
-    (f) => outcome(f.fetch('/h', {method: 'GET'}))
+await test('a 200 with a non-JSON body is a ResponseParseError with the status and the first 200 characters, not retried', async () => {
+  const body = '<html>' + 'x'.repeat(300) + 'END</html>';
+  const {result, v} = await withVendor((q, res) => res.writeHead(200).end(body), {retry: 3}, (f) =>
+    outcome(f.fetch('/h', {method: 'GET'}))
   );
-  assertEqual(typeof result.error, 'string', 'thrown value is a string, not an Error');
-  assert(result.error.includes('<html>maintenance</html>'), 'the whole body is in the error');
+  assert(result.error instanceof Error, 'thrown value is an Error');
+  assertEqual(result.error.name, 'ResponseParseError', 'error name');
+  assertEqual(result.error.status, 200, 'status');
+  assert(result.error.message.includes(body.slice(0, 200)), 'the first 200 characters are in the message');
+  assert(!result.error.message.includes(body.slice(0, 201)), 'nothing beyond 200 characters');
+  assert(!result.error.message.includes('END'), 'the end of the body is not in the message');
   assertEqual(v.requests.length, 1, 'not retried');
+});
+
+await test('a short non-JSON body is quoted whole in the error', async () => {
+  const {result} = await withVendor((q, res) => res.writeHead(200).end('maintenance'), {}, (f) =>
+    outcome(f.fetch('/h', {method: 'GET'}))
+  );
+  assertEqual(result.error.name, 'ResponseParseError', 'error name');
+  assert(result.error.message.includes('maintenance'), result.error.message);
+});
+
+await test('a non-JSON body is accepted when text is asked for', async () => {
+  const {result} = await withVendor((q, res) => res.writeHead(200).end('plain'), {}, (f) =>
+    f.fetch('/h', {method: 'GET', text: true})
+  );
+  assertEqual(result, 'plain', 'text body');
 });
 
 // --- retries (fetcher.mts:196-212) ---
@@ -190,22 +206,105 @@ await test('a failed attempt is logged with the url without its query string', a
   assert(!lines.some((l) => l.includes('abc')), `query leaked: ${lines.join(' | ')}`);
 });
 
-await test('pins current behaviour: a POST is retried after a 5xx with the same body (duplicate writes)', async () => {
-  // fetcher.mts:205-212 retries every method; a vendor that processed the POST and then failed sees it twice
-  const {v} = await withVendor((q, res) => res.writeHead(500).end('x'), {retry: 3}, (f) =>
-    outcome(f.fetch('/orders', {method: 'POST', body: {sku: 1}}))
-  );
-  assertEqual(v.requests.map((r) => `${r.method} ${r.body}`), ['POST {"sku":1}', 'POST {"sku":1}', 'POST {"sku":1}'], 'requests');
+const BODY = {sku: 1};
+const failing = (status = 500) => (q, res) => res.writeHead(status).end('x');
+
+await test('GET, HEAD, OPTIONS, PUT and DELETE are retried after a 5xx', async () => {
+  for (const method of ['GET', 'HEAD', 'OPTIONS', 'PUT', 'DELETE', 'get', 'put']) {
+    const {v} = await withVendor(failing(), {retry: 3}, (f) => outcome(f.fetch('/m', {method})));
+    assertEqual(v.requests.length, 3, `attempts for ${method}`);
+  }
 });
 
-await test('pins current behaviour: 401, 403 and 404 are retried like a 5xx on the plain Fetcher', async () => {
-  // fetcher.mts:201 only exempts 400 and 422
-  for (const status of [401, 403, 404]) {
-    const {v} = await withVendor((q, res) => res.writeHead(status).end('no'), {retry: 3}, (f) =>
-      outcome(f.fetch('/p', {method: 'GET'}))
+await test('a request without a method is a GET and is retried', async () => {
+  const {v} = await withVendor(failing(), {retry: 3}, (f) => outcome(f.fetch('/m')));
+  assertEqual(v.requests.length, 3, 'attempts');
+});
+
+await test('POST and PATCH are sent once after a 5xx by default', async () => {
+  for (const method of ['POST', 'PATCH', 'post']) {
+    const {result, v, timers} = await withVendor(failing(503), {retry: 3}, (f) =>
+      outcome(f.fetch('/orders', {method, body: BODY}))
     );
-    assertEqual(v.requests.length, 3, `attempts for ${status}`);
+    assertEqual(v.requests.length, 1, `requests for ${method}`);
+    assertEqual(timers.delays, [], 'no back-off');
+    assertEqual(result.error.message, '503 x', 'the error is thrown');
   }
+});
+
+await test('POST and PATCH are retried after a 5xx, with the same body, when the caller sets retryUnsafe', async () => {
+  for (const method of ['POST', 'PATCH']) {
+    const {v} = await withVendor(failing(), {retry: 3}, (f) =>
+      outcome(f.fetch('/orders', {method, body: BODY, retryUnsafe: true}))
+    );
+    assertEqual(v.requests.map((r) => `${r.method} ${r.body}`), Array(3).fill(`${method} {"sku":1}`), `requests for ${method}`);
+  }
+});
+
+await test('retryUnsafe applies to the one request that sets it', async () => {
+  const {v} = await withVendor(failing(), {retry: 3}, async (f) => {
+    await outcome(f.fetch('/a', {method: 'POST', body: BODY, retryUnsafe: true}));
+    await outcome(f.fetch('/b', {method: 'POST', body: BODY}));
+  });
+  assertEqual(v.requests.map((r) => r.url), ['/a', '/a', '/a', '/b'], 'requests');
+});
+
+await test('a POST that times out is not retried unless retryUnsafe is set', async () => {
+  for (const [retryUnsafe, expected] of [[false, 1], [true, 2]]) {
+    const v = await vendor(() => {}); // never answers
+    const timers = fakeTimers();
+    try {
+      await captureLog(() =>
+        outcome(new Fetcher({baseUrl: v.baseUrl, retry: 2}).fetch('/hang', {method: 'POST', body: BODY, timeout: 100, retryUnsafe}))
+      );
+      assertEqual(v.requests.length, expected, `attempts with retryUnsafe ${retryUnsafe}`);
+    } finally {
+      timers.restore();
+      await v.close();
+    }
+  }
+});
+
+await test('a POST that meets a network error is not retried unless retryUnsafe is set', async () => {
+  const port = await closedPort();
+  for (const [retryUnsafe, expected] of [[false, []], [true, [500]]]) {
+    const timers = fakeTimers();
+    try {
+      const {result} = await captureLog(() =>
+        outcome(new Fetcher({baseUrl: `http://127.0.0.1:${port}`, retry: 2}).fetch('/n', {method: 'POST', body: BODY, retryUnsafe}))
+      );
+      assert(result.error, 'must reject');
+      assertEqual(timers.delays, expected, `back-offs with retryUnsafe ${retryUnsafe}`);
+    } finally {
+      timers.restore();
+    }
+  }
+});
+
+await test('a PUT that times out is retried', async () => {
+  const v = await vendor(() => {});
+  const timers = fakeTimers();
+  try {
+    await captureLog(() => outcome(new Fetcher({baseUrl: v.baseUrl, retry: 2}).fetch('/hang', {method: 'PUT', body: BODY, timeout: 100})));
+    assertEqual(v.requests.length, 2, 'attempts');
+  } finally {
+    timers.restore();
+    await v.close();
+  }
+});
+
+await test('401, 403, 404, 410 and 418 are thrown at once on the plain Fetcher', async () => {
+  for (const status of [401, 403, 404, 410, 418]) {
+    const {result, v, timers} = await withVendor(failing(status), {retry: 3}, (f) => outcome(f.fetch('/p', {method: 'GET'})));
+    assertEqual(v.requests.length, 1, `requests for ${status}`);
+    assertEqual(timers.delays, [], 'no back-off');
+    assertEqual(result.error.status, status, 'status');
+  }
+});
+
+await test('a 408 is retried', async () => {
+  const {v} = await withVendor(failing(408), {retry: 3}, (f) => outcome(f.fetch('/p', {method: 'GET'})));
+  assertEqual(v.requests.length, 3, 'attempts');
 });
 
 // --- 429 (fetcher.mts:196-198, 86) ---
@@ -220,39 +319,75 @@ await test('a 429 is retried after 10 s, and the retry succeeds', async () => {
   assertEqual(timers.delays, [10000], 'rate-limit back-off is 10 s');
 });
 
-await test('pins current behaviour: a 429 does not use up `retry`; a vendor answering 429 forever is retried without end', async () => {
-  // fetcher.mts:196-198 returns before `--retries`; retry: 1 would otherwise allow a single attempt
-  const v = await vendor((q, res) => res.writeHead(429).end('slow down'));
-  const timers = fakeTimers({limit: 12});
-  try {
-    const {result} = await captureLog(() =>
-      outcome(new Fetcher({baseUrl: v.baseUrl, retry: 1}).fetch('/t', {method: 'GET'}))
-    );
-    assert(result.error?.message.startsWith('RUNAWAY'), `still retrying after 12 back-offs: ${result.error?.message}`);
-    assert(v.requests.length >= 12, `requests: ${v.requests.length}`);
-  } finally {
-    timers.restore();
-    await v.close();
-  }
+await test('a 429 counts against `retry`: with retry 1 there is one request and no wait', async () => {
+  const {result, v, timers} = await withVendor(failing(429), {retry: 1}, (f) => outcome(f.fetch('/t', {method: 'GET'})));
+  assertEqual(v.requests.length, 1, 'requests');
+  assertEqual(timers.delays, [], 'no wait');
+  assertEqual(result.error.status, 429, 'status');
 });
 
-await test('pins current behaviour: a Retry-After header on a 429 is ignored; the wait is always 10 s', async () => {
-  // fetcher.mts:86 and oauth-fetcher.mts:67 have a fixed 10000; nothing reads Retry-After
-  const {timers} = await withVendor(
-    (req, res, info) => (info.n === 1 ? res.writeHead(429, {'Retry-After': '1'}).end('x') : ok(req, res)),
-    {retry: 2},
-    (f) => f.fetch('/t', {method: 'GET'})
-  );
-  assertEqual(timers.delays, [10000], 'waited 10 s although the vendor said 1 s');
+await test('a vendor answering 429 every time gets `retry` requests, 10 s apart', async () => {
+  const {result, v, timers} = await withVendor(failing(429), {retry: 3}, (f) => outcome(f.fetch('/t', {method: 'GET'})));
+  assertEqual(v.requests.length, 3, 'requests');
+  assertEqual(timers.delays, [10000, 10000], 'waits');
+  assertEqual(result.error.status, 429, 'the 429 is thrown');
 });
 
-await test('pins current behaviour: a long Retry-After (an hour) is not honoured either', async () => {
+await test('a 429 and a 5xx share the same `retry` count', async () => {
+  const {v} = await withVendor(
+    (q, res, info) => res.writeHead(info.n === 1 ? 429 : 503).end('x'),
+    {retry: 3},
+    (f) => outcome(f.fetch('/t', {method: 'GET'}))
+  );
+  assertEqual(v.requests.length, 3, 'requests');
+});
+
+await test('a 429 is retried for POST as well, since the vendor did not process it', async () => {
+  const {v} = await withVendor(failing(429), {retry: 2}, (f) => outcome(f.fetch('/t', {method: 'POST', body: BODY})));
+  assertEqual(v.requests.length, 2, 'requests');
+});
+
+// --- Retry-After ---
+
+const retryAfter = async (status, header, retry = 2) => {
   const {timers} = await withVendor(
-    (req, res, info) => (info.n === 1 ? res.writeHead(429, {'Retry-After': '3600'}).end('x') : ok(req, res)),
-    {retry: 2},
+    (req, res, info) => (info.n === 1 ? res.writeHead(status, header == null ? {} : {'Retry-After': header}).end('x') : ok(req, res)),
+    {retry},
     (f) => f.fetch('/t', {method: 'GET'})
   );
-  assertEqual(timers.delays, [10000], 'retried after 10 s, inside the vendor\'s ban');
+  return timers.delays;
+};
+
+await test('Retry-After in seconds sets the wait before the retry', async () => {
+  assertEqual(await retryAfter(429, '1'), [1000], '429');
+  assertEqual(await retryAfter(503, '2'), [2000], '503');
+});
+
+await test('Retry-After 0 retries at once', async () => {
+  assertEqual(await retryAfter(429, '0'), [0], 'wait');
+});
+
+await test('Retry-After is capped at 60 s', async () => {
+  assertEqual(await retryAfter(429, '3600'), [60000], '429');
+  assertEqual(await retryAfter(503, '61'), [60000], '503');
+  assertEqual(await retryAfter(429, '60'), [60000], 'exactly 60 s');
+});
+
+await test('Retry-After as an HTTP date sets the wait to the time left', async () => {
+  const [wait] = await retryAfter(429, new Date(Date.now() + 30000).toUTCString());
+  assert(wait >= 27000 && wait <= 30000, `wait: ${wait}`);
+  const [capped] = await retryAfter(503, new Date(Date.now() + 3600000).toUTCString());
+  assertEqual(capped, 60000, 'capped');
+  const [past] = await retryAfter(429, new Date(Date.now() - 30000).toUTCString());
+  assertEqual(past, 0, 'a date in the past');
+});
+
+await test('without a usable Retry-After the usual wait applies', async () => {
+  assertEqual(await retryAfter(429, null), [10000], '429 without header');
+  assertEqual(await retryAfter(503, null), [500], '503 without header');
+  assertEqual(await retryAfter(429, 'soon'), [10000], '429 with text');
+  assertEqual(await retryAfter(503, '-5'), [500], '503 with a negative number');
+  assertEqual(await retryAfter(503, ''), [500], '503 with an empty value');
 });
 
 // --- timeouts (fetcher.mts:167-171) ---

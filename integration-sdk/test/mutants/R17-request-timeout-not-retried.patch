@@ -1,0 +1,14 @@
+# R17 a 408 is not retried. Must fail: test/fetcher-retry.test.mjs "a 408 is retried"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..5557e0a 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -105,7 +105,7 @@ export default class Fetcher {
+    * methods only when the request sets retryUnsafe
+    */
+   protected retryable(e: any, options: any): boolean {
+-    if (e.status === 429 || e.status === 408) return true;
++    if (e.status === 429) return true;
+     if (e.status != null && e.status < 500) return false;
+ 
+     const method = String(options?.method || 'GET').toUpperCase();

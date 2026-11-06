@@ -1,0 +1,14 @@
+# R12 a Retry-After HTTP date is not read. Must fail: test/fetcher-retry.test.mjs "Retry-After as an HTTP date sets the wait to the time left"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..7f0ccdc 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -57,7 +57,7 @@ const retryAfterMs = (value?: string | null): number | undefined => {
+   let ms: number;
+   if (/^\d+$/.test(text)) {
+     ms = Number(text) * 1000;
+-  } else if (/[a-z]/i.test(text) && !Number.isNaN(Date.parse(text))) {
++  } else if (Date.parse(text) < 0) {
+     ms = Math.max(0, Date.parse(text) - Date.now());
+   } else {
+     return undefined;

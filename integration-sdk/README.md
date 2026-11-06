@@ -166,6 +166,19 @@ SDK maintainers: `yarn test:harness` runs the harness tests (CI runs it on Node 
 applies 30+ deliberate bugs to the harness and the SDK handshake, dispatch and result paths and checks the tests
 catch each one; the result table is printed to the log.
 
+## 🔁 Fetcher retries
+
+`fetcher.fetch(url, options)` tries a request up to `retry` times in total (default 5).
+
+- A 429 counts against the limit like any other retried failure. The wait before a retry is the vendor's `Retry-After`
+  header (seconds or an HTTP date) when present, at most 60 s; otherwise 10 s after a 429 and 500 ms after other failures.
+- GET, HEAD, OPTIONS, PUT and DELETE are retried after a 5xx, a timeout or a network error. POST and PATCH are retried
+  only when the request sets `retryUnsafe: true`, for example `fetcher.fetch('/orders', {method: 'POST', body, retryUnsafe: true})`;
+  use it when the vendor treats a repeated request as the same request (an idempotency key, for instance).
+- 4xx answers other than 408 and 429 are thrown at once (the OAuth client also retries a 401 with a refreshed token).
+- A 200 answer whose body is not valid JSON is thrown as a `ResponseParseError` with the `status` and the first 200
+  characters of the body. Pass `text: true` to read a body as text.
+
 ## 📚 Documentation
 
 - **[OPENAPI_TO_CONNECTOR.md](./OPENAPI_TO_CONNECTOR.md)** - OpenAPI generator details

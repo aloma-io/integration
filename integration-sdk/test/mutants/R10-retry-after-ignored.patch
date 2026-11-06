@@ -1,0 +1,14 @@
+# R10 the Retry-After header is not used for the wait. Must fail: test/fetcher-retry.test.mjs "Retry-After in seconds sets the wait before the retry"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..bc4d19f 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -115,7 +115,7 @@ export default class Fetcher {
+ 
+   /** ms to wait before the next attempt: the vendor's Retry-After, else 10 s for a 429, else 500 ms */
+   protected waitBefore(e: any): number {
+-    if (e.retryAfter != null) return e.retryAfter;
++    if (false) return e.retryAfter;
+ 
+     return e.status === 429 ? RATE_LIMIT_WAIT : RETRY_WAIT;
+   }

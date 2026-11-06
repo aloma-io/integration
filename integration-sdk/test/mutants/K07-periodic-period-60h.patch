@@ -1,0 +1,13 @@
+# K07 the default refresh period is 60 h. Must fail: test/oauth-fetcher.test.mjs "noPeriodicTokenRefresh: true turns the periodic refresh off; false or unset leaves it on, every 4 h by default"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -113,7 +113,7 @@
+             console.log('periodic refresh', e);
+           }
+         },
+-        dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 1000
++        dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000
+       );
+     }
+   }

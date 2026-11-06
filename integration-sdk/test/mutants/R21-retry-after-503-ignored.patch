@@ -1,0 +1,14 @@
+# R21 Retry-After is read for 429 only. Must fail: test/fetcher-retry.test.mjs "Retry-After in seconds sets the wait before the retry"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..79bbbef 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -231,7 +231,7 @@ export default class Fetcher {
+         const e: any = new Error(status + ' ' + text);
+ 
+         e.status = status;
+-        e.retryAfter = retryAfterMs(ret.headers.get('retry-after'));
++        e.retryAfter = status === 429 ? retryAfterMs(ret.headers.get('retry-after')) : undefined;
+         throw e;
+       }
+ 

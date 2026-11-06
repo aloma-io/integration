@@ -2,6 +2,17 @@ import Dispatcher from '../../../dispatcher/index.mjs';
 import {OAuth} from '../../../fetcher/oauth-fetcher.mjs';
 import {Config} from '../../../websocket/config.mjs';
 
+// the "error" member of a token endpoint answer, when it is a plain code such as invalid_grant
+const oauthErrorCode = (text: string): string | undefined => {
+  try {
+    const code = JSON.parse(text)?.error;
+
+    return typeof code === 'string' && /^[A-Za-z0-9_.-]{1,64}$/.test(code) ? code : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 export const makeOAuth = async ({
   config,
   transport,
@@ -67,10 +78,24 @@ export const makeOAuth = async ({
     const text = await response.text();
 
     if (status === 200) {
-      return JSON.parse(text);
-    } else {
-      throw new Error('could not get refresh token ' + status + ' ' + text);
+      try {
+        return JSON.parse(text);
+      } catch {
+        throw new Error('could not get refresh token ' + status + ' (answer is not JSON)');
+      }
     }
+
+    // only the status and the OAuth error code are kept; the body may repeat what was sent
+    const code = oauthErrorCode(text);
+    const message = 'could not get refresh token ' + status + (code ? ' ' + code : '');
+    const error: any = new Error(message);
+
+    // a refusal from the token endpoint is final: the same request would be refused again
+    if (status >= 400 && status < 500) error.noRetry = true;
+
+    console.log(message);
+
+    throw error;
   };
 
   const theOAuth = dispatcher._oauth ? new OAuth(decrypted.oauthResult, saveOAuthResult, getRefreshToken) : null;
@@ -78,7 +103,7 @@ export const makeOAuth = async ({
   if (theOAuth) {
     clearInterval(dispatcher._refreshOAuthToken);
 
-    if (!(dispatcher._oauth.noPeriodicTokenRefresh === false)) {
+    if (dispatcher._oauth.noPeriodicTokenRefresh !== true) {
       dispatcher._refreshOAuthToken = setInterval(
         async () => {
           try {
@@ -88,7 +113,7 @@ export const makeOAuth = async ({
             console.log('periodic refresh', e);
           }
         },
-        dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 15000
+        dispatcher._oauth.tokenRefreshPeriod || 4 * 60 * 60 * 1000
       );
     }
   }

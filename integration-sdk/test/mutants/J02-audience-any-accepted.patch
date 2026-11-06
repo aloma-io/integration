@@ -1,6 +1,5 @@
 # J02 the audience is not checked. Must fail: test/jwe-config.test.mjs "a token for another audience or from another issuer is refused"
 diff --git a/integration-sdk/src/internal/util/jwe/index.mts b/integration-sdk/src/internal/util/jwe/index.mts
-index ac5fe0b..9ff2634 100644
 --- a/integration-sdk/src/internal/util/jwe/index.mts
 +++ b/integration-sdk/src/internal/util/jwe/index.mts
 @@ -62,7 +62,6 @@ class JWE {
@@ -8,6 +7,6 @@ index ac5fe0b..9ff2634 100644
      const {payload, protectedHeader} = await jose.jwtDecrypt(what, this.pair!.privateKey, {
        issuer: this.issuer,
 -      audience,
+       keyManagementAlgorithms: ['RSA-OAEP-256'],
+       contentEncryptionAlgorithms: ['A256GCM'],
      });
- 
-     return payload._data;

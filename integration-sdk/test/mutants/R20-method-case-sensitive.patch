@@ -1,0 +1,14 @@
+# R20 a lower-case method name is not recognised. Must fail: test/fetcher-retry.test.mjs "GET, HEAD, OPTIONS, PUT and DELETE are retried after a 5xx"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..3fe20c6 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -108,7 +108,7 @@ export default class Fetcher {
+     if (e.status === 429 || e.status === 408) return true;
+     if (e.status != null && e.status < 500) return false;
+ 
+-    const method = String(options?.method || 'GET').toUpperCase();
++    const method = String(options?.method || 'GET');
+ 
+     return REPEATABLE_METHODS.includes(method) || options?.retryUnsafe === true;
+   }

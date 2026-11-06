@@ -1,0 +1,13 @@
+# O10 an error that ends the refresh is retried like any other. Must fail: test/oauth-fetcher.test.mjs "a 4xx from the token endpoint, including 401, 408 and 429, is requested once even with retries left"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -37,8 +37,6 @@
+ 
+   // a 401 is retried with a refreshed token; an error that ends the refresh is not retried
+   protected retryable(e: any, options: any): boolean {
+-    if (e?.noRetry) return false;
+-
+     return e.status === 401 || super.retryable(e, options);
+   }
+ 

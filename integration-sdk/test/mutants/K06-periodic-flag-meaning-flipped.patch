@@ -1,0 +1,13 @@
+# K06 the periodic refresh is installed only when noPeriodicTokenRefresh is false. Must fail: test/oauth-fetcher.test.mjs "noPeriodicTokenRefresh: true turns the periodic refresh off; false or unset leaves it on, every 4 h by default"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+--- a/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/make-oauth.mts
+@@ -103,7 +103,7 @@
+   if (theOAuth) {
+     clearInterval(dispatcher._refreshOAuthToken);
+ 
+-    if (dispatcher._oauth.noPeriodicTokenRefresh !== true) {
++    if (dispatcher._oauth.noPeriodicTokenRefresh === false) {
+       dispatcher._refreshOAuthToken = setInterval(
+         async () => {
+           try {

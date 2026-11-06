@@ -1,0 +1,13 @@
+# O13 a failing token save is retried like a network error. Must fail: test/oauth-fetcher.test.mjs "a failing save reaches the caller of fetch and is not retried"
+diff --git a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+--- a/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/oauth-fetcher.mts
+@@ -155,7 +155,7 @@
+         await this.update(ret.access_token, ret.refresh_token);
+       } catch (e: any) {
+         // the stored token is not repeated by a retry
+-        if (e && typeof e === 'object') e.noRetry = true;
++        
+ 
+         throw e;
+       }

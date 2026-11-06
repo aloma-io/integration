@@ -1,14 +1,14 @@
-# R03 a 429 waits only 500 ms (the 429 wait is shortened). Must fail: test/fetcher-retry.test.mjs "a 429 is retried after 10 s, and the retry succeeds"
+# R03 a 429 without Retry-After waits only 500 ms. Must fail: test/fetcher-retry.test.mjs "a 429 is retried after 10 s, and the retry succeeds"
 diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
-index 84d8596..5d0094b 100644
+index 0f81fdd..4725fe0 100644
 --- a/integration-sdk/src/internal/fetcher/fetcher.mts
 +++ b/integration-sdk/src/internal/fetcher/fetcher.mts
-@@ -83,7 +83,7 @@ export default class Fetcher {
-             reject(e);
-           }
-         },
--        rateLimit ? 10000 : 500
-+        rateLimit ? 500 : 500
-       );
-     });
+@@ -117,7 +117,7 @@ export default class Fetcher {
+   protected waitBefore(e: any): number {
+     if (e.retryAfter != null) return e.retryAfter;
+ 
+-    return e.status === 429 ? RATE_LIMIT_WAIT : RETRY_WAIT;
++    return e.status === 429 ? RETRY_WAIT : RETRY_WAIT;
    }
+ 
+   protected async onError(e: any, url: string, options: any, retries: number, args: any, wait: number = RETRY_WAIT) {

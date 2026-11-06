@@ -1,0 +1,14 @@
+# R04 a 429 is not retried. Must fail: test/fetcher-retry.test.mjs "a 429 is retried after 10 s, and the retry succeeds"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..b770c62 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -105,7 +105,7 @@ export default class Fetcher {
+    * methods only when the request sets retryUnsafe
+    */
+   protected retryable(e: any, options: any): boolean {
+-    if (e.status === 429 || e.status === 408) return true;
++    if (e.status === 408) return true;
+     if (e.status != null && e.status < 500) return false;
+ 
+     const method = String(options?.method || 'GET').toUpperCase();

@@ -1,0 +1,14 @@
+# R22 Retry-After 0 is taken as absent. Must fail: test/fetcher-retry.test.mjs "Retry-After 0 retries at once"
+diff --git a/integration-sdk/src/internal/fetcher/fetcher.mts b/integration-sdk/src/internal/fetcher/fetcher.mts
+index 0f81fdd..f9fb3b2 100644
+--- a/integration-sdk/src/internal/fetcher/fetcher.mts
++++ b/integration-sdk/src/internal/fetcher/fetcher.mts
+@@ -115,7 +115,7 @@ export default class Fetcher {
+ 
+   /** ms to wait before the next attempt: the vendor's Retry-After, else 10 s for a 429, else 500 ms */
+   protected waitBefore(e: any): number {
+-    if (e.retryAfter != null) return e.retryAfter;
++    if (e.retryAfter) return e.retryAfter;
+ 
+     return e.status === 429 ? RATE_LIMIT_WAIT : RETRY_WAIT;
+   }
