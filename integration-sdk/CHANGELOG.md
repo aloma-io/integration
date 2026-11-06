@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The package no longer installs an 'aloma' command; that name belongs to the ALOMA CLI (@aloma.io/aloma). Use npx @aloma.io/integration-sdk or the path build/cli.mjs.
+
 ## 3.8.71
 
 - **BREAKING:** POST and PATCH requests are no longer retried by default. Retrying them is opt-in per call.
