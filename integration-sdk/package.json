@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "aloma": "./build/cli.mjs"
+    "aloma-integration-sdk": "./build/cli.mjs"
   },
   "scripts": {
     "dev": "./node_modules/typescript/bin/tsc --watch",
