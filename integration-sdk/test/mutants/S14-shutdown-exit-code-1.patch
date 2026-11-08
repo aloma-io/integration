@@ -1,0 +1,14 @@
+# S14 shutdown exits with 1. Must fail: test/connector-startup.test.mjs "server: SIGTERM makes the server leave, waits ten seconds, closes it and then exits with 0"
+diff --git a/integration-sdk/src/internal/connector/server/index.mts b/integration-sdk/src/internal/connector/server/index.mts
+index dbe5626..338f4a5 100755
+--- a/integration-sdk/src/internal/connector/server/index.mts
++++ b/integration-sdk/src/internal/connector/server/index.mts
+@@ -33,7 +33,7 @@ export const makeServer = async ({
+       }, 10000);
+     });
+ 
+-    process.exit(0);
++    process.exit(1);
+   };
+ 
+   process.on('uncaughtException', (e) => {

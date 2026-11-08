@@ -1,0 +1,14 @@
+# S18 the controller is not told it is a shutdown. Must fail: test/connector-startup.test.mjs "runtime: SIGTERM clears the health interval, stops the controller as a shutdown, then exits with 0"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..25a2163 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -118,7 +118,7 @@ export default class RuntimeContext {
+ 
+     const term = async () => {
+       clearInterval(healthInterval);
+-      await controller._doStop(true);
++      await controller._doStop();
+ 
+       process.exit(0);
+     };

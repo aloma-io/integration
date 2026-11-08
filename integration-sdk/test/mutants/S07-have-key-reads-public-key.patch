@@ -1,0 +1,14 @@
+# S07 a set private key is judged by the public key variable. Must fail: test/connector-startup.test.mjs "config: an unusable key pair that is set is not echoed, the hint says to check the variables, then it fails after two minutes"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..b69003f 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -20,7 +20,7 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+     try {
+       await config.validateKeys();
+     } catch (e) {
+-      const haveKey = !!process.env.PRIVATE_KEY;
++      const haveKey = !!process.env.PUBLIC_KEY;
+       const jwe = new JWE({});
+       var text = 'Please double check the env variables';
+ 

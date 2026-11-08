@@ -1,0 +1,14 @@
+# S15 the wait before closing is one second. Must fail: test/connector-startup.test.mjs "server: SIGTERM makes the server leave, waits ten seconds, closes it and then exits with 0"
+diff --git a/integration-sdk/src/internal/connector/server/index.mts b/integration-sdk/src/internal/connector/server/index.mts
+index dbe5626..0cdbe00 100755
+--- a/integration-sdk/src/internal/connector/server/index.mts
++++ b/integration-sdk/src/internal/connector/server/index.mts
+@@ -30,7 +30,7 @@ export const makeServer = async ({
+       setTimeout(async () => {
+         await server.close();
+         resolve(null);
+-      }, 10000);
++      }, 1000);
+     });
+ 
+     process.exit(0);

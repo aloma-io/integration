@@ -1,0 +1,13 @@
+# S17 the runtime context has no SIGINT handler. Must fail: test/connector-startup.test.mjs "runtime: start() runs the connector once, then registers SIGTERM and SIGINT and nothing else"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..c2b7fea 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -124,6 +124,6 @@ export default class RuntimeContext {
+     };
+ 
+     process.on('SIGTERM', term);
+-    process.on('SIGINT', term);
++    
+   }
+ }

@@ -1,0 +1,14 @@
+# S06 the wait before "could not start" is one minute. Must fail: test/connector-startup.test.mjs "config: without keys a connector with config fields prints the variable names, waits two minutes and fails with 'could not start'"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..22f2b30 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -47,7 +47,7 @@ ${text}
+           () => {
+             resolve(null);
+           },
+-          2 * 60 * 1000
++          60 * 1000
+         );
+       });
+ 

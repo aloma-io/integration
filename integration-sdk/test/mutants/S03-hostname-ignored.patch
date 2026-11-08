@@ -1,0 +1,14 @@
+# S03 HOSTNAME no longer sets the name. Must fail: test/connector-startup.test.mjs "config: every variable is mapped to its setting and the connector details are taken from the arguments"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..44bbc19 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -5,7 +5,7 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+   const config = new Config({
+     id: id,
+     version: version,
+-    name: process.env.HOSTNAME || name,
++    name: name,
+     registrationToken: process.env.REGISTRATION_TOKEN,
+     endpoint: process.env.DEVICE_ENDPOINT || 'https://connect.aloma.io/',
+     wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://connect.aloma.io/transport/',

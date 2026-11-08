@@ -1,0 +1,14 @@
+# S08 keys are never validated. Must fail: test/connector-startup.test.mjs "config: without keys a connector with config fields prints the variable names, waits two minutes and fails with 'could not start'"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..b81cbaf 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -16,7 +16,7 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+     icon: icon,
+   });
+ 
+-  if (Object.keys(configSchema().fields).length) {
++  if (false) {
+     try {
+       await config.validateKeys();
+     } catch (e) {
