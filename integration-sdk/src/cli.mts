@@ -151,6 +151,13 @@ program
     name = name.replace(/[\/\.]/gi, '');
     if (!name) throw new Error('name is empty');
 
+    // Refuse before writing anything when the project folder is already there
+    if (!options.controllerOnly && fs.existsSync(`${process.cwd()}/${name}`)) {
+      console.error(`❌ Error: folder '${name}' already exists`);
+      process.exit(1);
+    }
+
+    let created = false;
     try {
       // Read and parse the OpenAPI spec
       const specContent = fs.readFileSync(options.spec, 'utf-8');
@@ -187,6 +194,7 @@ Controller file generated successfully! You can now use it in your existing proj
 
         // Create the connector project structure
         fs.mkdirSync(target);
+        created = true;
         console.log('Creating connector project...');
         extract({...options, target, name});
 
@@ -231,12 +239,9 @@ ${nextSteps}`);
     } catch (error) {
       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
 
-      // Clean up on error (only if we created a project directory)
-      if (!options.controllerOnly) {
-        const target = `${process.cwd()}/${name}`;
-        if (fs.existsSync(target)) {
-          fs.rmSync(target, {recursive: true, force: true});
-        }
+      // Clean up on error (only the project directory this run created)
+      if (created) {
+        fs.rmSync(`${process.cwd()}/${name}`, {recursive: true, force: true});
       }
 
       process.exit(1);
