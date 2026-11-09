@@ -11,8 +11,17 @@ import {assert, assertEqual, captureLog, newConfig, suite, wsServer} from './hel
 
 const {test, finish} = suite('websocket transport');
 
+// PLAT-401: generate the shared RSA key pair before the first test, outside any test's clock (see oauth-start-finish)
+await newConfig();
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const settle = () => sleep(15);
+// PLAT-401: the transport defers its work with setTimeout(0) (send batching, incoming frames) and answers through promise
+// chains. A fixed 15 ms sleep only worked while the loop was never stalled for 15 ms: after a stall the sleep timer
+// expired before the timers the work had armed, and the asserts ran on nothing. Ten rounds of a 1 ms timer give every
+// chain ten turns of the event loop, in arming order, whatever the wall clock does.
+const settle = async () => {
+  for (let round = 0; round < 10; round++) await sleep(1);
+};
 
 /** a Transport on a stub socket that records the frames it is given; `connected` as asked */
 const stubbed = async ({connected = true, onMessage: handler = () => {}} = {}) => {
@@ -32,14 +41,23 @@ const live = async (serverOpts) => {
   const got = [];
   let opened = 0;
   let disconnected = 0;
+  let markClosed;
+  const closed = new Promise((resolve) => (markClosed = resolve));
   const t = new Transport({config, onMessage: (packet) => got.push(packet), onConnect: () => opened++});
-  const quiet = await captureLog(() => t.start(() => disconnected++));
+  const quiet = await captureLog(() =>
+    t.start(() => {
+      disconnected++;
+      markClosed();
+    }),
+  );
   await server.until(() => opened === 1, 'the transport to open');
 
   return {
     t,
     server,
     got,
+    /** resolves when the transport calls ondisconnect (the event itself, not a poll) */
+    closed,
     get disconnected() {
       return disconnected;
     },
@@ -56,7 +74,7 @@ const catchUncaught = async (fn) => {
   const handler = (e) => errors.push(e);
   process.on('uncaughtException', handler);
   try {
-    await fn();
+    await fn(errors);
   } finally {
     process.off('uncaughtException', handler);
   }
@@ -274,9 +292,10 @@ await test('receive: pins current behaviour: a frame that is not JSON throws out
   // Reachable from the platform (the authenticated peer) or anything that can inject into the stream.
   const l = await live();
   try {
-    const errors = await catchUncaught(async () => {
+    const errors = await catchUncaught(async (seen) => {
       l.server.sockets[0].send('{not json');
-      await sleep(60);
+      await l.server.until(() => seen.length > 0, 'the uncaught exception');
+      await settle(); // and nothing more than the one
     });
     assertEqual(errors.length, 1, 'one uncaught exception');
     assert(errors[0] instanceof SyntaxError, `a SyntaxError, got ${errors[0]}`);
@@ -304,21 +323,31 @@ await test('receive: pins current behaviour: one item that is not an object abor
   assertEqual(got, ['first'], 'the third packet was never handled');
 });
 
+// PLAT-401: send() encodes and writes 100 MiB, and the close comes only after the socket has taken it: 0.5-1.5 s of
+// CPU and memory work on an idle machine, up to 45 s when other runs share it (a 1.5 s poll deadline and the 2 s test
+// limit failed 3 of 3 under 4 parallel loops). So the test waits for the close event itself, with a deadline that only
+// stops a hang (about 3x the worst case measured), and the test limit allows for the work.
+const BIG_FRAME_WAIT_MS = 120000;
 await test('receive: a frame above the 100 MiB limit of the socket library closes the connection and the transport asks to reconnect', async () => {
   const l = await live();
+  let hangGuard;
   try {
     const errors = await captureLog(async () => {
       l.server.sockets[0].send('x'.repeat(100 * 1024 * 1024 + 1));
-      await l.server.until(() => l.disconnected === 1, 'the disconnect');
+      await Promise.race([
+        l.closed,
+        new Promise((_, reject) => (hangGuard = setTimeout(() => reject(new Error('timed out waiting for the disconnect')), BIG_FRAME_WAIT_MS))),
+      ]);
     });
     assertEqual(l.disconnected, 1, 'ondisconnect called once');
     assertEqual(l.t.connected, false, 'not connected any more');
     assertEqual(l.got, [], 'nothing was handed to the handler');
     assert(errors.lines.some((x) => x.includes('error:')), 'the error is logged');
   } finally {
+    clearTimeout(hangGuard);
     await l.stop();
   }
-});
+}, {limitMs: BIG_FRAME_WAIT_MS});
 
 // ---------------- connect, disconnect, close ----------------
 

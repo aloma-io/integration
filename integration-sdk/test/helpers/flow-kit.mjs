@@ -10,16 +10,25 @@ import {Config} from '../../build/internal/websocket/config.mjs';
 
 const colors = {green: '\x1b[32m', red: '\x1b[31m', yellow: '\x1b[33m', reset: '\x1b[0m', cyan: '\x1b[36m'};
 
+// The old check failed a test that took over 2000 ms of wall clock (PLAT-401). Measured with 4 parallel loops of a file
+// on a machine that other runs share (load average 12-23 on 4 cores): the OAuth tests took up to 14 s and the
+// 100 MiB frame test up to 45 s, while alone they take ~0.1 s and ~1 s. Most of it was CPU wait (RSA key generation
+// once per test, now once per process; fixed 15 ms sleeps in the websocket file). What is left is the machine, so the
+// limit is a hang guard with headroom over the measured worst case (3x), on the monotonic clock. A test that is expected
+// to be slower says so with {limitMs}. It no longer notices a test that waits for real for a few seconds.
+const DEFAULT_LIMIT_MS = 45000;
+
 export const suite = (title) => {
   let passed = 0;
   let failed = 0;
   return {
-    async test(name, fn) {
-      const started = Date.now();
+    async test(name, fn, {limitMs = DEFAULT_LIMIT_MS} = {}) {
+      const started = performance.now();
       try {
         console.log(`${colors.cyan}Running: ${name}${colors.reset}`);
         await fn();
-        if (Date.now() - started > 2000) throw new Error(`took ${Date.now() - started} ms, the limit is 2000 ms`);
+        const took = Math.round(performance.now() - started);
+        if (took > limitMs) throw new Error(`took ${took} ms, the limit is ${limitMs} ms`);
         console.log(`${colors.green}✓ PASS: ${name}${colors.reset}\n`);
         passed++;
       } catch (error) {
@@ -114,11 +123,21 @@ export const json = (res, status, body) => {
 
 const b64 = (s) => Buffer.from(s).toString('base64');
 
-/** a Config holding a freshly generated key pair; ids and tokens are made up */
+// RSA key generation is CPU-bound and took seconds per test when other runs shared the machine (PLAT-401), so the pair
+// is generated once per test process (each test file is its own process) and every Config of the file holds that pair.
+let sharedPair;
+const keyPair = () => {
+  sharedPair ??= (async () => {
+    const jwe = new JWE({algorithm: 'RSA-OAEP-256'});
+    await jwe.newPair();
+    return jwe.exportPair();
+  })();
+  return sharedPair;
+};
+
+/** a Config holding a key pair generated at run time (once per process); ids and tokens are made up */
 export const newConfig = async (id = 'connector-1', wsEndpoint = 'ws://127.0.0.1:1') => {
-  const jwe = new JWE({algorithm: 'RSA-OAEP-256'});
-  await jwe.newPair();
-  const pair = await jwe.exportPair();
+  const pair = await keyPair();
 
   return new Config({
     registrationToken: 'test-registration',
@@ -184,10 +203,11 @@ export const wsServer = async (onConnection) => {
     onConnection?.(socket, req);
   });
 
-  const until = async (predicate, what = 'condition') => {
-    const deadline = Date.now() + 1500;
+  // `within`: how long a hang may last before the wait gives up (the wait itself ends when the condition holds)
+  const until = async (predicate, what = 'condition', within = 30000) => {
+    const deadline = performance.now() + within;
     while (!predicate()) {
-      if (Date.now() > deadline) throw new Error(`timed out waiting for ${what}`);
+      if (performance.now() > deadline) throw new Error(`timed out waiting for ${what}`);
       await new Promise((resolve) => {
         waiters.push(resolve);
         setTimeout(resolve, 20);

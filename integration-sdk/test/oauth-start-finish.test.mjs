@@ -13,6 +13,10 @@ import {assert, assertEqual, captureFailure, captureLog, json, newConfig, outcom
 
 const {test, finish} = suite('OAuth start and finish');
 
+// PLAT-401: the shared RSA key pair is generated here, outside any test's clock: key generation is a random prime search
+// that takes 0.1 s alone and 10 s or more when other runs share the machine, and it used to land in the first finish test.
+await newConfig();
+
 const AUTH_URL = 'https://auth.example.test/authorize?client_id={{clientId}}&scope={{scope}}&response_type=code';
 const CLIENT_ID = 'test-client-id';
 const CLIENT_SECRET = 'test-client-secret';
