@@ -1,0 +1,14 @@
+# Q03 send queues a packet for an empty message. Must fail: test/websocket-connection.test.mjs
+diff --git a/integration-sdk/src/internal/websocket/index.mjs b/integration-sdk/src/internal/websocket/index.mjs
+index 1f3afd5..abf1ee2 100755
+--- a/integration-sdk/src/internal/websocket/index.mjs
++++ b/integration-sdk/src/internal/websocket/index.mjs
+@@ -24,8 +24,6 @@ class WebsocketConnector {
+   }
+ 
+   send(message) {
+-    if (!message) return;
+-
+     this.transport.send(this.transport.newPacket(message));
+   }
+ 

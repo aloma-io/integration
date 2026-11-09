@@ -1,0 +1,14 @@
+# Q11 the metrics answer has status 201. Must fail: test/metrics-endpoint.test.mjs
+diff --git a/integration-sdk/src/internal/connector/metrics.mts b/integration-sdk/src/internal/connector/metrics.mts
+index 763b233..ea49542 100755
+--- a/integration-sdk/src/internal/connector/metrics.mts
++++ b/integration-sdk/src/internal/connector/metrics.mts
+@@ -21,7 +21,7 @@ export const makeMetrics = async ({id, name, version}): Promise<void> => {
+     const app = express();
+ 
+     app.get('/metrics', async (request, response, next) => {
+-      response.status(200);
++      response.status(201);
+       response.set('Content-type', metrics.contentType);
+       response.send(await metrics.register.metrics());
+       response.end();

@@ -1,0 +1,14 @@
+# Q23 an interface is written for every component. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..047ec0a 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -1065,7 +1065,7 @@ ${jsdoc}
+ 
+     for (const [schemaName, schema] of Object.entries(this.spec.components.schemas)) {
+       const sanitizedSchemaName = this.sanitizeTypeName(schemaName);
+-      if (usedTypes.has(sanitizedSchemaName)) {
++      if (true) {
+         const interfaceCode = this.generateInterfaceFromSchema(schemaName, schema);
+         if (interfaceCode) {
+           interfaces.push(interfaceCode);

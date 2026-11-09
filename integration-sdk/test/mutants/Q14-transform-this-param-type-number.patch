@@ -1,0 +1,14 @@
+# Q14 the declared type of a parameter without a symbol is number. Must fail: test/transform-helper-paths.test.mjs
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..a161782 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -300,7 +300,7 @@ const typeOfDeclaration = (checker: ts.TypeChecker, node: ts.Node): ts.Type | ts
+     ts.hasOnlyExpressionInitializer(node) &&
+     !!node.initializer &&
+     (ts.isAsExpression(node.initializer) || ts.isTypeAssertionExpression(node));
+-  return assertion ? type : checker.getBaseTypeOfLiteralType(type);
++  return (checker as any).getNumberType();
+ };
+ 
+ // ---------------------------------------------------------------------------------------------------------------

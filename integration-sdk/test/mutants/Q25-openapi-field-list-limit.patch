@@ -1,0 +1,14 @@
+# Q25 the documented field list allows 11 fields. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..f005070 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -1238,7 +1238,7 @@ ${jsdoc}
+     lines.push(' *');
+     lines.push(` * ${context}${isArray ? '[]' : ''} fields:`);
+ 
+-    const maxFields = 10; // Limit to avoid too much clutter
++    const maxFields = 11; // Limit to avoid too much clutter
+     const properties = Object.entries(schema.properties).slice(0, maxFields);
+ 
+     for (const [propName, propSchema] of properties) {

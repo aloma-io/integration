@@ -1,0 +1,14 @@
+# Q24 the command line exits with 2 on an error. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..5211b0f 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -1633,7 +1633,7 @@ program
+       console.log(`📊 Found ${generator['extractOperations']().length} operations`);
+     } catch (error) {
+       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
+-      process.exit(1);
++      process.exit(2);
+     }
+   });
+ 

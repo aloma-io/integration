@@ -1,0 +1,16 @@
+# Q15 the formatter file-name callback throws. Must fail: test/transform-helper-paths.test.mjs
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..8967776 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -43,7 +43,9 @@ const createProgram = (file: string) => {
+ 
+   if (diagnostics.length) {
+     const host: ts.FormatDiagnosticsHost = {
+-      getCanonicalFileName: (name) => name,
++      getCanonicalFileName: (name) => {
++        throw new Error('canonical');
++      },
+       getCurrentDirectory: () => process.cwd(),
+       getNewLine: () => '\n',
+     };

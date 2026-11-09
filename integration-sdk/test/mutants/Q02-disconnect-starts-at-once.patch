@@ -1,0 +1,14 @@
+# Q02 onDisconnect connects again without any wait. Must fail: test/websocket-connection.test.mjs
+diff --git a/integration-sdk/src/internal/websocket/connection/index.mjs b/integration-sdk/src/internal/websocket/connection/index.mjs
+index 2b23eec..b1d79f2 100755
+--- a/integration-sdk/src/internal/websocket/connection/index.mjs
++++ b/integration-sdk/src/internal/websocket/connection/index.mjs
+@@ -45,7 +45,7 @@ class Connection {
+   onDisconnect() {
+     var local = this;
+ 
+-    setTimeout(() => local.start(), 5000);
++    local.start();
+   }
+ 
+   async close() {

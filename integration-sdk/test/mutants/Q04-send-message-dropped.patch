@@ -1,0 +1,14 @@
+# Q04 send hands over an empty packet instead of the message. Must fail: test/websocket-connection.test.mjs
+diff --git a/integration-sdk/src/internal/websocket/index.mjs b/integration-sdk/src/internal/websocket/index.mjs
+index 1f3afd5..4867a9d 100755
+--- a/integration-sdk/src/internal/websocket/index.mjs
++++ b/integration-sdk/src/internal/websocket/index.mjs
+@@ -26,7 +26,7 @@ class WebsocketConnector {
+   send(message) {
+     if (!message) return;
+ 
+-    this.transport.send(this.transport.newPacket(message));
++    this.transport.send(this.transport.newPacket({}));
+   }
+ 
+   async close() {

@@ -1,0 +1,14 @@
+# Q18 the fallback prefix is the upper-case method. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..d16d585 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -256,7 +256,7 @@ export class OpenAPIToConnector {
+     }
+ 
+     // Fallback: prepend the HTTP method
+-    return `${operation.method.toLowerCase()}${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
++    return `${operation.method.toUpperCase()}${baseName.charAt(0).toUpperCase() + baseName.slice(1)}`;
+   }
+ 
+   /**

@@ -1,0 +1,14 @@
+# Q13 the service label carries the connector id. Must fail: test/metrics-endpoint.test.mjs
+diff --git a/integration-sdk/src/internal/connector/metrics.mts b/integration-sdk/src/internal/connector/metrics.mts
+index 763b233..82c87d6 100755
+--- a/integration-sdk/src/internal/connector/metrics.mts
++++ b/integration-sdk/src/internal/connector/metrics.mts
+@@ -6,7 +6,7 @@ export const makeMetrics = async ({id, name, version}): Promise<void> => {
+     const metrics = PromClient;
+ 
+     const defaultLabels = {
+-      service: name,
++      service: id,
+       connectorId: id,
+       connectorVersion: version,
+       node: process.env.HOSTNAME || 'test',

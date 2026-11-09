@@ -1,0 +1,14 @@
+# Q20 inline object types allow 6 properties. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..bedc508 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -482,7 +482,7 @@ export class OpenAPIToConnector {
+       const propNames = Object.keys(schema.properties);
+ 
+       // For response objects, generate inline type definitions
+-      if (propNames.length <= 5) {
++      if (propNames.length <= 6) {
+         // Reasonable limit for inline types
+         const propTypes = Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+           const propType = this.getTypeFromSchema(prop);
