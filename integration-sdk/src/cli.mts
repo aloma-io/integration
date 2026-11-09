@@ -151,6 +151,13 @@ program
     name = name.replace(/[\/\.]/gi, '');
     if (!name) throw new Error('name is empty');
 
+    // Refuse before writing anything when the project folder is already there
+    if (!options.controllerOnly && fs.existsSync(`${process.cwd()}/${name}`)) {
+      console.error(`❌ Error: folder '${name}' already exists`);
+      process.exit(1);
+    }
+
+    let created = false;
     try {
       // Read and parse the OpenAPI spec
       const specContent = fs.readFileSync(options.spec, 'utf-8');
@@ -187,6 +194,7 @@ Controller file generated successfully! You can now use it in your existing proj
 
         // Create the connector project structure
         fs.mkdirSync(target);
+        created = true;
         console.log('Creating connector project...');
         extract({...options, target, name});
 
@@ -231,12 +239,9 @@ ${nextSteps}`);
     } catch (error) {
       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
 
-      // Clean up on error (only if we created a project directory)
-      if (!options.controllerOnly) {
-        const target = `${process.cwd()}/${name}`;
-        if (fs.existsSync(target)) {
-          fs.rmSync(target, {recursive: true, force: true});
-        }
+      // Clean up on error (only the project directory this run created)
+      if (created) {
+        fs.rmSync(`${process.cwd()}/${name}`, {recursive: true, force: true});
       }
 
       process.exit(1);
@@ -489,18 +494,23 @@ program
       if (exposedMethods.trim()) {
         controllerContent = fs.readFileSync(controllerPath, 'utf-8');
 
-        // Extract existing method names from controller (async 'method.name' pattern)
+        // Extract existing method names from controller (async name( and async 'method.name'( patterns)
+        const methodNamePattern = /async\s+(?:['"]([^'"]+)['"]|([A-Za-z_$][\w$]*))\s*\(/;
         const existingNames = new Set(
-          (controllerContent.match(/async\s+['"]([^'"]+)['"]\s*\(/g) || [])
-            .map(m => m.match(/['"]([^'"]+)['"]/)?.[1])
+          (controllerContent.match(new RegExp(methodNamePattern, 'g')) || [])
+            .map(m => {
+              const found = m.match(methodNamePattern);
+              return found?.[1] ?? found?.[2];
+            })
             .filter(Boolean)
         );
 
-        // Filter exposed methods to only include new ones
-        const methodBlocks = exposedMethods.split(/(?=\n  async ['"])/);
+        // Filter exposed methods to only include new ones; each block starts at its doc comment
+        const methodBlocks = exposedMethods.split(/(?=\n  \/\*\*\n)/);
         const newMethods = methodBlocks.filter(block => {
-          const nameMatch = block.match(/async\s+['"]([^'"]+)['"]\s*\(/);
-          return !nameMatch || !existingNames.has(nameMatch[1]);
+          const nameMatch = block.match(methodNamePattern);
+          const name = nameMatch?.[1] ?? nameMatch?.[2];
+          return !name || !existingNames.has(name);
         }).join('');
 
         if (newMethods.trim()) {

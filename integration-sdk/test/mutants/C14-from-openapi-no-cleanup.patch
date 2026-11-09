@@ -1,14 +1,22 @@
-# C14 from openapi no cleanup. Must fail: test/cli-commands.test.mjs "from-openapi exits 1 and removes an existing folder of the same name (pins current behaviour)"
+# C14 from openapi unconditional clean-up. Must fail: test/cli-commands.test.mjs "from-openapi exits 1 naming the folder and leaves an existing folder and its contents in place"
 diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
-index 2714000..d58f0f3 100644
 --- a/integration-sdk/src/cli.mts
 +++ b/integration-sdk/src/cli.mts
-@@ -235,7 +235,7 @@ ${nextSteps}`);
-       if (!options.controllerOnly) {
-         const target = `${process.cwd()}/${name}`;
-         if (fs.existsSync(target)) {
--          fs.rmSync(target, {recursive: true, force: true});
-+          fs.existsSync(target);
-         }
+@@ -152,7 +152,7 @@ program
+     if (!name) throw new Error('name is empty');
+ 
+     // Refuse before writing anything when the project folder is already there
+-    if (!options.controllerOnly && fs.existsSync(`${process.cwd()}/${name}`)) {
++    if (false) {
+       console.error(`❌ Error: folder '${name}' already exists`);
+       process.exit(1);
+     }
+@@ -240,7 +240,7 @@ ${nextSteps}`);
+       console.error('❌ Error:', error instanceof Error ? error.message : 'Unknown error');
+ 
+       // Clean up on error (only the project directory this run created)
+-      if (created) {
++      if (!options.controllerOnly && fs.existsSync(`${process.cwd()}/${name}`)) {
+         fs.rmSync(`${process.cwd()}/${name}`, {recursive: true, force: true});
        }
  
