@@ -494,18 +494,23 @@ program
       if (exposedMethods.trim()) {
         controllerContent = fs.readFileSync(controllerPath, 'utf-8');
 
-        // Extract existing method names from controller (async 'method.name' pattern)
+        // Extract existing method names from controller (async name( and async 'method.name'( patterns)
+        const methodNamePattern = /async\s+(?:['"]([^'"]+)['"]|([A-Za-z_$][\w$]*))\s*\(/;
         const existingNames = new Set(
-          (controllerContent.match(/async\s+['"]([^'"]+)['"]\s*\(/g) || [])
-            .map(m => m.match(/['"]([^'"]+)['"]/)?.[1])
+          (controllerContent.match(new RegExp(methodNamePattern, 'g')) || [])
+            .map(m => {
+              const found = m.match(methodNamePattern);
+              return found?.[1] ?? found?.[2];
+            })
             .filter(Boolean)
         );
 
-        // Filter exposed methods to only include new ones
-        const methodBlocks = exposedMethods.split(/(?=\n  async ['"])/);
+        // Filter exposed methods to only include new ones; each block starts at its doc comment
+        const methodBlocks = exposedMethods.split(/(?=\n  \/\*\*\n)/);
         const newMethods = methodBlocks.filter(block => {
-          const nameMatch = block.match(/async\s+['"]([^'"]+)['"]\s*\(/);
-          return !nameMatch || !existingNames.has(nameMatch[1]);
+          const nameMatch = block.match(methodNamePattern);
+          const name = nameMatch?.[1] ?? nameMatch?.[2];
+          return !name || !existingNames.has(name);
         }).join('');
 
         if (newMethods.trim()) {

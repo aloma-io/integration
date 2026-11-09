@@ -706,16 +706,29 @@ await test('add-resource runs yarn build in the project folder unless --no-build
   assertEqual(sb.yarnCalls().length, 1, 'no further yarn call with --no-build');
 });
 
-await test('add-resource run twice for the same class adds the exposed methods a second time (pins current behaviour)', async () => {
+await test('add-resource run again for the same class adds no exposed method twice', async () => {
   const sb = sandbox();
   baseProject(sb);
   addResource(sb, 'proj', 'OwnersResource', sb.spec('owners.json'));
+  const once = sb.read('proj/src/controller/index.mts');
   addResource(sb, 'proj', 'OwnersResource', sb.spec('owners.json'));
   const code = sb.read('proj/src/controller/index.mts');
-  assertEqual(code.split('async ownersListOwners(').length - 1, 2, 'exposed method count');
+  assertEqual(code.split('async ownersListOwners(').length - 1, 1, 'exposed method count');
+  assertEqual(code, once, 'controller unchanged by the second run');
   assertEqual(code.split("import * as ownersFunctions from '../resources/owners.mjs';").length - 1, 1, 'import stays single');
   assertEqual(code.split('  owners: any = {};').length - 1, 1, 'property stays single');
   assertEqual(code.split("this.bindResourceFunctions('owners', ownersFunctions);").length - 1, 1, 'binding stays single');
+});
+
+await test('add-resource --nested-paths run again for the same class adds no method and no doc comment', async () => {
+  const sb = sandbox();
+  baseProject(sb);
+  addResource(sb, 'proj', 'DealsResource', sb.spec('pets.json'), ['--nested-paths']);
+  const once = sb.read('proj/src/controller/index.mts');
+  addResource(sb, 'proj', 'DealsResource', sb.spec('pets.json'), ['--nested-paths']);
+  const code = sb.read('proj/src/controller/index.mts');
+  assertEqual(code.match(/\/\*\*/g).length, once.match(/\/\*\*/g).length, 'doc comment count');
+  assertEqual(code, once, 'controller unchanged by the second run');
 });
 
 await test('add-resource leaves out the binding when the controller has no binding line to follow (pins current behaviour)', async () => {
