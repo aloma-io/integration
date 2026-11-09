@@ -454,14 +454,35 @@ await test('from-openapi exits 1 with the validation error and leaves no folder 
   assertEqual(fs.readdirSync(sb.work), [], 'no folder left');
 });
 
-await test('from-openapi exits 1 and removes an existing folder of the same name (pins current behaviour)', async () => {
+await test('from-openapi exits 1 naming the folder and leaves an existing folder and its contents in place', async () => {
   const sb = sandbox();
   fs.mkdirSync(path.join(sb.work, 'pets'));
   fs.writeFileSync(path.join(sb.work, 'pets/keep.txt'), 'mine');
   const r = sb.cli(['from-openapi', 'pets', '--connector-id', 'c', '--spec', sb.spec('pets.json'), '--no-build']);
   assertEqual(r.code, 1, 'exit code');
-  assert(r.err.includes('EEXIST'), `message (${r.err})`);
-  assertEqual(fs.readdirSync(sb.work), [], 'the folder is gone');
+  assert(r.err.includes("folder 'pets' already exists"), `message (${r.err})`);
+  assertEqual(tree(path.join(sb.work, 'pets')), ['keep.txt'], 'folder content');
+  assertEqual(sb.read('pets/keep.txt'), 'mine', 'file content');
+});
+
+await test('from-openapi exits 1 naming the folder and leaves an existing folder in place when the specification is missing', async () => {
+  const sb = sandbox();
+  fs.mkdirSync(path.join(sb.work, 'pets'));
+  fs.writeFileSync(path.join(sb.work, 'pets/keep.txt'), 'mine');
+  const r = sb.cli(['from-openapi', 'pets', '--connector-id', 'c', '--spec', sb.spec('nope.json'), '--no-build']);
+  assertEqual(r.code, 1, 'exit code');
+  assert(r.err.includes("folder 'pets' already exists"), `message (${r.err})`);
+  assertEqual(tree(path.join(sb.work, 'pets')), ['keep.txt'], 'folder content');
+  assertEqual(sb.read('pets/keep.txt'), 'mine', 'file content');
+});
+
+await test('from-openapi removes the project folder it made and exits 1 when a step after the folder was made fails', async () => {
+  const sb = sandbox();
+  const r = sb.cli(['from-openapi', 'pets', '--connector-id', 'c', '--spec', sb.spec('pets.json')], {YARN_EXIT: '1'});
+  assertEqual(r.code, 1, 'exit code');
+  assert(r.err.includes('❌ Error:'), `message (${r.err})`);
+  assertEqual(sb.yarnCalls().length, 1, 'the failing yarn call ran');
+  assertEqual(fs.readdirSync(sb.work), [], 'no folder left');
 });
 
 await test('from-openapi --controller-only leaves an existing folder of the same name in place when the spec is missing', async () => {
