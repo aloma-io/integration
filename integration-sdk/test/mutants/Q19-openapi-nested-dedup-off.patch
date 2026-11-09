@@ -1,0 +1,14 @@
+# Q19 a suffix equal to the last segment is repeated. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..ec8e6c5 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -100,7 +100,7 @@ export class OpenAPIToConnector {
+ 
+     // Dedup: if suffix equals last path segment, don't repeat it
+     const last = parts[parts.length - 1];
+-    if (suffix === last) return parts.join('.');
++    if (false) return parts.join('.');
+     return [...parts, suffix].join('.');
+   }
+ 

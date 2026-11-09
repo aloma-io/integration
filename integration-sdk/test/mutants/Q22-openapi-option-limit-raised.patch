@@ -1,0 +1,14 @@
+# Q22 the free-form options limit moves to 16. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..5a732d7 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -405,7 +405,7 @@ export class OpenAPIToConnector {
+     // If there are too many parameters, use simplified signature to avoid parsing issues
+     // Also check if any parameter name is too long (over 100 chars) which can cause issues
+     const hasLongParamNames = optionProps.some((prop) => prop.length > 100);
+-    if (optionProps.length > 15 || hasLongParamNames) {
++    if (optionProps.length > 16 || hasLongParamNames) {
+       const required = hasRequiredParams ? '' : '?';
+       return `(options${required}: {[key: string]: any})`;
+     }

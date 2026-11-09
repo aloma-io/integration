@@ -1,0 +1,14 @@
+# Q17 the http method prefix of an operationId is kept. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..6a6af5b 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -212,7 +212,7 @@ export class OpenAPIToConnector {
+ 
+       // Remove any remaining special characters and clean up
+       cleaned = cleaned
+-        .replace(/^(get|post|put|patch|delete|head|options)-/i, '') // Remove HTTP method prefix
++        
+         .replace(/[^a-zA-Z0-9_]/g, '_')
+         .replace(/_+/g, '_')
+         .replace(/^_|_$/g, '');

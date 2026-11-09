@@ -1,0 +1,14 @@
+# Q06 the error text changes. Must fail: test/not-empty-and-builder.test.mjs
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..b50d4d2 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -60,7 +60,7 @@ export const unwrap = async (ret, options) => {
+ };
+ 
+ export const notEmpty = (what, name) => {
+-  if (!what?.trim()) throw new Error(`${name} cannot be empty`);
++  if (!what?.trim()) throw new Error(`${name} is empty`);
+ 
+   return what;
+ };

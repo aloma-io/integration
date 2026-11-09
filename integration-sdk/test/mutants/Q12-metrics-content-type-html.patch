@@ -1,0 +1,14 @@
+# Q12 the metrics answer is typed as html. Must fail: test/metrics-endpoint.test.mjs
+diff --git a/integration-sdk/src/internal/connector/metrics.mts b/integration-sdk/src/internal/connector/metrics.mts
+index 763b233..36b77d5 100755
+--- a/integration-sdk/src/internal/connector/metrics.mts
++++ b/integration-sdk/src/internal/connector/metrics.mts
+@@ -22,7 +22,7 @@ export const makeMetrics = async ({id, name, version}): Promise<void> => {
+ 
+     app.get('/metrics', async (request, response, next) => {
+       response.status(200);
+-      response.set('Content-type', metrics.contentType);
++      response.set('Content-type', 'text/html');
+       response.send(await metrics.register.metrics());
+       response.end();
+     });

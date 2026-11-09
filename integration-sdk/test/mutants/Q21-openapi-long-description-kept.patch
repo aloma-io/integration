@@ -1,0 +1,14 @@
+# Q21 descriptions up to 199 characters are written inline. Must fail: test/openapi-remaining-branches.test.mjs
+diff --git a/integration-sdk/src/openapi-to-connector.mts b/integration-sdk/src/openapi-to-connector.mts
+index 34c238a..73a7dac 100644
+--- a/integration-sdk/src/openapi-to-connector.mts
++++ b/integration-sdk/src/openapi-to-connector.mts
+@@ -598,7 +598,7 @@ export class OpenAPIToConnector {
+         if (description) {
+           // Clean up description for inline use
+           const cleanDesc = description.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+-          if (cleanDesc.length < 100) {
++          if (cleanDesc.length < 200) {
+             // Only add short descriptions inline
+             optionProps.push(`${propName}${optional}: ${propType} /** ${cleanDesc} */`);
+           } else {

@@ -1,0 +1,14 @@
+# Q08 a descriptor without an id is accepted. Must fail: test/not-empty-and-builder.test.mjs
+diff --git a/integration-sdk/src/builder/index.mts b/integration-sdk/src/builder/index.mts
+index e879724..33b9004 100644
+--- a/integration-sdk/src/builder/index.mts
++++ b/integration-sdk/src/builder/index.mts
+@@ -268,7 +268,7 @@ export class Builder {
+     this.data.types = text;
+     this.data.methods = methods;
+ 
+-    notEmpty((this.data.id = connectorId), 'id');
++    this.data.id = connectorId;
+     notEmpty((this.data.version = version), 'version');
+   }
+ }

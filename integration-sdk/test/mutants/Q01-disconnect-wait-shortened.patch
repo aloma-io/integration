@@ -1,0 +1,14 @@
+# Q01 onDisconnect waits 500 ms instead of 5 s. Must fail: test/websocket-connection.test.mjs
+diff --git a/integration-sdk/src/internal/websocket/connection/index.mjs b/integration-sdk/src/internal/websocket/connection/index.mjs
+index 2b23eec..f0cf400 100755
+--- a/integration-sdk/src/internal/websocket/connection/index.mjs
++++ b/integration-sdk/src/internal/websocket/connection/index.mjs
+@@ -45,7 +45,7 @@ class Connection {
+   onDisconnect() {
+     var local = this;
+ 
+-    setTimeout(() => local.start(), 5000);
++    setTimeout(() => local.start(), 500);
+   }
+ 
+   async close() {

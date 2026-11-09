@@ -1,0 +1,12 @@
+# Q10 metrics are served on port 4051. Must fail: test/metrics-endpoint.test.mjs
+diff --git a/integration-sdk/src/internal/connector/metrics.mts b/integration-sdk/src/internal/connector/metrics.mts
+index 763b233..ac65bc0 100755
+--- a/integration-sdk/src/internal/connector/metrics.mts
++++ b/integration-sdk/src/internal/connector/metrics.mts
+@@ -30,5 +30,5 @@ export const makeMetrics = async ({id, name, version}): Promise<void> => {
+     return app;
+   };
+ 
+-  makeMetricsServer(newMetrics()).listen(4050, '0.0.0.0');
++  makeMetricsServer(newMetrics()).listen(4051, '0.0.0.0');
+ };
