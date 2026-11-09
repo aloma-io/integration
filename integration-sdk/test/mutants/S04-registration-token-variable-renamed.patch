@@ -1,0 +1,14 @@
+# S04 the registration token is read from another variable. Must fail: test/connector-startup.test.mjs "config: every variable is mapped to its setting and the connector details are taken from the arguments"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..ad0d3fd 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -6,7 +6,7 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+     id: id,
+     version: version,
+     name: process.env.HOSTNAME || name,
+-    registrationToken: process.env.REGISTRATION_TOKEN,
++    registrationToken: process.env.REGISTRATION_KEY,
+     endpoint: process.env.DEVICE_ENDPOINT || 'https://connect.aloma.io/',
+     wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://connect.aloma.io/transport/',
+     privateKey: process.env.PRIVATE_KEY,

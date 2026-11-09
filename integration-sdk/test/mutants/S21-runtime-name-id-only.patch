@@ -1,0 +1,14 @@
+# S21 the connector name drops the version. Must fail: test/connector-startup.test.mjs "runtime: the connector is named id/version and gets the id and version from the data"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..bc2d460 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -76,7 +76,7 @@ export default class RuntimeContext {
+     const connector = new Connector({
+       id: data.id,
+       version: data.version,
+-      name: `${data.id}/${data.version}`,
++      name: data.id,
+       icon,
+     });
+ 

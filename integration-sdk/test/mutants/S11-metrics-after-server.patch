@@ -1,0 +1,31 @@
+# S11 the metrics endpoint is set up after the server. Must fail: test/connector-startup.test.mjs "connector: run() announces itself, then sets up the metrics endpoint, then starts the websocket connector"
+diff --git a/integration-sdk/src/internal/connector/index.mts b/integration-sdk/src/internal/connector/index.mts
+index 8ae2190..ae2e6db 100755
+--- a/integration-sdk/src/internal/connector/index.mts
++++ b/integration-sdk/src/internal/connector/index.mts
+@@ -34,12 +34,6 @@ export class Connector {
+       icon: this.icon,
+     });
+ 
+-    await makeMetrics({
+-      id: this.id,
+-      name: this.name,
+-      version: this.version,
+-    });
+-
+     const server = await makeServer({
+       config,
+       configSchema,
+@@ -48,6 +42,12 @@ export class Connector {
+       dispatcher: this.dispatcher,
+     });
+ 
++    await makeMetrics({
++      id: this.id,
++      name: this.name,
++      version: this.version,
++    });
++
+     await server.start();
+   }
+ }

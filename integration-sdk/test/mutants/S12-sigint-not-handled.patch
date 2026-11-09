@@ -1,0 +1,14 @@
+# S12 SIGINT has no handler. Must fail: test/connector-startup.test.mjs "connector: run() announces itself, then sets up the metrics endpoint, then starts the websocket connector"
+diff --git a/integration-sdk/src/internal/connector/server/index.mts b/integration-sdk/src/internal/connector/server/index.mts
+index dbe5626..2d90577 100755
+--- a/integration-sdk/src/internal/connector/server/index.mts
++++ b/integration-sdk/src/internal/connector/server/index.mts
+@@ -45,7 +45,7 @@ export const makeServer = async ({
+   });
+ 
+   process.on('SIGTERM', term);
+-  process.on('SIGINT', term);
++  
+ 
+   return server;
+ };

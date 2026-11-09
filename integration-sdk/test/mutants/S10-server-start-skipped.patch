@@ -1,0 +1,13 @@
+# S10 run() never starts the server. Must fail: test/connector-startup.test.mjs "connector: run() announces itself, then sets up the metrics endpoint, then starts the websocket connector"
+diff --git a/integration-sdk/src/internal/connector/index.mts b/integration-sdk/src/internal/connector/index.mts
+index 8ae2190..784a924 100755
+--- a/integration-sdk/src/internal/connector/index.mts
++++ b/integration-sdk/src/internal/connector/index.mts
+@@ -48,6 +48,6 @@ export class Connector {
+       dispatcher: this.dispatcher,
+     });
+ 
+-    await server.start();
++    
+   }
+ }

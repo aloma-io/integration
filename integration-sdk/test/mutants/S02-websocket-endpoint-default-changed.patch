@@ -1,0 +1,14 @@
+# S02 the default websocket endpoint is changed. Must fail: test/connector-startup.test.mjs "config: without DEVICE_ENDPOINT, WEBSOCKET_ENDPOINT and HOSTNAME the defaults apply"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..f6e451c 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -8,7 +8,7 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+     name: process.env.HOSTNAME || name,
+     registrationToken: process.env.REGISTRATION_TOKEN,
+     endpoint: process.env.DEVICE_ENDPOINT || 'https://connect.aloma.io/',
+-    wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://connect.aloma.io/transport/',
++    wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://connect.aloma.io/',
+     privateKey: process.env.PRIVATE_KEY,
+     publicKey: process.env.PUBLIC_KEY,
+     introspect,

@@ -1,0 +1,14 @@
+# S24 the health interval keeps the process alive. Must fail: test/connector-startup.test.mjs "runtime: the main function stops the controller, starts it with the platform arguments, schedules a 30 s health check and checks once"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..5efc25a 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -105,7 +105,7 @@ export default class RuntimeContext {
+           await controller._doStop();
+           await controller._doStart(config, oauth, newTask, updateTask, getClient, getBlob, getBlobContent, createBlob);
+ 
+-          healthInterval = setInterval(() => healthCheck(controller), 30000).unref();
++          healthInterval = setInterval(() => healthCheck(controller), 30000);
+ 
+           await healthCheck(controller);
+         } catch (e) {

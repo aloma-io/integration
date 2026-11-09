@@ -1,0 +1,14 @@
+# S09 a missing registration token is accepted. Must fail: test/connector-startup.test.mjs "config: a missing REGISTRATION_TOKEN is refused with an error that names it and carries no key material"
+diff --git a/integration-sdk/src/internal/websocket/config.mjs b/integration-sdk/src/internal/websocket/config.mjs
+index 5384ad9..dbc5599 100755
+--- a/integration-sdk/src/internal/websocket/config.mjs
++++ b/integration-sdk/src/internal/websocket/config.mjs
+@@ -30,7 +30,7 @@ class Config {
+     this._configSchema = configSchema;
+     this._icon = icon;
+ 
+-    if (!registrationToken) throw new Error('empty registration token (set env.REGISTRATION_TOKEN)');
++    
+     if (!endpoint) throw new Error('empty endpoint (set env.DEVICE_ENDPOINT)');
+     if (!wsEndpoint) throw new Error('empty registration token (set env.WEBSOCKET_ENDPOINT)');
+ 

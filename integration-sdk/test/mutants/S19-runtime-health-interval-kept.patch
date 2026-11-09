@@ -1,0 +1,13 @@
+# S19 the health interval is not cleared on shutdown. Must fail: test/connector-startup.test.mjs "runtime: SIGTERM clears the health interval, stops the controller as a shutdown, then exits with 0"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..5a81653 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -117,7 +117,6 @@ export default class RuntimeContext {
+     connector.run();
+ 
+     const term = async () => {
+-      clearInterval(healthInterval);
+       await controller._doStop(true);
+ 
+       process.exit(0);

@@ -1,0 +1,16 @@
+# S16 unhandled rejections have no handler. Must fail: test/connector-startup.test.mjs "connector: run() announces itself, then sets up the metrics endpoint, then starts the websocket connector"
+diff --git a/integration-sdk/src/internal/connector/server/index.mts b/integration-sdk/src/internal/connector/server/index.mts
+index dbe5626..b373d0d 100755
+--- a/integration-sdk/src/internal/connector/server/index.mts
++++ b/integration-sdk/src/internal/connector/server/index.mts
+@@ -40,9 +40,7 @@ export const makeServer = async ({
+     console.log(e);
+   });
+ 
+-  process.on('unhandledRejection', (e) => {
+-    console.log(e);
+-  });
++  
+ 
+   process.on('SIGTERM', term);
+   process.on('SIGINT', term);

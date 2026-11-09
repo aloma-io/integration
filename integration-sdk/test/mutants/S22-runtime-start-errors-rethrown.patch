@@ -1,0 +1,14 @@
+# S22 a failing controller start rejects main(). Must fail: test/connector-startup.test.mjs "runtime: a failing controller start is logged, schedules no health check and does not reject"
+diff --git a/integration-sdk/src/builder/runtime-context.mts b/integration-sdk/src/builder/runtime-context.mts
+index e2ae248..914cc8c 100644
+--- a/integration-sdk/src/builder/runtime-context.mts
++++ b/integration-sdk/src/builder/runtime-context.mts
+@@ -109,7 +109,7 @@ export default class RuntimeContext {
+ 
+           await healthCheck(controller);
+         } catch (e) {
+-          console.log(e);
++          throw e;
+         }
+       }
+     );

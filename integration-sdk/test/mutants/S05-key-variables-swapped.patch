@@ -1,0 +1,16 @@
+# S05 the two key variables are swapped. Must fail: test/connector-startup.test.mjs "config: every variable is mapped to its setting and the connector details are taken from the arguments"
+diff --git a/integration-sdk/src/internal/connector/config.mts b/integration-sdk/src/internal/connector/config.mts
+index a257532..52e1784 100755
+--- a/integration-sdk/src/internal/connector/config.mts
++++ b/integration-sdk/src/internal/connector/config.mts
+@@ -9,8 +9,8 @@ export const makeConfig = async ({id, version, name, introspect, configSchema, i
+     registrationToken: process.env.REGISTRATION_TOKEN,
+     endpoint: process.env.DEVICE_ENDPOINT || 'https://connect.aloma.io/',
+     wsEndpoint: process.env.WEBSOCKET_ENDPOINT || 'wss://connect.aloma.io/transport/',
+-    privateKey: process.env.PRIVATE_KEY,
+-    publicKey: process.env.PUBLIC_KEY,
++    privateKey: process.env.PUBLIC_KEY,
++    publicKey: process.env.PRIVATE_KEY,
+     introspect,
+     configSchema,
+     icon: icon,

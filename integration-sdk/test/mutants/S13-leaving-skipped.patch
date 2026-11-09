@@ -1,0 +1,14 @@
+# S13 shutdown does not tell the platform the connector is leaving. Must fail: test/connector-startup.test.mjs "server: SIGTERM makes the server leave, waits ten seconds, closes it and then exits with 0"
+diff --git a/integration-sdk/src/internal/connector/server/index.mts b/integration-sdk/src/internal/connector/server/index.mts
+index dbe5626..0c43daa 100755
+--- a/integration-sdk/src/internal/connector/server/index.mts
++++ b/integration-sdk/src/internal/connector/server/index.mts
+@@ -24,7 +24,7 @@ export const makeServer = async ({
+   });
+ 
+   const term = async () => {
+-    await server.leaving();
++    
+ 
+     await new Promise((resolve) => {
+       setTimeout(async () => {
