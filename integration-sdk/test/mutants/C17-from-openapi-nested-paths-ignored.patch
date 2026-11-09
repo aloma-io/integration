@@ -1,0 +1,14 @@
+# C17 from openapi nested paths ignored. Must fail: test/cli-commands.test.mjs "from-openapi --nested-paths names methods by their dotted path"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..9bfe8f5 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -157,7 +157,7 @@ program
+       const spec = OpenAPIToConnector.parseSpec(specContent);
+ 
+       // Generate the controller from OpenAPI spec
+-      const generatorOptions = {nestedPaths: !!options.nestedPaths};
++      const generatorOptions = {nestedPaths: false};
+       const generator = new OpenAPIToConnector(spec, name, generatorOptions);
+       let controllerCode: string;
+ 

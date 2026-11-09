@@ -1,0 +1,14 @@
+# C09 create install without ignore engines. Must fail: test/cli-commands.test.mjs "create runs yarn install with --ignore-engines and then yarn build inside the project folder"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..8e244d6 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -102,7 +102,7 @@ program
+     await generateKeys({target});
+ 
+     console.log('Installing dependencies ...');
+-    await exec(`cd ${target}; yarn --ignore-engines`);
++    await exec(`cd ${target}; yarn`);
+ 
+     console.log('Building ...');
+     await exec(`cd ${target}; yarn build`);

@@ -1,0 +1,14 @@
+# C11 build keeps old files. Must fail: test/cli-commands.test.mjs "build empties the build folder and writes .controller.json with the method list, connector id and version"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..4b644f6 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -119,7 +119,7 @@ program
+   .command('build')
+   .description('Build the current connector project')
+   .action(async (str, options) => {
+-    const {stdout, stderr} = await exec(`rm -rf build; mkdir -p build; `);
++    const {stdout, stderr} = await exec(`mkdir -p build; `);
+ 
+     try {
+       fs.copyFileSync(`${TARGET_DIR}/logo.png`, `${TARGET_DIR}/build/logo.png`);

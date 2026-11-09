@@ -1,0 +1,14 @@
+# C16 from openapi controller only ignored. Must fail: test/cli-commands.test.mjs "from-openapi --controller-only writes only the controller file, at --out relative to the working directory"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..a31da6e 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -169,7 +169,7 @@ program
+         controllerCode = generator.generateController();
+       }
+ 
+-      if (options.controllerOnly) {
++      if (false) {
+         // Controller-only mode: just generate the controller file
+         const controllerPath = path.resolve(options.out);
+         fs.mkdirSync(path.dirname(controllerPath), {recursive: true});

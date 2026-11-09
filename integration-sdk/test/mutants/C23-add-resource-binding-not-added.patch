@@ -1,0 +1,14 @@
+# C23 add resource binding not added. Must fail: test/cli-commands.test.mjs "add-resource adds the import, the property, the binding and the exposed methods to the controller"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..7304bd8 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -469,7 +469,7 @@ program
+         const bindings = controllerContent.match(bindingRegex);
+         if (bindings && bindings.length > 0) {
+           const lastBinding = bindings[bindings.length - 1];
+-          controllerContent = controllerContent.replace(lastBinding, `${lastBinding}\n${bindingStatement}`);
++          controllerContent = controllerContent.replace(lastBinding, lastBinding);
+         }
+       }
+ 

@@ -1,0 +1,14 @@
+# C12 build logo not copied. Must fail: test/cli-commands.test.mjs "build copies logo.png into the build folder when the project has one"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..817ed8a 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -122,7 +122,7 @@ program
+     const {stdout, stderr} = await exec(`rm -rf build; mkdir -p build; `);
+ 
+     try {
+-      fs.copyFileSync(`${TARGET_DIR}/logo.png`, `${TARGET_DIR}/build/logo.png`);
++      fs.accessSync(`${TARGET_DIR}/logo.png`);
+     } catch (e) {
+       // blank
+     }

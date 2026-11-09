@@ -1,0 +1,13 @@
+# C03 gitignore env line dropped. Must fail: test/cli-commands.test.mjs "create writes a .gitignore that lists .DS_Store, node_modules, build, .env and yarn-error.log"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..42656bd 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -54,7 +54,6 @@ const extract = ({target, name, connectorId}) => {
+     `.DS_Store
+ node_modules
+ build
+-.env
+ yarn-error.log`
+   );
+ };
