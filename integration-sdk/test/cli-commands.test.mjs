@@ -292,8 +292,10 @@ const buildProject = (sb, {logo = true} = {}) => {
   if (logo) fs.writeFileSync(path.join(p, 'logo.png'), 'PNGDATA');
   return path.join(sdk, 'build/cli.mjs');
 };
+// a build takes 4-47 s alone and 51-92 s when two test runs share the machine, so the limit is well above that
+const BUILD_TIMEOUT_MS = 240000;
 const runBuild = (sb, cli) => {
-  const r = spawnSync(process.execPath, [cli, 'build'], {cwd: sb.work, encoding: 'utf8', timeout: 60000});
+  const r = spawnSync(process.execPath, [cli, 'build'], {cwd: sb.work, encoding: 'utf8', timeout: BUILD_TIMEOUT_MS});
   return {code: r.status, out: r.stdout, err: r.stderr};
 };
 
@@ -807,10 +809,39 @@ await test('the key-pair script prints a different pair on every run', async () 
 await test('the key-pair script prints keys in the format create writes to the .env', async () => {
   const sb = sandbox();
   sb.cli(['create', 'my-conn', '--connector-id', 'c']);
-  const fromEnv = envLines(sb.read('my-conn/.env'));
+  const fromCreate = keysFromEnv(sb.read('my-conn/.env'));
   const fromScript = keyScript().out.split('\n');
-  assertEqual(fromScript[0].length, fromEnv[1].length, 'private key line length');
-  assertEqual(fromScript[1].length, fromEnv[2].length, 'public key line length');
+  const value = (line) => line.slice(line.indexOf('=') + 1);
+  const name = (line) => line.slice(0, line.indexOf('='));
+  assertEqual([name(fromScript[0]), name(fromScript[1])], ['PRIVATE_KEY', 'PUBLIC_KEY'], 'variable names in order');
+
+  // same encoding (base64 of a PEM text) and the same key types as create writes
+  const scriptKeys = checkKeyPair(value(fromScript[0]), value(fromScript[1]));
+  for (const which of ['priv', 'pub']) {
+    assertEqual(scriptKeys[which].asymmetricKeyType, fromCreate[which].asymmetricKeyType, `${which} key type`);
+    assertEqual(
+      scriptKeys[which].asymmetricKeyDetails.modulusLength,
+      fromCreate[which].asymmetricKeyDetails.modulusLength,
+      `${which} key size`
+    );
+  }
+  assertEqual(scriptKeys.priv.asymmetricKeyType, 'rsa', 'key type');
+  assertEqual(scriptKeys.priv.asymmetricKeyDetails.modulusLength, 2048, 'key size');
+
+  // length range for a 2048-bit RSA key: the PEM text is the DER base64 in 64 columns plus header and footer, and the
+  // line is the base64 of that text. DER is 1200-1219 bytes for the private key (PKCS#8; leading zeros of the secret
+  // numbers vary) and exactly 294 for the public key (SPKI).
+  const encodedLength = (der, label) => {
+    const body = Math.ceil(der / 3) * 4;
+    const pem = `-----BEGIN ${label}-----\n`.length + body + Math.ceil(body / 64) + `-----END ${label}-----\n`.length;
+    return Math.ceil(pem / 3) * 4;
+  };
+  const inRange = (line, min, max, what) => {
+    const length = value(line).length;
+    assert(length >= min && length <= max, `${what} length ${length} is within ${min}-${max}`);
+  };
+  inRange(fromScript[0], encodedLength(1200, 'PRIVATE KEY'), encodedLength(1219, 'PRIVATE KEY'), 'private key');
+  inRange(fromScript[1], encodedLength(294, 'PUBLIC KEY'), encodedLength(294, 'PUBLIC KEY'), 'public key');
 });
 
 fs.rmSync(base, {recursive: true, force: true});
