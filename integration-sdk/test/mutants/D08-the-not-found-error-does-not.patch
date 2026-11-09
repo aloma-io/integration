@@ -1,0 +1,14 @@
+# D08 the not-found error does not name the requested method. Must fail: test/dispatcher-controller.test.mjs "execute: a name nothing answers is reported with the names asked for when there is no __default"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..ad16be4 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -176,7 +176,7 @@ ${arg.configurableClientScope}
+       const originalQuery = [...query];
+ 
+       const method = resolveMethod(query);
+-      if (!method && !_resolvers.__default) throw new Error(`${originalQuery} not found`);
++      if (!method && !_resolvers.__default) throw new Error(`${query} not found`);
+ 
+       return method ? method(variables, ctx) : _resolvers.__default(variables ? {...variables, __method: originalQuery} : variables, ctx);
+     };

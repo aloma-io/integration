@@ -1,0 +1,14 @@
+# D14 set-config does not wait for onConfig. Must fail: test/dispatcher-controller.test.mjs "processPacket: connector.set-config waits for onConfig and passes its failure on"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..efe3dec 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -206,7 +206,7 @@ ${arg.configurableClientScope}
+           return typeof ret === 'object' && !Array.isArray(ret) ? ret : {[packet.args().query]: ret};
+ 
+         case 'connector.set-config':
+-          await local.onConfig({...packet.args().secrets});
++          local.onConfig({...packet.args().secrets});
+ 
+           return;
+       }

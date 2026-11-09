@@ -1,0 +1,14 @@
+# D06 blank names are no longer dropped from a query. Must fail: test/dispatcher-controller.test.mjs "execute: blank and reserved names are dropped from the query before it is resolved"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..84c53c2 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -169,7 +169,7 @@ ${arg.configurableClientScope}
+ 
+       query = query
+         .filter(
+-          (what) => !!what?.trim() && !['constructor', '__proto__', 'toString', 'toSource', 'prototype'].includes(what)
++          (what) => !['constructor', '__proto__', 'toString', 'toSource', 'prototype'].includes(what)
+         )
+         .slice(0, 20);
+ 

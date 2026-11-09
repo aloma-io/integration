@@ -1,0 +1,14 @@
+# D18 a later description replaces the first. Must fail: test/dispatcher-controller.test.mjs "config: keeps the first description, summary and oauth flag, and the first definition of each field"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..41f5e01 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -98,7 +98,7 @@ ${arg.configurableClientScope}
+ 
+   config({fields, oauth, description, summary}: any) {
+     this._config.oauth = this._config.oauth || oauth;
+-    this._config.description = this._config.description || description;
++    this._config.description = description || this._config.description;
+     this._config.summary = this._config.summary || summary;
+     this._config.fields = {...fields, ...this._config.fields};
+ 

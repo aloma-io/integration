@@ -1,0 +1,14 @@
+# D12 introspect answers with the config schema as the types. Must fail: test/dispatcher-controller.test.mjs "processPacket: connector.introspect answers with the config schema and the types"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..59a4f43 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -190,7 +190,7 @@ ${arg.configurableClientScope}
+           // @ts-ignore
+           const intro = await introspect({});
+ 
+-          return {configSchema: local._config, introspect: intro};
++          return {configSchema: local._config, introspect: local._config};
+ 
+         case 'connector.start-oauth':
+           // @ts-ignore

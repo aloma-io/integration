@@ -1,0 +1,14 @@
+# D25 getClient ignores the OAuth client. Must fail: test/dispatcher-controller.test.mjs "getClient: with OAuth the client sends the access token the platform gave as a bearer token"
+diff --git a/integration-sdk/src/internal/connector/server/on-connect/index.mts b/integration-sdk/src/internal/connector/server/on-connect/index.mts
+index 105e16a..d94a15e 100755
+--- a/integration-sdk/src/internal/connector/server/on-connect/index.mts
++++ b/integration-sdk/src/internal/connector/server/on-connect/index.mts
+@@ -121,7 +121,7 @@ export const onConnect = ({
+ 
+           transport.send(packet);
+         },
+-        getClient: (arg) => (theOAuth ? (oauthClient = theOAuth.getClient(arg)) : new Fetcher(arg)),
++        getClient: (arg) => new Fetcher(arg),
+         newTask: (name, data) => {
+           return new Promise((resolve, reject) => {
+             const packet = transport.newPacket(

@@ -1,0 +1,14 @@
+# D17 a required endpoint token is still a line field. Must fail: test/dispatcher-controller.test.mjs "endpoint: a required endpoint has a managed, not optional token field"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..afe557f 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -117,7 +117,7 @@ ${arg.configurableClientScope}
+         _endpointToken: {
+           name: 'Endpoint Token',
+           placeholder: 'e.g. 1234',
+-          type: !!notOptional ? 'managed' : 'line',
++          type: 'line',
+           plain: true,
+           optional: !notOptional,
+         },

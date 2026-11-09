@@ -1,0 +1,14 @@
+# D21 the default autocomplete answers with nothing instead of an empty object. Must fail: test/dispatcher-controller.test.mjs "__autocomplete: a controller without an autocomplete method answers with an empty object"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..0e5dc0b 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -45,7 +45,7 @@ export abstract class AbstractController {
+    * @returns
+    */
+   protected async autocomplete(arg: any): Promise<any> {
+-    return Promise.resolve({});
++    return Promise.resolve();
+   }
+ 
+   /**

@@ -1,0 +1,14 @@
+# D03 build() accepts a dispatcher that lacks either types or resolvers. Must fail: test/dispatcher-controller.test.mjs "build: refuses to run without types, and without resolvers"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..fc64183 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -141,7 +141,7 @@ ${arg.configurableClientScope}
+   }
+ 
+   build() {
+-    if (!this._types || !this._resolvers) throw new Error('missing types or resolvers');
++    if (!this._types && !this._resolvers) throw new Error('missing types or resolvers');
+     var local = this;
+ 
+     const _resolvers = {...this._resolvers};

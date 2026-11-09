@@ -1,0 +1,14 @@
+# D04 the namespace is not forwarded to the method. Must fail: test/dispatcher-controller.test.mjs "execute: a single name is run like a list of one, with the variables and the task context, and its result is returned"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..be2c9fc 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -164,7 +164,7 @@ ${arg.configurableClientScope}
+     };
+ 
+     const execute = async ({query, variables, taskId, namespace, sticky}: any) => {
+-      const ctx = {taskId, namespace, sticky};
++      const ctx = {taskId, sticky};
+       if (!Array.isArray(query)) query = [query];
+ 
+       query = query

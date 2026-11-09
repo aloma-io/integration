@@ -1,0 +1,14 @@
+# D19 resolvers() replaces the earlier resolvers instead of adding. Must fail: test/dispatcher-controller.test.mjs "resolvers: successive calls are merged and a later method replaces an earlier one of the same name"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..48e1830 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -106,7 +106,7 @@ ${arg.configurableClientScope}
+   }
+ 
+   resolvers(what) {
+-    this._resolvers = {...this._resolvers, ...what};
++    this._resolvers = {...what};
+ 
+     return this;
+   }

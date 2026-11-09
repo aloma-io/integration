@@ -1,0 +1,14 @@
+# D02 start() does not pass its argument to the main function. Must fail: test/dispatcher-controller.test.mjs "main: start gives its argument to the main function, once, and announces itself in the log"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..830e88c 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -150,7 +150,7 @@ ${arg.configurableClientScope}
+ 
+     const start = async (arg) => {
+       console.log('starting ...');
+-      await main(arg);
++      await main();
+     };
+ 
+     const resolveMethod = (query) => {

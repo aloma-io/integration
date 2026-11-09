@@ -1,0 +1,14 @@
+# D20 __endpoint does not pass its argument to endpoint. Must fail: test/dispatcher-controller.test.mjs "__endpoint: gives the argument to endpoint and returns its result"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..64b414f 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -174,7 +174,7 @@ export abstract class AbstractController {
+    * @ignore
+    **/
+   async __endpoint(arg: any): Promise<any | null> {
+-    return this.endpoint(arg);
++    return this.endpoint({});
+   }
+ 
+   /**
