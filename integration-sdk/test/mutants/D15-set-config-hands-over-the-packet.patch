@@ -1,0 +1,14 @@
+# D15 set-config hands over the packet's own object instead of a copy. Must fail: test/dispatcher-controller.test.mjs "processPacket: connector.set-config gives onConfig a copy of the secrets and answers nothing"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..2b896a3 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -206,7 +206,7 @@ ${arg.configurableClientScope}
+           return typeof ret === 'object' && !Array.isArray(ret) ? ret : {[packet.args().query]: ret};
+ 
+         case 'connector.set-config':
+-          await local.onConfig({...packet.args().secrets});
++          await local.onConfig(packet.args().secrets);
+ 
+           return;
+       }

@@ -1,0 +1,14 @@
+# D16 finish-oauth does not pass the packet arguments. Must fail: test/dispatcher-controller.test.mjs "finishOAuth: the packet arguments go to the dispatcher as they are and its answer is returned"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..67409df 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -198,7 +198,7 @@ ${arg.configurableClientScope}
+ 
+         case 'connector.finish-oauth':
+           // @ts-ignore
+-          return await local.finishOAuth(packet.args());
++          return await local.finishOAuth({});
+ 
+         case 'connector.query':
+           const ret = await execute(packet.args());

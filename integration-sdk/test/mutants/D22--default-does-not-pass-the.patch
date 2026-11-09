@@ -1,0 +1,14 @@
+# D22 __default does not pass the task context to fallback. Must fail: test/dispatcher-controller.test.mjs "__default: gives the argument and the task context to fallback and returns its result"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..723614b 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -188,7 +188,7 @@ export abstract class AbstractController {
+    * @ignore
+    **/
+   async __default(arg: any, ctx?: any): Promise<any | null> {
+-    return this.fallback(arg, ctx);
++    return this.fallback(arg);
+   }
+ 
+   /**

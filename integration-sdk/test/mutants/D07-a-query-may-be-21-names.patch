@@ -1,0 +1,14 @@
+# D07 a query may be 21 names long instead of 20. Must fail: test/dispatcher-controller.test.mjs "execute: only the first 20 names of a query are used"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..6eeb496 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -171,7 +171,7 @@ ${arg.configurableClientScope}
+         .filter(
+           (what) => !!what?.trim() && !['constructor', '__proto__', 'toString', 'toSource', 'prototype'].includes(what)
+         )
+-        .slice(0, 20);
++        .slice(0, 21);
+ 
+       const originalQuery = [...query];
+ 

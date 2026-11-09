@@ -1,0 +1,14 @@
+# D09 __default is not told which method was asked for. Must fail: test/dispatcher-controller.test.mjs "execute: a name nothing answers goes to __default with the variables plus __method, and the task context"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..20ce40c 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -178,7 +178,7 @@ ${arg.configurableClientScope}
+       const method = resolveMethod(query);
+       if (!method && !_resolvers.__default) throw new Error(`${originalQuery} not found`);
+ 
+-      return method ? method(variables, ctx) : _resolvers.__default(variables ? {...variables, __method: originalQuery} : variables, ctx);
++      return method ? method(variables, ctx) : _resolvers.__default(variables ? {...variables} : variables, ctx);
+     };
+ 
+     const introspect = () => local._types;

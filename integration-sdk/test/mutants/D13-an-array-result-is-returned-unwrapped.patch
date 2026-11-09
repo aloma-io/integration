@@ -1,0 +1,14 @@
+# D13 an array result is returned unwrapped. Must fail: test/dispatcher-controller.test.mjs "processPacket: connector.query wraps an array or scalar result under the query name"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..8e7e245 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -203,7 +203,7 @@ ${arg.configurableClientScope}
+         case 'connector.query':
+           const ret = await execute(packet.args());
+ 
+-          return typeof ret === 'object' && !Array.isArray(ret) ? ret : {[packet.args().query]: ret};
++          return typeof ret === 'object' ? ret : {[packet.args().query]: ret};
+ 
+         case 'connector.set-config':
+           await local.onConfig({...packet.args().secrets});

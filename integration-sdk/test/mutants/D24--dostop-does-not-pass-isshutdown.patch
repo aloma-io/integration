@@ -1,0 +1,13 @@
+# D24 _doStop does not pass isShutdown to stop. Must fail: test/dispatcher-controller.test.mjs "_doStop: passes isShutdown on to stop, false when none is given"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..210b33a 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -273,6 +273,6 @@ export abstract class AbstractController {
+    * @ignore
+    **/
+   async _doStop(isShutdown: boolean = false): Promise<void> {
+-    await this.stop(isShutdown);
++    await this.stop();
+   }
+ }

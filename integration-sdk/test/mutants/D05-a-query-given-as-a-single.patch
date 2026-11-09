@@ -1,0 +1,14 @@
+# D05 a query given as a single name is not turned into a list. Must fail: test/dispatcher-controller.test.mjs "resolvers: successive calls are merged and a later method replaces an earlier one of the same name"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+index d92ec32..d80fc64 100755
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -165,7 +165,7 @@ ${arg.configurableClientScope}
+ 
+     const execute = async ({query, variables, taskId, namespace, sticky}: any) => {
+       const ctx = {taskId, namespace, sticky};
+-      if (!Array.isArray(query)) query = [query];
++      
+ 
+       query = query
+         .filter(

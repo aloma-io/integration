@@ -1,0 +1,14 @@
+# D23 _doStart installs the blob content function as getBlob. Must fail: test/dispatcher-controller.test.mjs "_doStart: newTask, updateTask, getClient, getBlob, getBlobContent and createBlob become the given functions, each in its own place"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..a150453 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -263,7 +263,7 @@ export abstract class AbstractController {
+     this.updateTask = updateTask;
+     this.getClient = getClient;
+     this.createBlob = createBlob;
+-    this.getBlob = getBlob;
++    this.getBlob = getBlobContent;
+     this.getBlobContent = getBlobContent;
+ 
+     await this.start();
