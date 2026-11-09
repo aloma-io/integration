@@ -1,0 +1,14 @@
+# C02 create connector id is name. Must fail: test/cli-commands.test.mjs "create writes package.json from the template with the given name and connector id"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..d26c4f1 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -46,7 +46,7 @@ const extract = ({target, name, connectorId}) => {
+   const content = JSON.parse(fs.readFileSync(`${target}/package.json`, {encoding: 'utf-8'}));
+ 
+   content.name = name;
+-  content.connectorId = connectorId;
++  content.connectorId = name;
+ 
+   fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 2));
+   fs.writeFileSync(

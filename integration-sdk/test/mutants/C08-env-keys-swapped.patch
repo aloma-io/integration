@@ -1,0 +1,16 @@
+# C08 env keys swapped. Must fail: test/cli-commands.test.mjs "create writes a .env with an empty registration token and a parseable base64 key pair"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..3735eed 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -67,8 +67,8 @@ const generateKeys = async ({target}) => {
+   const pub = await jwe.exportPublicAsBase64();
+ 
+   const content = `REGISTRATION_TOKEN=
+-PRIVATE_KEY=${priv}
+-PUBLIC_KEY=${pub}
++PRIVATE_KEY=${pub}
++PUBLIC_KEY=${priv}
+ `;
+ 
+   fs.writeFileSync(`${target}/.env`, content);

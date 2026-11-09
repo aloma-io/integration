@@ -1,0 +1,13 @@
+# C06 create keys not generated. Must fail: test/cli-commands.test.mjs "create makes the project folder with the template files, a .gitignore and a .env"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..b7ca085 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -99,7 +99,6 @@ program
+     extract({...options, target, name});
+ 
+     console.log('Generating keys ...');
+-    await generateKeys({target});
+ 
+     console.log('Installing dependencies ...');
+     await exec(`cd ${target}; yarn --ignore-engines`);

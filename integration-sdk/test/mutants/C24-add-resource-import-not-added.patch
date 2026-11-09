@@ -1,0 +1,14 @@
+# C24 add resource import not added. Must fail: test/cli-commands.test.mjs "add-resource adds the import, the property, the binding and the exposed methods to the controller"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..df8933a 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -436,7 +436,7 @@ program
+         const imports = controllerContent.match(importRegex);
+         if (imports && imports.length > 0) {
+           const lastImport = imports[imports.length - 1];
+-          controllerContent = controllerContent.replace(lastImport, `${lastImport}\n${importStatement}`);
++          controllerContent = controllerContent.replace(lastImport, lastImport);
+         } else {
+           // If no imports found, add at the beginning
+           controllerContent = `${importStatement}\n\n${controllerContent}`;

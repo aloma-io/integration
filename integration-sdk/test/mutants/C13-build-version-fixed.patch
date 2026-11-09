@@ -1,0 +1,14 @@
+# C13 build version fixed. Must fail: test/cli-commands.test.mjs "build empties the build folder and writes .controller.json with the method list, connector id and version"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..9613219 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -262,7 +262,7 @@ class Extractor {
+         text,
+         methods,
+         connectorId: packageJson.connectorId,
+-        version: packageJson.version,
++        version: '0.0.1',
+       }),
+       {encoding: 'utf-8'}
+     );

@@ -1,0 +1,14 @@
+# C18 from openapi resource ignored. Must fail: test/cli-commands.test.mjs "from-openapi --resource writes a resource class of functions instead of a controller class"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..8fce9f6 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -161,7 +161,7 @@ program
+       const generator = new OpenAPIToConnector(spec, name, generatorOptions);
+       let controllerCode: string;
+ 
+-      if (options.resource) {
++      if (false) {
+         console.log(`Generating resource class '${options.resource}' from OpenAPI specification...`);
+         controllerCode = generator.generateResourceClass(options.resource);
+       } else {

@@ -1,0 +1,13 @@
+# C04 create name not sanitised. Must fail: test/cli-commands.test.mjs "create removes dots and slashes from the name"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..3eb694a 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -88,7 +88,6 @@ program
+   .argument('<name>', 'name of the project')
+   .requiredOption('--connector-id <id>', 'id of the connector')
+   .action(async (name, options) => {
+-    name = name.replace(/[\/\.]/gi, '');
+     if (!name) throw new Error('name is empty');
+ 
+     const target = `${process.cwd()}/${name}`;

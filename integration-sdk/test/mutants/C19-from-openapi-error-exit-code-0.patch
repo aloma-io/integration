@@ -1,0 +1,14 @@
+# C19 from openapi error exit code 0. Must fail: test/cli-commands.test.mjs "from-openapi removes the project folder and exits 1 when the specification file is missing"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..429cb54 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -239,7 +239,7 @@ ${nextSteps}`);
+         }
+       }
+ 
+-      process.exit(1);
++      process.exit(0);
+     }
+   });
+ 

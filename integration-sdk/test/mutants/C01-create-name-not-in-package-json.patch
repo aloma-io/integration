@@ -1,0 +1,14 @@
+# C01 create name not in package json. Must fail: test/cli-commands.test.mjs "create writes package.json from the template with the given name and connector id"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..c01dc8a 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -45,7 +45,7 @@ const extract = ({target, name, connectorId}) => {
+ 
+   const content = JSON.parse(fs.readFileSync(`${target}/package.json`, {encoding: 'utf-8'}));
+ 
+-  content.name = name;
++  
+   content.connectorId = connectorId;
+ 
+   fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 2));

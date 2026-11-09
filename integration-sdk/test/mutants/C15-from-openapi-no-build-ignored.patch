@@ -1,0 +1,14 @@
+# C15 from openapi no build ignored. Must fail: test/cli-commands.test.mjs "from-openapi --no-build makes the project folder with the generated controller and no yarn call"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..d6b099f 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -198,7 +198,7 @@ Controller file generated successfully! You can now use it in your existing proj
+         console.log('Generating keys...');
+         await generateKeys({target});
+ 
+-        if (options.build !== false) {
++        if (true) {
+           console.log('Installing dependencies...');
+           await exec(`cd ${target}; yarn --ignore-engines`);
+ 

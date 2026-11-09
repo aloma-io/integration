@@ -1,0 +1,18 @@
+# C05 create empty name accepted. Must fail: test/cli-commands.test.mjs "create exits 1 with "name is empty" when nothing is left of the name, and makes no folder"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..01fa225 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -89,11 +89,9 @@ program
+   .requiredOption('--connector-id <id>', 'id of the connector')
+   .action(async (name, options) => {
+     name = name.replace(/[\/\.]/gi, '');
+-    if (!name) throw new Error('name is empty');
+-
+     const target = `${process.cwd()}/${name}`;
+ 
+-    fs.mkdirSync(target);
++    fs.mkdirSync(target, {recursive: true});
+ 
+     console.log('Creating connector ...');
+     extract({...options, target, name});

@@ -1,0 +1,14 @@
+# C20 multi resource file keeps suffix. Must fail: test/cli-commands.test.mjs "create-multi-resource --no-build makes the project with one file per resource and the main controller"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..d2edc0a 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -327,7 +327,7 @@ program
+         const resourceCode = generator.generateResourceClass(className);
+ 
+         // Write the resource file
+-        const fileName = className.toLowerCase().replace('resource', '');
++        const fileName = className.toLowerCase();
+         const resourcePath = `${target}/src/resources/${fileName}.mts`;
+         fs.mkdirSync(path.dirname(resourcePath), {recursive: true});
+         fs.writeFileSync(resourcePath, resourceCode);

@@ -1,0 +1,13 @@
+# C22 multi resource keys not generated. Must fail: test/cli-commands.test.mjs "create-multi-resource --no-build makes the project with one file per resource and the main controller"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index 2714000..7e35f50 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -347,7 +347,6 @@ program
+       fs.writeFileSync(controllerPath, mainControllerCode);
+ 
+       console.log('Generating keys...');
+-      await generateKeys({target});
+ 
+       if (options.build !== false) {
+         console.log('Installing dependencies...');
