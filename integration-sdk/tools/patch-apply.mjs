@@ -18,3 +18,13 @@ export function checkPatches({patchDir, root}) {
   }
   return {checked: patches.length, failures, problem: null};
 }
+
+// Pure: the break IDs (file name up to the first dash) that more than one .patch file registers.
+export function duplicateIds(names) {
+  const byId = new Map();
+  for (const name of names.filter((n) => n.endsWith('.patch'))) {
+    const id = name.split('-')[0];
+    byId.set(id, [...(byId.get(id) ?? []), name]);
+  }
+  return [...byId].filter(([, patches]) => patches.length > 1).map(([id, patches]) => ({id, patches}));
+}

@@ -1,4 +1,4 @@
-# W04 the patch list is a fixed short list instead of the directory. Must fail: test/mutant-patches-apply.test.mjs
+# P04 the patch list is a fixed short list instead of the directory. Must fail: test/mutant-patches-apply.test.mjs
 diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
 index f38dec1..466a408 100644
 --- a/integration-sdk/tools/patch-apply.mjs

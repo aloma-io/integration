@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {checkPatches} from '../tools/patch-apply.mjs';
+import {checkPatches, duplicateIds} from '../tools/patch-apply.mjs';
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const patchDir = path.join(repo, 'integration-sdk', 'test', 'mutants');
@@ -43,10 +43,17 @@ const empty = checkPatches({patchDir: dir, root: tree});
 check('fixture: a directory without patches is a problem, not a pass', Boolean(empty.problem) && empty.checked === 0);
 fs.rmSync(scratch, {recursive: true, force: true});
 
+// Every break has its own ID: the part of the file name before the first dash.
+check('ids: distinct IDs are fine', duplicateIds(['A01-x.patch', 'A02-y.patch', 'B01-z.patch']).length === 0);
+check('ids: a repeated ID is reported once, with both files', JSON.stringify(duplicateIds(['W02-a.patch', 'W02-b.patch', 'W03-c.patch'])) === JSON.stringify([{id: 'W02', patches: ['W02-a.patch', 'W02-b.patch']}]));
+check('ids: files that are not patches are ignored', duplicateIds(['W02-a.patch', 'W02-notes.txt']).length === 0);
+
 // The real mutants against the real tree.
 const real = checkPatches({patchDir, root: repo});
 if (real.problem) check(real.problem, false);
 for (const f of real.failures) check(`${f.patch} still applies: ${f.error}`, false);
+const names = fs.readdirSync(patchDir);
+for (const d of duplicateIds(names)) check(`break ID ${d.id} is registered once: ${d.patches.join(', ')}`, false);
 const onDisk = fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch')).length;
 check('every .patch file in test/mutants was checked', real.checked === onDisk);
 if (!real.problem && !real.failures.length) console.log(`checked ${real.checked} patches, all apply`);

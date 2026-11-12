@@ -1,4 +1,4 @@
-# W05 an empty patch directory is no longer a problem. Must fail: test/mutant-patches-apply.test.mjs
+# P05 an empty patch directory is no longer a problem. Must fail: test/mutant-patches-apply.test.mjs
 diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
 index f38dec1..36de19b 100644
 --- a/integration-sdk/tools/patch-apply.mjs

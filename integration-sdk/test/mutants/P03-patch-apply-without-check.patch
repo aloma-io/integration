@@ -1,4 +1,4 @@
-# W03 the apply step runs without --check and changes the tree. Must fail: test/mutant-patches-apply.test.mjs
+# P03 the apply step runs without --check and changes the tree. Must fail: test/mutant-patches-apply.test.mjs
 diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
 index f38dec1..ba90485 100644
 --- a/integration-sdk/tools/patch-apply.mjs
