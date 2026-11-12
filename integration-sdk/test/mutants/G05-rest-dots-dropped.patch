@@ -1,0 +1,14 @@
+# G05 the rest element loses its leading dots. Must fail: test/transform-expressions-types.test.mjs "type text: a rest element prints as ...A[]"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..684b1b5 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -231,7 +231,7 @@ const typeText = (checker: ts.TypeChecker, nodeOrType: any): string => {
+     case ts.SyntaxKind.OptionalType:
+       return `${child((node as ts.OptionalTypeNode).type)}?`;
+     case ts.SyntaxKind.RestType:
+-      return `...${child((node as ts.RestTypeNode).type)}`;
++      return `${child((node as ts.RestTypeNode).type)}`;
+     case ts.SyntaxKind.IndexedAccessType:
+       return `${child((node as ts.IndexedAccessTypeNode).objectType)}[${child((node as ts.IndexedAccessTypeNode).indexType)}]`;
+     case ts.SyntaxKind.TypeReference: {

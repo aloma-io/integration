@@ -1,0 +1,14 @@
+# G04 tuple elements are joined with a bare comma. Must fail: test/transform-expressions-types.test.mjs "type text: a tuple prints as [A, B]"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..ec2e158 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -225,7 +225,7 @@ const typeText = (checker: ts.TypeChecker, nodeOrType: any): string => {
+     case ts.SyntaxKind.ArrayType:
+       return `${child((node as ts.ArrayTypeNode).elementType)}[]`;
+     case ts.SyntaxKind.TupleType:
+-      return `[${(node as ts.TupleTypeNode).elements.map(child).join(', ')}]`;
++      return `[${(node as ts.TupleTypeNode).elements.map(child).join(',')}]`;
+     case ts.SyntaxKind.NamedTupleMember:
+       return `${(node as ts.NamedTupleMember).name.getText() ?? ''}: ${child((node as ts.NamedTupleMember).type)}`;
+     case ts.SyntaxKind.OptionalType:

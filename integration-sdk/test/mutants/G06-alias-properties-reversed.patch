@@ -1,0 +1,14 @@
+# G06 the properties of an alias or interface parameter come out in reverse order. Must fail: test/transform-expressions-types.test.mjs "properties of an alias or interface parameter are listed in declaration order with their types"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..96c784e 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -459,7 +459,7 @@ const propertiesOf = (checker: ts.TypeChecker, parameter: ts.ParameterDeclaratio
+ 
+   // not a type literal (an interface or a type alias, say): list its properties with the checker's types
+   const realType = 'kind' in type ? checker.getTypeFromTypeNode(type) : type;
+-  return checker.getPropertiesOfType(realType).map((prop) => [prop.getName(), typeText(checker, checker.getTypeOfSymbolAtLocation(prop, parameter))]);
++  return checker.getPropertiesOfType(realType).reverse().map((prop) => [prop.getName(), typeText(checker, checker.getTypeOfSymbolAtLocation(prop, parameter))]);
+ };
+ 
+ const declare = (checker: ts.TypeChecker, method: Method) => {

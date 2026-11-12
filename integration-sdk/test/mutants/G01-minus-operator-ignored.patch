@@ -1,0 +1,14 @@
+# G01 the unary minus no longer negates (the number default prints unsigned). Must fail: test/transform-expressions-types.test.mjs "default values: negative number, unary plus, negated boolean, as const, parentheses, assertion"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..1b5cc88 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -129,7 +129,7 @@ const resolveExpression = (checker: ts.TypeChecker, expression: ts.Expression |
+   if (ts.isPrefixUnaryExpression(expr)) {
+     const value = resolveExpression(checker, expr.operand);
+     if (typeof value !== 'number' && typeof value !== 'string' && typeof value !== 'boolean') return value;
+-    if (expr.operator === ts.SyntaxKind.MinusToken) return -value;
++    if (expr.operator === ts.SyntaxKind.MinusToken) return value;
+     if (expr.operator === ts.SyntaxKind.ExclamationToken) return !value;
+     if (expr.operator === ts.SyntaxKind.PlusToken) return +value;
+     return value;
