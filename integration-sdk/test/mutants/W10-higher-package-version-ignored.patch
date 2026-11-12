@@ -1,0 +1,14 @@
+# W10 a package.json version higher than the latest on npm is ignored (always latest+1). Must fail: test/publish-workspace.test.mjs "T2 PKG 2.1.0 higher than LATEST 2.0.3 publishes 2.1.0 (hand-raised)"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 26fe532..9279985 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -63,7 +63,7 @@ is_higher() {
+   return 1
+ }
+ 
+-if is_higher "$PKG" "$LATEST"; then
++if false; then
+   TARGET="$PKG"
+ else
+   IFS=. read -r MAJOR MINOR PATCH <<<"$LATEST"

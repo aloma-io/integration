@@ -1,0 +1,13 @@
+# W11 the versions are compared as text, not numbers. Must fail: test/publish-workspace.test.mjs "T7 numeric comparison: PKG 2.10.0 is higher than LATEST 2.9.0"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 26fe532..8753c3f 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -53,6 +53,7 @@ done
+ 
+ # Numeric, part by part: 2.10.0 is higher than 2.9.0.
+ is_higher() {
++  [[ "$1" > "$2" ]] && return 0 || return 1
+   local a b i
+   IFS=. read -r -a a <<<"$1"
+   IFS=. read -r -a b <<<"$2"

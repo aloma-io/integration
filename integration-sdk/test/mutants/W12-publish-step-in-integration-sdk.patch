@@ -1,0 +1,12 @@
+# W12 the publish step runs in integration-sdk instead of workspace-sdk. Must fail: test/publish-workspace.test.mjs "the publish step runs with working directory workspace-sdk"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 36183c3..3b55967 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -153,5 +153,5 @@ jobs:
+       # Raises workspace-sdk's patch version and publishes it when files under workspace-sdk/ changed since the previous
+       # tag; fails when it cannot publish; says so in the log and skips when workspace-sdk/ did not change.
+       - name: Publish workspace-sdk
+-        working-directory: workspace-sdk
++        working-directory: integration-sdk
+         run: bash "$GITHUB_WORKSPACE/.github/scripts/workspace-publish.sh"

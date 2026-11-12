@@ -1,0 +1,14 @@
+# W07 the patch bump becomes a minor bump. Must fail: test/publish-workspace.test.mjs "T1 a change under workspace-sdk/ with LATEST 2.0.3 and PKG 2.0.0 publishes 2.0.4"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 26fe532..f3a81c5 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -67,7 +67,7 @@ if is_higher "$PKG" "$LATEST"; then
+   TARGET="$PKG"
+ else
+   IFS=. read -r MAJOR MINOR PATCH <<<"$LATEST"
+-  TARGET="$MAJOR.$MINOR.$((PATCH + 1))"
++  TARGET="$MAJOR.$((MINOR + 1)).$PATCH"
+ fi
+ 
+ # d) never publish over, and never skip past, a version that exists

@@ -1,0 +1,14 @@
+# W13 the workspace publish job no longer needs workspace-test. Must fail: test/publish-workspace.test.mjs "the workspace publish job needs the workspace test job"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 36183c3..d5adf67 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -109,7 +109,7 @@ jobs:
+   # Publishes workspace-sdk when it changed since the previous tag (one tag counter serves two packages; the version is
+   # not the tag): the script raises the patch version itself and fails red when it cannot publish.
+   workspace-publish:
+-    needs: [test, workspace-test]
++    needs: [test]
+     runs-on: ubuntu-26.04
+     timeout-minutes: 15
+     permissions:
