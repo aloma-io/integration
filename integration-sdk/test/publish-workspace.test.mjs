@@ -79,7 +79,7 @@ check('the workspace publish job has exactly one step that calls the script', pu
 check('the publish step calls the checked-in script', /^\s+run: .*\.github\/scripts\/workspace-publish\.sh"?\s*$/m.test(publishSteps[0] ?? ''));
 check('the publish step runs with working directory workspace-sdk', /^ {8}working-directory: workspace-sdk\s*$/m.test(publishSteps[0] ?? ''));
 check('no step of the workspace publish job runs in integration-sdk', !/working-directory: integration-sdk/.test(text(wsPublish)));
-check('the workspace publish job checks out all history and tags (fetch-depth 0)', /uses: actions\/checkout@[\w.]+\s*\n\s+with:\s*\n(\s+[\w-]+: .*\n)*?\s+fetch-depth: 0\s*$/m.test(text(wsPublish)));
+check('the workspace publish job checks out all history and tags (fetch-depth 0)', /uses: actions\/checkout@[\w.]+(?: +#.*)?\s*\n\s+with:\s*\n(\s+[\w-]+: .*\n)*?\s+fetch-depth: 0\s*$/m.test(text(wsPublish)));
 check('the workspace publish job has no inline npm publish or skip rule', !/npm publish|already published, skipping/.test(text(wsPublish)));
 check('the workspace publish job has its own permissions', /^ {4}permissions:\s*$/m.test(text(wsPublish)) && /^ {6}id-token: write\s*$/m.test(text(wsPublish)) && /^ {6}contents: read\s*$/m.test(text(wsPublish)));
 check('workflow-wide permissions are unchanged', topBlock('permissions').filter((l) => l.trim()).join('|') === '  id-token: write|  contents: read');
