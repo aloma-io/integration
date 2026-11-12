@@ -1,0 +1,14 @@
+# W03-version-shape-unchecked tag shape check dropped. Must fail: publish-workflow.test.mjs non-x.y.z case
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 043868b..2320761 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -80,7 +80,7 @@ jobs:
+         run: |
+           set -e
+           VERSION="${GITHUB_REF_NAME#v}"
+-          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
++          if ! printf '%s' "$VERSION" | grep -Eq ".*" # '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+             echo "Tag '$GITHUB_REF_NAME' is not a plain x.y.z version" >&2
+             exit 1
+           fi
