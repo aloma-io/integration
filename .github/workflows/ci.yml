@@ -42,7 +42,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install dependencies
-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile
 
       - name: Build
         run: npx yarn@1.22.22 build
@@ -70,7 +70,7 @@ jobs:
           node-version: '22'
 
       - name: Install dependencies
-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile
 
       - name: Build
         run: npx yarn@1.22.22 build
