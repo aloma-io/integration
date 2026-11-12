@@ -1,0 +1,14 @@
+# W16 identical content skips even when the gitHead is not known. Must fail: test/publish-workspace.test.mjs "D4 identical content without a known gitHead publishes (never skips on a missing gitHead)"
+diff --git a/.github/scripts/workspace-publish-decision.mjs b/.github/scripts/workspace-publish-decision.mjs
+index c482a84..1b3f905 100644
+--- a/.github/scripts/workspace-publish-decision.mjs
++++ b/.github/scripts/workspace-publish-decision.mjs
+@@ -40,7 +40,7 @@ export function decide({treeIdentical, gitHeadKnown, gitHeadReachable, gitHead,
+   } catch (e) {
+     return {action: 'fail', reason: e.message};
+   }
+-  if (treeIdentical && gitHeadKnown) return {action: 'skip', reason: 'content identical to the latest published build'};
++  if (treeIdentical) return {action: 'skip', reason: 'content identical to the latest published build'};
+   if (gitHeadKnown && !gitHeadReachable) {
+     return {action: 'fail', reason: `npm's latest workspace-sdk@${latest} was built from ${gitHead}, which is neither the tag commit ${tagCommit} nor an ancestor of it; an older release must not replace a newer one`};
+   }

@@ -1,0 +1,10 @@
+# W23 the read-back warning for a missing gitHead is never printed. Must fail: test/publish-workspace.test.mjs "T14 publish where npm has no gitHead: exit 0 and the warning line"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index f3e430a..68a09db 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -94,4 +94,3 @@ npm publish --access public --provenance
+ 
+ # f) read back npm's record of the new version: the skip rule needs its gitHead. A warning only, never a failure.
+ if READBACK="$(npm view "$NAME@$TARGET" gitHead 2>/dev/null)"; then LOOKUP=ok; else LOOKUP=failed; READBACK=""; fi
+-node "$DECISION" marker "workspace-sdk" "$TARGET" "$LOOKUP" "$READBACK"

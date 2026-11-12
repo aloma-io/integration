@@ -1,0 +1,14 @@
+# W10 a package.json version higher than the latest on npm is ignored (always latest+1). Must fail: test/publish-workspace.test.mjs "T2 PKG 2.1.0 higher than LATEST 2.0.3 publishes 2.1.0 (hand-raised)"
+diff --git a/.github/scripts/workspace-publish-decision.mjs b/.github/scripts/workspace-publish-decision.mjs
+index be0321d..70ab11b 100644
+--- a/.github/scripts/workspace-publish-decision.mjs
++++ b/.github/scripts/workspace-publish-decision.mjs
+@@ -26,7 +26,7 @@ export function isHigher(a, b) {
+ 
+ export function nextVersion(pkg, latest) {
+   for (const v of [pkg, latest]) if (!PLAIN.test(v)) throw new Error(`'${v}' is not a plain major.minor.patch version`);
+-  if (isHigher(pkg, latest)) return pkg;
++  if (false) return pkg;
+   const [major, minor, patch] = parts(latest);
+   return `${major}.${minor}.${patch + 1}`;
+ }

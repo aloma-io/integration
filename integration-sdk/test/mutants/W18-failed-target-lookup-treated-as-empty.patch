@@ -1,0 +1,14 @@
+# W18 a failed lookup of the target version (not E404) is treated as "not on npm". Must fail: test/publish-workspace.test.mjs "T5 a failed lookup of the target version (not E404) exits non-zero and publishes nothing"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 634ef89..8c8ecd6 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -53,7 +53,7 @@ fi
+ # c) never publish over, and never skip past, a version that exists
+ ONNPM=no
+ if ! EXISTING="$(npm view "$NAME@$TARGET" version 2>"$ERR")"; then
+-  if ! grep -q E404 "$ERR"; then
++  if false; then
+     cat "$ERR" >&2
+     echo "workspace-sdk: cannot check $NAME@$TARGET on npm" >&2
+     exit 1

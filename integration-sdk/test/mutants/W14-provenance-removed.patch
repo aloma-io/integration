@@ -1,0 +1,14 @@
+# W14 provenance removed from npm publish. Must fail: test/publish-workspace.test.mjs "T1 the publish is public with provenance, in workspace-sdk"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 435043f..e7f9b5f 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -89,7 +89,7 @@ case "$ACTION" in
+     # e) set the version (no commit, no tag; the target may be the version package.json already has) and publish
+     echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
+     npm version "$TARGET" --no-git-tag-version --allow-same-version
+-    npm publish --access public --provenance;;
++    npm publish --access public;;
+   *)
+     echo "workspace-sdk: unknown action '$ACTION' from the decision step; nothing published" >&2
+     exit 1;;

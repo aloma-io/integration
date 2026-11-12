@@ -1,0 +1,14 @@
+# W19 a version with a pre-release suffix passes the plain-version check. Must fail: test/publish-workspace.test.mjs "T10 a beta version in package.json exits 1 and publishes nothing"
+diff --git a/.github/scripts/workspace-publish-decision.mjs b/.github/scripts/workspace-publish-decision.mjs
+index be0321d..204f7e6 100644
+--- a/.github/scripts/workspace-publish-decision.mjs
++++ b/.github/scripts/workspace-publish-decision.mjs
+@@ -13,7 +13,7 @@
+ import path from 'node:path';
+ import {pathToFileURL} from 'node:url';
+ 
+-export const PLAIN = /^[0-9]+\.[0-9]+\.[0-9]+$/;
++export const PLAIN = /^[0-9]+\.[0-9]+\.[0-9]+(-[0-9a-z.]+)?$/;
+ 
+ const parts = (v) => v.split('.').map(Number);
+ 

@@ -1,0 +1,13 @@
+# W09 the identical-content case does not print the skip line. Must fail: test/publish-workspace.test.mjs "T4 and prints the skip line naming the gitHead and the version"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 634ef89..e269768 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -67,7 +67,6 @@ if [ "$EXISTING" = "$TARGET" ]; then ONNPM=yes; fi
+ case "$ACTION" in
+   skip)
+     MSG="workspace-sdk: $DIR/ at $TAG is identical to ${GITHEAD:0:12}, the commit $LATEST was built from; publish skipped"
+-    echo "$MSG"
+     echo "::notice::$MSG"
+     exit 0;;
+   fail)

@@ -1,9 +1,9 @@
 # W05 version step moved after publish. Must fail: publish-workflow.test.mjs order check
 diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
-index 043868b..037abcf 100644
+index ba4dff4..bace40a 100644
 --- a/.github/workflows/publish.yml
 +++ b/.github/workflows/publish.yml
-@@ -74,6 +74,10 @@ jobs:
+@@ -74,6 +74,10 @@
          working-directory: integration-sdk
          run: npx yarn@1.22.22 build
  
@@ -14,11 +14,14 @@ index 043868b..037abcf 100644
        # The release bot cuts the tag; nothing else writes it into package.json. Tags look like 3.8.72 (older: v3.8.66).
        - name: Set package version from the tag
          working-directory: integration-sdk
-@@ -85,7 +89,3 @@ jobs:
-             exit 1
+@@ -91,10 +95,6 @@
            fi
            npm version "$VERSION" --no-git-tag-version --allow-same-version
--
+ 
 -      - name: Publish
 -        working-directory: integration-sdk
 -        run: npm publish --access public --provenance
+-
+   # Runs the workspace-sdk build and tests on the tagged commit; the workspace publish job needs it.
+   workspace-test:
+     runs-on: ubuntu-26.04

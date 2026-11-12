@@ -1,0 +1,14 @@
+# W27 the workspace publish job runs dependency install scripts again. Must fail: test/publish-workspace.test.mjs "the workspace publish job installs with a frozen lockfile and scripts disabled"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index e46d712..0e6f792 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -159,7 +159,7 @@ jobs:
+       # No dependency install scripts in a job that can mint a publish token; the build is plain tsc.
+       - name: Install dependencies
+         working-directory: workspace-sdk
+-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines --ignore-scripts
++        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+ 
+       - name: Build
+         working-directory: workspace-sdk

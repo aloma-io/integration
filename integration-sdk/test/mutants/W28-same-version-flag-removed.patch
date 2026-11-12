@@ -1,0 +1,14 @@
+# W28 a version equal to the one in package.json fails the job: --allow-same-version is removed from the version step. Must fail: test/publish-workspace.test.mjs "T15 TARGET equal to the version in package.json publishes (same-version bump)"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 435043f..2ce1337 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -88,7 +88,7 @@ case "$ACTION" in
+   publish)
+     # e) set the version (no commit, no tag; the target may be the version package.json already has) and publish
+     echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
+-    npm version "$TARGET" --no-git-tag-version --allow-same-version
++    npm version "$TARGET" --no-git-tag-version
+     npm publish --access public --provenance;;
+   *)
+     echo "workspace-sdk: unknown action '$ACTION' from the decision step; nothing published" >&2

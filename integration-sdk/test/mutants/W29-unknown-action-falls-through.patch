@@ -1,0 +1,15 @@
+# W29 an unknown action word is no longer refused: the default arm of the action case is removed. Must fail: test/publish-workspace.test.mjs "T16 an unknown action exits non-zero, publishes nothing and names the value"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 435043f..563d7a3 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -90,9 +90,6 @@ case "$ACTION" in
+     echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
+     npm version "$TARGET" --no-git-tag-version --allow-same-version
+     npm publish --access public --provenance;;
+-  *)
+-    echo "workspace-sdk: unknown action '$ACTION' from the decision step; nothing published" >&2
+-    exit 1;;
+ esac
+ 
+ # f) read back npm's record of the new version: the skip rule needs its gitHead. A warning only, never a failure.

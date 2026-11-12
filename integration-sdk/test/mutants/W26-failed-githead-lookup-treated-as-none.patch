@@ -1,0 +1,14 @@
+# W26 a failed gitHead lookup is read as no gitHead (|| true restored). Must fail: test/publish-workspace.test.mjs "T13 a failed gitHead lookup (not E404) fails red and publishes nothing"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index f3e430a..ab39c10 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -41,7 +41,7 @@ TARGET="$(node "$DECISION" target "$PKG" "$LATEST")"
+ # b) the commit the latest version was built from, and whether the folder is the same there
+ GITHEAD=""
+ if [ "$LATEST" != 0.0.0 ]; then
+-  if ! GITHEAD="$(npm view "$NAME" gitHead 2>"$ERR")"; then
++  if ! GITHEAD="$(npm view "$NAME" gitHead 2>"$ERR" || true)"; then
+     if ! grep -q E404 "$ERR"; then
+       cat "$ERR" >&2
+       echo "workspace-sdk: cannot read the gitHead of $NAME from npm" >&2

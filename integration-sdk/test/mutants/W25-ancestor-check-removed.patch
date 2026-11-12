@@ -1,0 +1,14 @@
+# W25 an older release is no longer refused: the ancestor check is removed. Must fail: test/publish-workspace.test.mjs "T12 an older tag after a newer release fails red and publishes nothing"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index f3e430a..2584d9b 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -56,7 +56,7 @@ IDENTICAL=no
+ REACHABLE=no
+ if [[ "$GITHEAD" =~ ^[0-9a-f]{40}$ ]] && git -C "$ROOT" cat-file -e "$GITHEAD^{commit}" 2>/dev/null; then
+   KNOWN=yes
+-  if git -C "$ROOT" merge-base --is-ancestor "$GITHEAD" "$TAGCOMMIT"; then REACHABLE=yes; fi
++  REACHABLE=yes
+   BUILT="$(git -C "$ROOT" rev-parse -q --verify "$GITHEAD:$DIR" 2>/dev/null || true)"
+   NOW="$(git -C "$ROOT" rev-parse -q --verify "$TAG:$DIR" 2>/dev/null || true)"
+   if [ -n "$BUILT" ] && [ "$BUILT" = "$NOW" ]; then IDENTICAL=yes; fi

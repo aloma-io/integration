@@ -1,0 +1,16 @@
+# W21 the workspace publish job has no concurrency group (two close releases can drop the second change). Must fail: test/publish-workspace.test.mjs "the workspace publish job has a concurrency group"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index e46d712..28b3808 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -128,10 +128,6 @@ jobs:
+   # cannot publish.
+   workspace-publish:
+     needs: [test, workspace-test]
+-    # One run at a time, in arrival order: a second release close behind the first waits for it.
+-    concurrency:
+-      group: workspace-sdk-publish
+-      cancel-in-progress: false
+     runs-on: ubuntu-26.04
+     timeout-minutes: 15
+     permissions:

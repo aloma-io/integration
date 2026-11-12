@@ -1,0 +1,14 @@
+# W17 any failed lookup of the latest version is treated like E404 (never published). Must fail: test/publish-workspace.test.mjs "T5 a failed lookup of the latest version (not E404) exits non-zero and publishes nothing"
+diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
+index 634ef89..2b73a42 100755
+--- a/.github/scripts/workspace-publish.sh
++++ b/.github/scripts/workspace-publish.sh
+@@ -27,7 +27,7 @@ NAME="$(node -p "require('./package.json').name")"
+ PKG="$(node -p "require('./package.json').version")"
+ if LATEST="$(npm view "$NAME" version 2>"$ERR")"; then
+   :
+-elif grep -q E404 "$ERR"; then
++elif true; then
+   LATEST=0.0.0
+ else
+   cat "$ERR" >&2
