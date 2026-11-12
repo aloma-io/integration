@@ -23,6 +23,6 @@ check('the test job runs in integration-sdk', jobs.test?.defaults?.run?.['workin
 check('the test job builds', runs(jobs.test).some((r) => /\byarn(@[\d.]+)? build\b/.test(r)));
 check('the test job runs the suite', runs(jobs.test).some((r) => /\byarn(@[\d.]+)? test\b/.test(r)));
 check('the publish job needs the test job', needsOf(jobs.publish).includes('test'));
-check('only the publish job publishes', Object.entries(jobs).every(([k, j]) => k === 'publish' || !runs(j).some((r) => /npm publish/.test(r))));
+check('only the publish jobs publish', Object.entries(jobs).every(([k, j]) => k === 'publish' || k === 'workspace-publish' || !runs(j).some((r) => /npm publish/.test(r))));
 
 process.exit(failed ? 1 : 0);
