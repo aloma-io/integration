@@ -74,6 +74,18 @@ jobs:
         working-directory: integration-sdk
         run: npx yarn@1.22.22 build
 
+      # The release bot cuts the tag; nothing else writes it into package.json. Tags look like 3.8.72 (older: v3.8.66).
+      - name: Set package version from the tag
+        working-directory: integration-sdk
+        run: |
+          set -e
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Tag '$GITHUB_REF_NAME' is not a plain x.y.z version" >&2
+            exit 1
+          fi
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
       - name: Publish
         working-directory: integration-sdk
         run: npm publish --access public --provenance

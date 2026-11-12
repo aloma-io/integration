@@ -1,0 +1,14 @@
+# W04-version-set-without-flag version step skips package.json write. Must fail: publish-workflow.test.mjs 3.8.72 case
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 043868b..b373c6d 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -84,7 +84,7 @@ jobs:
+             echo "Tag '$GITHUB_REF_NAME' is not a plain x.y.z version" >&2
+             exit 1
+           fi
+-          npm version "$VERSION" --no-git-tag-version --allow-same-version
++          echo "$VERSION"
+ 
+       - name: Publish
+         working-directory: integration-sdk
