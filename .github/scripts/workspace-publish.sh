@@ -85,12 +85,15 @@ case "$ACTION" in
   fail)
     echo "$REASON" >&2
     exit 1;;
+  publish)
+    # e) set the version (no commit, no tag; the target may be the version package.json already has) and publish
+    echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
+    npm version "$TARGET" --no-git-tag-version --allow-same-version
+    npm publish --access public --provenance;;
+  *)
+    echo "workspace-sdk: unknown action '$ACTION' from the decision step; nothing published" >&2
+    exit 1;;
 esac
-
-# e) set the version (no commit, no tag) and publish
-echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
-npm version "$TARGET" --no-git-tag-version
-npm publish --access public --provenance
 
 # f) read back npm's record of the new version: the skip rule needs its gitHead. A warning only, never a failure.
 if READBACK="$(npm view "$NAME@$TARGET" gitHead 2>/dev/null)"; then LOOKUP=ok; else LOOKUP=failed; READBACK=""; fi

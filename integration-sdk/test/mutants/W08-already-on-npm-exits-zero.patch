@@ -1,14 +1,14 @@
 # W08 a version already on npm exits 0 instead of failing. Must fail: test/publish-workspace.test.mjs "T3 TARGET already on npm exits non-zero"
 diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
-index 634ef89..47b54c9 100755
+index 435043f..f9f7f76 100755
 --- a/.github/scripts/workspace-publish.sh
 +++ b/.github/scripts/workspace-publish.sh
-@@ -72,7 +72,7 @@ case "$ACTION" in
+@@ -84,7 +84,7 @@ case "$ACTION" in
      exit 0;;
    fail)
      echo "$REASON" >&2
 -    exit 1;;
 +    exit 0;;
- esac
- 
- # e) set the version (no commit, no tag) and publish
+   publish)
+     # e) set the version (no commit, no tag; the target may be the version package.json already has) and publish
+     echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"

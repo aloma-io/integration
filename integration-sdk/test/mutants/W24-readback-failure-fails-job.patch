@@ -1,10 +1,10 @@
 # W24 a failed read-back after a successful publish fails the job. Must fail: test/publish-workspace.test.mjs "T14 a read-back that fails after the publish: exit 0 with a warning, never red"
 diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
-index f3e430a..2f7ba99 100755
+index 435043f..bfd17fd 100755
 --- a/.github/scripts/workspace-publish.sh
 +++ b/.github/scripts/workspace-publish.sh
-@@ -93,5 +93,5 @@ npm version "$TARGET" --no-git-tag-version
- npm publish --access public --provenance
+@@ -96,5 +96,5 @@ case "$ACTION" in
+ esac
  
  # f) read back npm's record of the new version: the skip rule needs its gitHead. A warning only, never a failure.
 -if READBACK="$(npm view "$NAME@$TARGET" gitHead 2>/dev/null)"; then LOOKUP=ok; else LOOKUP=failed; READBACK=""; fi

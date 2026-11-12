@@ -176,6 +176,11 @@ case "$1" in
         cat "$FAKE_NPM_DIR/latest"; exit 0;;
     esac;;
   version)
+    # like the real npm: setting the version package.json already has is refused unless --allow-same-version is given
+    cur="$(sed -n 's/.*"version": "\\([^"]*\\)".*/\\1/p' package.json)"
+    if [ "$cur" = "$2" ]; then
+      case " $* " in *" --allow-same-version "*) ;; *) echo "npm error Version not changed" >&2; exit 1;; esac
+    fi
     sed "s/\\"version\\": \\"[^\\"]*\\"/\\"version\\": \\"$2\\"/" package.json > package.json.new && mv package.json.new package.json
     exit 0;;
   publish)
@@ -194,8 +199,8 @@ exit 0
 // opts: readbackError, githeadError (npm view <name> gitHead fails), release (the tag being released instead of the last one), pkg, latest (undefined = never published), exists (versions on npm), viewError, targetError, latestError, latestError, changed (the second commit touches
 // workspace-sdk/), third, gitHead ('none' | 'first' | 'second' | 'unknown' = a commit that is not in the checkout |
 // 'garbage'), recordGitHead (publish records the tag's commit), staleLatest (publish does not move latest), runs (times the
-// script runs for the same tag; the result is the last run), previousTag (false = 3.0.0 is not tagged)
-function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latestError, githeadError, readbackError, release, changed = true, third = false, gitHead = 'none', recordGitHead = false, staleLatest = false, runs = 1, previousTag = true}) {
+// script runs for the same tag; the result is the last run), previousTag (false = 3.0.0 is not tagged), stubAction (the decision step answers this action word instead of the real one)
+function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latestError, githeadError, readbackError, release, changed = true, third = false, gitHead = 'none', recordGitHead = false, staleLatest = false, runs = 1, previousTag = true, stubAction}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ws-publish-'));
   const repoDir = path.join(dir, 'repo');
   const fake = path.join(dir, 'fake');
@@ -242,11 +247,19 @@ function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latest
   const callsFile = path.join(fake, 'calls');
   const readCalls = () => (fs.existsSync(callsFile) ? fs.readFileSync(callsFile, 'utf8').split('\n').filter(Boolean) : []);
   const base = Object.assign({}, process.env);
+  let scriptPath = script;
+  if (stubAction) {
+    const stubDir = path.join(dir, 'stub');
+    fs.mkdirSync(stubDir);
+    scriptPath = path.join(stubDir, 'workspace-publish.sh');
+    fs.copyFileSync(script, scriptPath);
+    fs.writeFileSync(path.join(stubDir, 'workspace-publish-decision.mjs'), `const [, , cmd, a] = process.argv;\nif (cmd === 'target') console.log(a); else console.log(${JSON.stringify(stubAction)} + '\\nstub reason');\n`);
+  }
   let r;
   let before = 0;
   for (let i = 0; i < runs; i++) {
     before = readCalls().length;
-    r = spawnSync('bash', [script], {
+    r = spawnSync('bash', [scriptPath], {
       cwd: path.join(repoDir, 'workspace-sdk'),
       encoding: 'utf8',
       env: Object.assign({}, base, {PATH: `${fake}:${base.PATH}`, FAKE_NPM_DIR: fake, GITHUB_REF_NAME: tag}),
@@ -364,6 +377,17 @@ if (fs.existsSync(script)) {
   // E404 for a missing version, as the real npm answers (stderr, exit 1)
   const t11 = run({pkg: '2.0.0', latest: '2.0.3', exists: ['2.0.3']});
   check('T11 a target version missing on npm (E404, exit 1) is published', publishedExactly(t11, '2.0.4'));
+
+  // the version a person put into package.json is also the target: npm refuses that without --allow-same-version
+  const t15 = run({pkg: '2.0.4', latest: '2.0.3'});
+  check('T15 TARGET equal to the version in package.json publishes (same-version bump)', publishedExactly(t15, '2.0.4'));
+  check('T15 and the version step passes --allow-same-version', t15.versionSet.every((c) => c.includes('--allow-same-version')));
+  const t15b = run({pkg: '2.0.0', latest: undefined});
+  check('T15 a first publish at the version package.json has publishes', publishedExactly(t15b, '2.0.0'));
+
+  // an action word the script does not know fails red and publishes nothing
+  const t16 = run({pkg: '2.0.0', latest: '2.0.3', stubAction: 'frobnicate'});
+  check('T16 an unknown action exits non-zero, publishes nothing and names the value', t16.status !== 0 && t16.published.length === 0 && t16.versionSet.length === 0 && /frobnicate/.test(t16.out));
 
   const t7 = run({pkg: '2.10.0', latest: '2.9.0'});
   check('T7 numeric comparison: PKG 2.10.0 is higher than LATEST 2.9.0', publishedExactly(t7, '2.10.0'));
