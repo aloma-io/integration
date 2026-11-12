@@ -28,7 +28,7 @@
     "./package.json": "./package.json"
   },
   "dependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "commander": "^12",
     "jshint": "^2",
     "lodash": "4.18.0",

@@ -35,17 +35,27 @@ check('the pull-request CI matrix can be read', prMatrix.length > 0 && prMatrix.
 const lowest = Math.min(...matrix);
 const prLowest = Math.min(...prMatrix);
 
+let typesChecked = 0;
 for (const [label, {pkg, readme}] of Object.entries(packages)) {
-  const range = JSON.parse(read(pkg)).engines?.node;
+  const json = JSON.parse(read(pkg));
+  const range = json.engines?.node;
   const major = typeof range === 'string' ? Number(range.match(/^>=\s*(\d+)(\.\d+){0,2}$/)?.[1]) : NaN;
   check(`${label}: engines.node is declared as ">=<major>"`, Number.isInteger(major), String(range));
   if (!Number.isInteger(major)) continue;
   check(`${label}: the lowest matrix Node (${lowest}) satisfies engines ${range}`, lowest >= major, `lowest ${lowest}`);
   check(`${label}: the lowest pull-request matrix Node (${prLowest}) satisfies engines ${range}`, prLowest >= major, `lowest ${prLowest}`);
   check(`${label}: engines major ${major} appears in the full matrix`, matrix.includes(major), `matrix ${matrix}`);
+  if (label === 'integration-sdk' || label === 'workspace-sdk') {
+    const spec = {...json.devDependencies, ...json.dependencies}['@types/node'];
+    const typesMajor = typeof spec === 'string' ? Number(spec.match(/^[\^~]?(\d+)/)?.[1]) : NaN;
+    typesChecked++;
+    check(`${label}: @types/node major (${spec}) is not below engines major ${major}`, typesMajor >= major, String(spec));
+  }
   if (readme) {
     check(`${label}: README states Node ${major} or later`, new RegExp(`Node(\\.js)? ${major} or later`).test(read(readme)), readme);
   }
 }
+
+check('@types/node is checked in both SDK package.json files', typesChecked === 2, `checked ${typesChecked}`);
 
 process.exit(failed ? 1 : 0);
