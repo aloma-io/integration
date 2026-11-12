@@ -1,0 +1,15 @@
+# N04 the engines field is removed from the integration-sdk connector template package.json. Must fail: test/node-support.test.mjs
+diff --git a/integration-sdk/template/connector/package.json b/integration-sdk/template/connector/package.json
+index bba9096..c91e390 100755
+--- a/integration-sdk/template/connector/package.json
++++ b/integration-sdk/template/connector/package.json
+@@ -6,9 +6,6 @@
+   "connectorId": "TODO",
+   "license": "Apache-2.0",
+   "type": "module",
+-  "engines": {
+-    "node": ">=22"
+-  },
+   "scripts": {
+     "start": "node build/index.mjs",
+     "dev": "./node_modules/typescript/bin/tsc --watch",

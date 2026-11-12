@@ -1,0 +1,15 @@
+# N01 the engines field is removed from integration-sdk/package.json. Must fail: test/node-support.test.mjs "integration-sdk: engines.node is declared as \">=<major>\""
+diff --git a/integration-sdk/package.json b/integration-sdk/package.json
+index 6356e33..2b89f3e 100644
+--- a/integration-sdk/package.json
++++ b/integration-sdk/package.json
+@@ -5,9 +5,6 @@
+   "author": "aloma.io",
+   "license": "Apache-2.0",
+   "type": "module",
+-  "engines": {
+-    "node": ">=22"
+-  },
+   "bin": {
+     "aloma-integration-sdk": "./build/cli.mjs"
+   },

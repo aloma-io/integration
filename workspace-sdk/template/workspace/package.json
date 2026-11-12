@@ -5,6 +5,9 @@
   "author": "",
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node build/index.mjs",
     "dev": "./node_modules/typescript/bin/tsc --watch",
@@ -14,11 +17,11 @@
     "format": "yarn prettier --write src/"
   },
   "dependencies": {
-    "@aloma.io/workspace-sdk": "^0",
+    "@aloma.io/workspace-sdk": "^2",
     "typescript": "^5"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "mocha": "^10",
     "prettier": "^3"
   }

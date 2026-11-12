@@ -1,0 +1,14 @@
+# N08 the full CI matrix gains Node 20 and the pull-request list gains it too. Must fail: test/node-support.test.mjs
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index a7e6527..d9df803 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -26,7 +26,7 @@ jobs:
+     strategy:
+       fail-fast: false
+       matrix:
+-        node: ${{ fromJSON(github.event_name == 'pull_request' && '["22"]' || '["22","24","26"]') }}
++        node: ${{ fromJSON(github.event_name == 'pull_request' && '["20","22"]' || '["20","22","24","26"]') }}
+     defaults:
+       run:
+         working-directory: integration-sdk

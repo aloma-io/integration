@@ -1,0 +1,15 @@
+# N13 a package declares engines >=22 while its @types/node major is 18. Must fail: test/types-node-major.test.mjs
+diff --git a/integration-sdk/examples/hello-world/package.json b/integration-sdk/examples/hello-world/package.json
+index 7b656df..7327847 100755
+--- a/integration-sdk/examples/hello-world/package.json
++++ b/integration-sdk/examples/hello-world/package.json
+@@ -6,6 +6,9 @@
+   "connectorId": "TODO",
+   "license": "Apache-2.0",
+   "type": "module",
++  "engines": {
++    "node": ">=22"
++  },
+   "scripts": {
+     "start": "node build/index.mjs",
+     "dev": "./node_modules/typescript/bin/tsc --watch",

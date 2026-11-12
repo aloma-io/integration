@@ -1,0 +1,13 @@
+# N06 the 'Requires Node 22 or later.' sentence is removed from integration-sdk/README.md. Must fail: test/node-support.test.mjs
+diff --git a/integration-sdk/README.md b/integration-sdk/README.md
+index 11b9c30..f6c602d 100644
+--- a/integration-sdk/README.md
++++ b/integration-sdk/README.md
+@@ -15,7 +15,6 @@ A powerful toolkit for generating production-ready Aloma connectors from OpenAPI
+ 
+ ## 🚀 Quick Start
+ 
+-Requires Node 22 or later.
+ 
+ ### 1. Create from scratch
+ ```bash

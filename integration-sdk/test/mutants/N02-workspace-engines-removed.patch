@@ -1,0 +1,15 @@
+# N02 the engines field is removed from workspace-sdk/package.json. Must fail: test/node-support.test.mjs
+diff --git a/workspace-sdk/package.json b/workspace-sdk/package.json
+index d5ff787..804b085 100755
+--- a/workspace-sdk/package.json
++++ b/workspace-sdk/package.json
+@@ -5,9 +5,6 @@
+   "author": "aloma.io",
+   "license": "Apache-2.0",
+   "type": "module",
+-  "engines": {
+-    "node": ">=22"
+-  },
+   "bin": {
+     "aloma-workspace-sdk": "./build/cli.mjs"
+   },

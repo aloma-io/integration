@@ -1,0 +1,14 @@
+# N12 @types/node in the integration template goes back to ^20. Must fail: test/types-node-major.test.mjs
+diff --git a/integration-sdk/template/connector/package.json b/integration-sdk/template/connector/package.json
+index 1d0aa37..bba9096 100755
+--- a/integration-sdk/template/connector/package.json
++++ b/integration-sdk/template/connector/package.json
+@@ -22,7 +22,7 @@
+     "typescript": "^5"
+   },
+   "devDependencies": {
+-    "@types/node": "^22",
++    "@types/node": "^20",
+     "mocha": "^10",
+     "prettier": "^3"
+   }

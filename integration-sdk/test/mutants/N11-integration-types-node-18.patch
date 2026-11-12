@@ -1,0 +1,14 @@
+# N11 @types/node in integration-sdk/package.json goes back to ^18. Must fail: test/node-support.test.mjs
+diff --git a/integration-sdk/package.json b/integration-sdk/package.json
+index d5c8aff..cc768b9 100644
+--- a/integration-sdk/package.json
++++ b/integration-sdk/package.json
+@@ -39,7 +39,7 @@
+   },
+   "dependencies": {
+     "@paralleldrive/cuid2": "^2",
+-    "@types/node": "^22",
++    "@types/node": "^18",
+     "commander": "^12",
+     "comment-parser": "^1.4.1",
+     "dotenv": "^16",

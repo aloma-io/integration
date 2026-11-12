@@ -1,0 +1,14 @@
+# N10 @types/node in workspace-sdk/package.json goes back to ^20. Must fail: test/node-support.test.mjs
+diff --git a/workspace-sdk/package.json b/workspace-sdk/package.json
+index d5ff787..e21db10 100755
+--- a/workspace-sdk/package.json
++++ b/workspace-sdk/package.json
+@@ -28,7 +28,7 @@
+     "./package.json": "./package.json"
+   },
+   "dependencies": {
+-    "@types/node": "^22",
++    "@types/node": "^20",
+     "commander": "^12",
+     "jshint": "^2",
+     "lodash": "4.18.0",
