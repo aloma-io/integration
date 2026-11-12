@@ -1,0 +1,13 @@
+# H03 the descriptor writer no longer checks that the source is not empty. Must fail: test/cli-build-extract.test.mjs "the descriptor writer refuses an empty source with "source cannot be empty" and writes nothing"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index d9d7704..554c9d9 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -250,7 +250,6 @@ ${nextSteps}`);
+ 
+ class Extractor {
+   async extract(source, target) {
+-    notEmpty(source, 'source');
+ 
+     fs.readFileSync(source);
+     const {text, methods} = await parseTypes(source);
