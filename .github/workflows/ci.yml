@@ -21,7 +21,7 @@ permissions:
 jobs:
   integration_sdk:
     name: integration_sdk (node ${{ matrix.node }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -53,7 +53,7 @@ jobs:
         run: npx yarn@1.22.22 test
 
   workspace_sdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     defaults:
       run:
@@ -81,7 +81,7 @@ jobs:
     name: ci-passed
     needs: [integration_sdk, workspace_sdk]
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Require every job to have succeeded
