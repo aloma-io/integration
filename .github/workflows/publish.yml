@@ -84,6 +84,11 @@ jobs:
             echo "Tag '$GITHUB_REF_NAME' is not a plain x.y.z version" >&2
             exit 1
           fi
+          CURRENT=$(node -p "require('./package.json').version")
+          if ! node -e 'const n = (v) => v.split("-")[0].split(".").map(Number); const [t, c] = [n(process.argv[1]), n(process.argv[2])]; process.exit((t[0] - c[0] || t[1] - c[1] || t[2] - c[2]) < 0 ? 1 : 0)' "$VERSION" "$CURRENT"; then
+            echo "Tag version $VERSION is lower than the version $CURRENT in package.json" >&2
+            exit 1
+          fi
           npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - name: Publish
