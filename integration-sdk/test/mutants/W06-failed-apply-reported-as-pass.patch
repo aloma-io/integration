@@ -1,0 +1,14 @@
+# W06 a failing apply is reported as a pass. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+index f38dec1..044059a 100644
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -11,7 +11,7 @@ export function checkPatches({patchDir, root}) {
+   for (const patch of patches) {
+     const r = spawnSync('git', ['apply', '--check', path.join(patchDir, patch)], {cwd: root, encoding: 'utf8'});
+     if (r.error) return {checked: 0, failures: [], problem: `git could not be run: ${r.error.message}`};
+-    if (r.status !== 0) {
++    if (false) {
+       const error = (r.stderr || '').split('\n').find((l) => l.trim()) || `git exited with ${r.status}`;
+       failures.push({patch, error});
+     }

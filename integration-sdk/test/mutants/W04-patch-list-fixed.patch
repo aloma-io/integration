@@ -1,0 +1,14 @@
+# W04 the patch list is a fixed short list instead of the directory. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+index f38dec1..466a408 100644
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -5,7 +5,7 @@ import fs from 'node:fs';
+ import path from 'node:path';
+ 
+ export function checkPatches({patchDir, root}) {
+-  const patches = fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch')).sort();
++  const patches = ['W01-publish-needs-test-removed.patch'];
+   if (!patches.length) return {checked: 0, failures: [], problem: `no .patch files in ${patchDir}`};
+   const failures = [];
+   for (const patch of patches) {

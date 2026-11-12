@@ -1,0 +1,13 @@
+# W05 an empty patch directory is no longer a problem. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+index f38dec1..36de19b 100644
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -6,7 +6,6 @@ import path from 'node:path';
+ 
+ export function checkPatches({patchDir, root}) {
+   const patches = fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch')).sort();
+-  if (!patches.length) return {checked: 0, failures: [], problem: `no .patch files in ${patchDir}`};
+   const failures = [];
+   for (const patch of patches) {
+     const r = spawnSync('git', ['apply', '--check', path.join(patchDir, patch)], {cwd: root, encoding: 'utf8'});

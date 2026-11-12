@@ -8,6 +8,6 @@ index 9af5cd3..b53f4dc 100644
  
    publish:
 -    needs: test
-     runs-on: ubuntu-latest
+     runs-on: ubuntu-26.04
+     timeout-minutes: 15
      steps:
-       - uses: actions/checkout@v6

@@ -1,0 +1,14 @@
+# W02 the publish workflow runner image changes, so the W01 patch no longer applies. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index 5f2e9c6..757f7ee 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -40,7 +40,7 @@ jobs:
+ 
+   publish:
+     needs: test
+-    runs-on: ubuntu-26.04
++    runs-on: ubuntu-latest
+     timeout-minutes: 15
+     steps:
+       - uses: actions/checkout@v6
