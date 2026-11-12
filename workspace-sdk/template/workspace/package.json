@@ -5,6 +5,9 @@
   "author": "",
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node build/index.mjs",
     "dev": "./node_modules/typescript/bin/tsc --watch",

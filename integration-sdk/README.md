@@ -15,6 +15,8 @@ A powerful toolkit for generating production-ready Aloma connectors from OpenAPI
 
 ## 🚀 Quick Start
 
+Requires Node 22 or later.
+
 ### 1. Create from scratch
 ```bash
 npx @aloma.io/integration-sdk@latest create connectorName --connector-id 1234

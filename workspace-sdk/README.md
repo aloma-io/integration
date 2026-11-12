@@ -2,6 +2,8 @@
 
 ## Creating a new workspace
 
+Requires Node 22 or later.
+
 You can simply create a new repository via `npx @aloma.io/workspace-sdk@latest create name` to manage workspace assets in git.
 
 ## Release notes

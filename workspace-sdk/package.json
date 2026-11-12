@@ -5,6 +5,9 @@
   "author": "aloma.io",
   "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "bin": {
     "aloma-workspace-sdk": "./build/cli.mjs"
   },
