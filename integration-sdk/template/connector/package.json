@@ -22,7 +22,7 @@
     "typescript": "^5"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^22",
     "mocha": "^10",
     "prettier": "^3"
   }
