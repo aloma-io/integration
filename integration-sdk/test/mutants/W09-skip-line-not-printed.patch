@@ -1,13 +1,13 @@
-# W09 the unchanged-workspace case does not print the skip line. Must fail: test/publish-workspace.test.mjs "T4 and prints the skip line naming the previous tag"
+# W09 the identical-content case does not print the skip line. Must fail: test/publish-workspace.test.mjs "T4 and prints the skip line naming the gitHead and the version"
 diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
-index 26fe532..bca1e8e 100755
+index 634ef89..e269768 100755
 --- a/.github/scripts/workspace-publish.sh
 +++ b/.github/scripts/workspace-publish.sh
-@@ -20,7 +20,6 @@ CHANGED=1
- if PREVIOUS="$(git -C "$ROOT" describe --tags --abbrev=0 "$TAG^" 2>/dev/null)"; then
-   # b) the only skip
-   if [ -z "$(git -C "$ROOT" diff --name-only "$PREVIOUS" "$TAG" -- "$DIR/")" ]; then
--    echo "workspace-sdk: no changes under $DIR/ since $PREVIOUS; publish skipped"
-     echo "::notice::workspace-sdk: no changes under $DIR/ since $PREVIOUS; publish skipped"
-     exit 0
-   fi
+@@ -67,7 +67,6 @@ if [ "$EXISTING" = "$TARGET" ]; then ONNPM=yes; fi
+ case "$ACTION" in
+   skip)
+     MSG="workspace-sdk: $DIR/ at $TAG is identical to ${GITHEAD:0:12}, the commit $LATEST was built from; publish skipped"
+-    echo "$MSG"
+     echo "::notice::$MSG"
+     exit 0;;
+   fail)

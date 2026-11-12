@@ -1,14 +1,14 @@
 # W08 a version already on npm exits 0 instead of failing. Must fail: test/publish-workspace.test.mjs "T3 TARGET already on npm exits non-zero"
 diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
-index 26fe532..375c782 100755
+index 634ef89..47b54c9 100755
 --- a/.github/scripts/workspace-publish.sh
 +++ b/.github/scripts/workspace-publish.sh
-@@ -81,7 +81,7 @@ if ! EXISTING="$(npm view "$NAME@$TARGET" version 2>"$ERR")"; then
- fi
- if [ "$EXISTING" = "$TARGET" ]; then
-   echo "workspace-sdk@$TARGET is already on npm; refusing to skip"
--  exit 1
-+  exit 0
- fi
+@@ -72,7 +72,7 @@ case "$ACTION" in
+     exit 0;;
+   fail)
+     echo "$REASON" >&2
+-    exit 1;;
++    exit 0;;
+ esac
  
  # e) set the version (no commit, no tag) and publish

@@ -123,8 +123,9 @@ jobs:
       - name: Test
         run: npx yarn@1.22.22 test
 
-  # Publishes workspace-sdk when it changed since the previous tag (one tag counter serves two packages; the version is
-  # not the tag): the script raises the patch version itself and fails red when it cannot publish.
+  # Publishes workspace-sdk unless its content is identical to the build of the latest published version (one tag counter
+  # serves two packages; the version is not the tag): the script raises the patch version itself and fails red when it
+  # cannot publish.
   workspace-publish:
     needs: [test, workspace-test]
     runs-on: ubuntu-26.04
@@ -144,17 +145,9 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           package-manager-cache: false
 
-      - name: Install npm@latest globally via tarball (bypasses self-replace MODULE_NOT_FOUND)
-        run: |
-          set -e
-          NPM_VERSION=$(curl -fsSL https://registry.npmjs.org/npm/latest | python3 -c 'import sys,json; print(json.load(sys.stdin)["version"])')
-          echo "Installing npm $NPM_VERSION via tarball"
-          TARBALL_DIR=$(mktemp -d)
-          curl -fsSL "https://registry.npmjs.org/npm/-/npm-${NPM_VERSION}.tgz" | tar xz -C "$TARBALL_DIR"
-          NPM_GLOBAL_PATH=$(node -p "require('path').resolve(process.execPath, '../../lib/node_modules')")
-          echo "Replacing $NPM_GLOBAL_PATH/npm"
-          rm -rf "$NPM_GLOBAL_PATH/npm"
-          mv "$TARBALL_DIR/package" "$NPM_GLOBAL_PATH/npm"
+      # Pinned: this job holds id-token: write. 11.5.1 is the first npm that publishes with the OIDC token.
+      - name: Install npm 11.5.1
+        run: npm install --global npm@11.5.1
 
       - name: Print npm version (diagnostic)
         run: npm --version
@@ -167,8 +160,8 @@ jobs:
         working-directory: workspace-sdk
         run: npx yarn@1.22.22 build
 
-      # Raises workspace-sdk's patch version and publishes it when files under workspace-sdk/ changed since the previous
-      # tag; fails when it cannot publish; says so in the log and skips when workspace-sdk/ did not change.
+      # Raises workspace-sdk's patch version and publishes it when workspace-sdk/ differs from the commit the latest published
+      # version was built from; fails when it cannot publish; says so in the log and skips when it is identical.
       - name: Publish workspace-sdk
         working-directory: workspace-sdk
         run: bash "$GITHUB_WORKSPACE/.github/scripts/workspace-publish.sh"

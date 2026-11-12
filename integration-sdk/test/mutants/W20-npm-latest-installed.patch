@@ -1,0 +1,14 @@
+# W20 the publish job installs npm@latest again. Must fail: test/publish-workspace.test.mjs "the workspace publish job installs an exact npm version, not npm@latest"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index fb9fa73..f4b95ef 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -147,7 +147,7 @@ jobs:
+ 
+       # Pinned: this job holds id-token: write. 11.5.1 is the first npm that publishes with the OIDC token.
+       - name: Install npm 11.5.1
+-        run: npm install --global npm@11.5.1
++        run: npm install --global npm@latest
+ 
+       - name: Print npm version (diagnostic)
+         run: npm --version
