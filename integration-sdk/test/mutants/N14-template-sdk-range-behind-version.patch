@@ -1,0 +1,13 @@
+# N14 the integration template depends on the SDK ^3 again while the package is 4.x. Must fail: test/template-sdk-range.test.mjs
+diff --git a/integration-sdk/template/connector/package.json b/integration-sdk/template/connector/package.json
+--- a/integration-sdk/template/connector/package.json
++++ b/integration-sdk/template/connector/package.json
+@@ -18,7 +18,7 @@
+     "generate-keys": "node node_modules/@aloma.io/integration-sdk/build/internal/util/jwe/cli.mjs"
+   },
+   "dependencies": {
+-    "@aloma.io/integration-sdk": "^4",
++    "@aloma.io/integration-sdk": "^3",
+     "typescript": "^5"
+   },
+   "devDependencies": {

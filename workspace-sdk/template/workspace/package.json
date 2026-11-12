@@ -17,7 +17,7 @@
     "format": "yarn prettier --write src/"
   },
   "dependencies": {
-    "@aloma.io/workspace-sdk": "^0",
+    "@aloma.io/workspace-sdk": "^2",
     "typescript": "^5"
   },
   "devDependencies": {

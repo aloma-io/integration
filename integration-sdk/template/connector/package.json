@@ -18,7 +18,7 @@
     "generate-keys": "node node_modules/@aloma.io/integration-sdk/build/internal/util/jwe/cli.mjs"
   },
   "dependencies": {
-    "@aloma.io/integration-sdk": "^3",
+    "@aloma.io/integration-sdk": "^4",
     "typescript": "^5"
   },
   "devDependencies": {
