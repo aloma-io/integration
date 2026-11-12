@@ -6,10 +6,12 @@
 # the repository root (default workspace-sdk).
 #
 # - Skip only when the content of the package folder at the tag is identical to its content at the commit the latest
-#   published version was built from (npm's gitHead). No gitHead, a gitHead not in the checkout, or a failed lookup
-#   (other than E404) counts as changed.
+#   published version was built from (npm's gitHead). No gitHead or a gitHead not in the checkout counts as
+#   changed; a failed lookup (other than E404) fails the job.
 # - Otherwise the patch version is raised from the latest one on npm and published; a version a person put into
 #   package.json on purpose (higher than the latest on npm) is published as it is.
+# - An older release after a newer one fails: when npm's gitHead is neither the tag's commit nor an ancestor of it.
+# - After a successful publish the gitHead npm recorded is read back; a missing one is a warning (exit stays 0).
 # - Every other outcome that does not publish exits non-zero, so the job goes red.
 set -euo pipefail
 
@@ -39,12 +41,22 @@ TARGET="$(node "$DECISION" target "$PKG" "$LATEST")"
 # b) the commit the latest version was built from, and whether the folder is the same there
 GITHEAD=""
 if [ "$LATEST" != 0.0.0 ]; then
-  GITHEAD="$(npm view "$NAME" gitHead 2>/dev/null || true)"
+  if ! GITHEAD="$(npm view "$NAME" gitHead 2>"$ERR")"; then
+    if ! grep -q E404 "$ERR"; then
+      cat "$ERR" >&2
+      echo "workspace-sdk: cannot read the gitHead of $NAME from npm" >&2
+      exit 1
+    fi
+    GITHEAD=""
+  fi
 fi
+TAGCOMMIT="$(git -C "$ROOT" rev-parse -q --verify "$TAG^{commit}")"
 KNOWN=no
 IDENTICAL=no
+REACHABLE=no
 if [[ "$GITHEAD" =~ ^[0-9a-f]{40}$ ]] && git -C "$ROOT" cat-file -e "$GITHEAD^{commit}" 2>/dev/null; then
   KNOWN=yes
+  if git -C "$ROOT" merge-base --is-ancestor "$GITHEAD" "$TAGCOMMIT"; then REACHABLE=yes; fi
   BUILT="$(git -C "$ROOT" rev-parse -q --verify "$GITHEAD:$DIR" 2>/dev/null || true)"
   NOW="$(git -C "$ROOT" rev-parse -q --verify "$TAG:$DIR" 2>/dev/null || true)"
   if [ -n "$BUILT" ] && [ "$BUILT" = "$NOW" ]; then IDENTICAL=yes; fi
@@ -63,7 +75,7 @@ fi
 if [ "$EXISTING" = "$TARGET" ]; then ONNPM=yes; fi
 
 # d) decide
-{ read -r ACTION; read -r REASON; } < <(node "$DECISION" decide "$IDENTICAL" "$KNOWN" "$PKG" "$LATEST" "$ONNPM")
+{ read -r ACTION; read -r REASON; } < <(node "$DECISION" decide "$IDENTICAL" "$KNOWN" "$PKG" "$LATEST" "$ONNPM" "$REACHABLE" "$GITHEAD" "$TAGCOMMIT")
 case "$ACTION" in
   skip)
     MSG="workspace-sdk: $DIR/ at $TAG is identical to ${GITHEAD:0:12}, the commit $LATEST was built from; publish skipped"
@@ -79,3 +91,7 @@ esac
 echo "workspace-sdk: publishing $NAME@$TARGET (package.json $PKG, latest on npm $LATEST; $REASON)"
 npm version "$TARGET" --no-git-tag-version
 npm publish --access public --provenance
+
+# f) read back npm's record of the new version: the skip rule needs its gitHead. A warning only, never a failure.
+if READBACK="$(npm view "$NAME@$TARGET" gitHead 2>/dev/null)"; then LOOKUP=ok; else LOOKUP=failed; READBACK=""; fi
+node "$DECISION" marker "workspace-sdk" "$TARGET" "$LOOKUP" "$READBACK"

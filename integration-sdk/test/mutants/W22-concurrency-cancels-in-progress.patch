@@ -1,0 +1,14 @@
+# W22 the workspace publish concurrency cancels a run in progress. Must fail: test/publish-workspace.test.mjs "the workspace publish concurrency does not cancel a run in progress (cancel-in-progress: false)"
+diff --git a/.github/workflows/publish.yml b/.github/workflows/publish.yml
+index e46d712..fee679b 100644
+--- a/.github/workflows/publish.yml
++++ b/.github/workflows/publish.yml
+@@ -131,7 +131,7 @@ jobs:
+     # One run at a time, in arrival order: a second release close behind the first waits for it.
+     concurrency:
+       group: workspace-sdk-publish
+-      cancel-in-progress: false
++      cancel-in-progress: true
+     runs-on: ubuntu-26.04
+     timeout-minutes: 15
+     permissions:

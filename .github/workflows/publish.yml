@@ -128,6 +128,10 @@ jobs:
   # cannot publish.
   workspace-publish:
     needs: [test, workspace-test]
+    # One run at a time, in arrival order: a second release close behind the first waits for it.
+    concurrency:
+      group: workspace-sdk-publish
+      cancel-in-progress: false
     runs-on: ubuntu-26.04
     timeout-minutes: 15
     permissions:
@@ -152,9 +156,10 @@ jobs:
       - name: Print npm version (diagnostic)
         run: npm --version
 
+      # No dependency install scripts in a job that can mint a publish token; the build is plain tsc.
       - name: Install dependencies
         working-directory: workspace-sdk
-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines --ignore-scripts
 
       - name: Build
         working-directory: workspace-sdk

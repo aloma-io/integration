@@ -1,12 +1,12 @@
 # W15 the skip rule compares with the previous tag instead of the latest published build (a failed publish is lost). Must fail: test/publish-workspace.test.mjs "T6 a release that does not touch workspace-sdk/, after a red release that did, publishes the lost change"
 diff --git a/.github/scripts/workspace-publish.sh b/.github/scripts/workspace-publish.sh
-index 634ef89..5f509c5 100755
+index f3e430a..34b04bf 100755
 --- a/.github/scripts/workspace-publish.sh
 +++ b/.github/scripts/workspace-publish.sh
-@@ -45,7 +45,7 @@ KNOWN=no
- IDENTICAL=no
+@@ -57,7 +57,7 @@ REACHABLE=no
  if [[ "$GITHEAD" =~ ^[0-9a-f]{40}$ ]] && git -C "$ROOT" cat-file -e "$GITHEAD^{commit}" 2>/dev/null; then
    KNOWN=yes
+   if git -C "$ROOT" merge-base --is-ancestor "$GITHEAD" "$TAGCOMMIT"; then REACHABLE=yes; fi
 -  BUILT="$(git -C "$ROOT" rev-parse -q --verify "$GITHEAD:$DIR" 2>/dev/null || true)"
 +  BUILT="$(git -C "$ROOT" rev-parse -q --verify "$(git -C "$ROOT" describe --tags --abbrev=0 "$TAG^"):$DIR" 2>/dev/null || true)"
    NOW="$(git -C "$ROOT" rev-parse -q --verify "$TAG:$DIR" 2>/dev/null || true)"

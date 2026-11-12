@@ -1,9 +1,9 @@
 # W07 the patch bump becomes a minor bump. Must fail: test/publish-workspace.test.mjs "T1 a change under workspace-sdk/ with LATEST 2.0.3 and PKG 2.0.0 publishes 2.0.4"
 diff --git a/.github/scripts/workspace-publish-decision.mjs b/.github/scripts/workspace-publish-decision.mjs
-index be0321d..2df7453 100644
+index c482a84..dc63192 100644
 --- a/.github/scripts/workspace-publish-decision.mjs
 +++ b/.github/scripts/workspace-publish-decision.mjs
-@@ -28,7 +28,7 @@ export function nextVersion(pkg, latest) {
+@@ -30,7 +30,7 @@ export function nextVersion(pkg, latest) {
    for (const v of [pkg, latest]) if (!PLAIN.test(v)) throw new Error(`'${v}' is not a plain major.minor.patch version`);
    if (isHigher(pkg, latest)) return pkg;
    const [major, minor, patch] = parts(latest);
@@ -11,4 +11,4 @@ index be0321d..2df7453 100644
 +  return `${major}.${minor + 1}.${patch}`;
  }
  
- export function decide({treeIdentical, gitHeadKnown, pkg, latest, targetOnNpm}) {
+ export function decide({treeIdentical, gitHeadKnown, gitHeadReachable, gitHead, tagCommit, pkg, latest, targetOnNpm}) {

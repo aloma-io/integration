@@ -91,6 +91,13 @@ check('only the two publish jobs publish', Object.keys(jobs).every((k) => hasPub
 check('every workspace job has timeout-minutes and an explicit ubuntu image', [wsTest, wsPublish].every((j) => /^ {4}timeout-minutes: \d+\s*$/m.test(text(j)) && /^ {4}runs-on: ubuntu-\d\d\.\d\d\s*$/m.test(text(j))));
 check('the workspace publish job installs an exact npm version, not npm@latest', /^\s+run: npm install --global npm@\d+\.\d+\.\d+\s*$/m.test(text(wsPublish)) && !/npm@latest|npm\/latest|registry\.npmjs\.org\/npm\//.test(text(wsPublish)));
 
+// Runs queue one after the other, so two releases close together cannot drop the second one's workspace change.
+check('the workspace publish job has a concurrency group', /^ {4}concurrency:\s*\n {6}group: \S+\s*$/m.test(text(wsPublish)));
+check('the workspace publish concurrency does not cancel a run in progress (cancel-in-progress: false)', /^ {6}cancel-in-progress: false\s*$/m.test(text(wsPublish)) && !/cancel-in-progress: true/.test(text(wsPublish)));
+// The job can mint an npm publish token: dependency install scripts do not run in it.
+const installStep = stepsOf(wsPublish).find((st) => /install --frozen-lockfile/.test(st));
+check('the workspace publish job installs with a frozen lockfile and scripts disabled', /install --frozen-lockfile\b.*--ignore-scripts|install --ignore-scripts\b.*--frozen-lockfile/.test(installStep ?? ''));
+
 // (c) the version does not come from the tag
 check('the workspace version does not come from the tag in the workflow', !/GITHUB_REF|github\.ref|ref_name/.test(text(wsPublish)));
 
@@ -103,7 +110,9 @@ check('the integration-sdk publish job is untouched by the workspace skip rule',
 // (e) the decision function, directly
 const decisionFile = path.join(repo, '.github/scripts/workspace-publish-decision.mjs');
 const {decide, nextVersion, isHigher} = await import(pathToFileURL(decisionFile).href);
-const D = (o) => decide({treeIdentical: false, gitHeadKnown: true, pkg: '2.0.0', latest: '2.0.3', targetOnNpm: false, ...o});
+const A = 'a'.repeat(40);
+const B = 'b'.repeat(40);
+const D = (o) => decide({treeIdentical: false, gitHeadKnown: true, gitHeadReachable: true, gitHead: A, tagCommit: B, pkg: '2.0.0', latest: '2.0.3', targetOnNpm: false, ...o});
 check('D1 changed content publishes the latest with the patch raised', D({}).action === 'publish' && D({}).target === '2.0.4');
 check('D2 a package.json version higher than latest is published as it is', D({pkg: '2.1.0'}).target === '2.1.0' && D({pkg: '2.1.0'}).action === 'publish');
 check('D3 identical content with a known gitHead skips', D({treeIdentical: true}).action === 'skip');
@@ -118,13 +127,32 @@ check('D11 numeric comparison: 2.10.0 is higher than 2.9.0, and 2.9.0 is not hig
 check('D12 numeric patch raise: latest 2.0.9 gives 2.0.10', nextVersion('2.0.0', '2.0.9') === '2.0.10');
 check('D13 equal versions publish the patch above', D({pkg: '2.0.3'}).target === '2.0.4');
 
+// an older release must not overwrite a newer one: the latest build's commit must be the tag's commit or an ancestor of it
+check('D14 same tree skips even when the gitHead is not behind the tag', D({treeIdentical: true, gitHeadReachable: false}).action === 'skip');
+const old = D({gitHeadReachable: false});
+check('D15 an older tag (gitHead not the tag commit, not its ancestor) fails', old.action === 'fail');
+check('D15 and the message names both commits', old.reason.includes(A) && old.reason.includes(B));
+check('D15 and an older tag fails even when its target is not on npm', D({gitHeadReachable: false, targetOnNpm: false}).action === 'fail' && D({gitHeadReachable: false}).target === undefined);
+check('D16 a newer tag (gitHead behind the tag) publishes', D({gitHeadReachable: true}).action === 'publish');
+check('D17 a gitHead not in the checkout publishes (unchanged rule)', D({gitHeadKnown: false, gitHeadReachable: false}).action === 'publish');
+check('D18 a bad version still fails first', D({gitHeadReachable: false, pkg: '2.1.0-beta.0'}).reason.includes('plain major.minor.patch'));
+
+// after a successful publish: the read-back of npm's record of the new version (gitHead), a warning only
+const {markerWarning} = await import(pathToFileURL(decisionFile).href);
+const W = (o) => markerWarning({name: 'workspace-sdk', version: '2.0.4', lookup: 'ok', gitHead: A, ...o});
+check('M1 marker present: no warning', W({}) === null);
+check('M2 marker absent: the warning line', W({gitHead: ''}) === '::warning::workspace-sdk@2.0.4 has no gitHead on npm; a re-run of this job would publish another version');
+check('M3 lookup failed: a warning too (never a failure)', /^::warning::workspace-sdk@2\.0\.4 /.test(W({lookup: 'failed', gitHead: ''}) ?? '') && /a re-run of this job would publish another version/.test(W({lookup: 'failed', gitHead: ''}) ?? ''));
+check('M4 a lookup that failed is a warning even if some text came with it', W({lookup: 'failed', gitHead: A}) !== null);
+check('M5 whitespace only counts as absent', W({gitHead: '\n'}) !== null);
+
 // (f) the script, run for real in a temporary git repository with a fake npm on PATH
 const script = path.join(repo, '.github/scripts', SCRIPT);
 const PKG_NAME = '@aloma.io/workspace-sdk';
 const FAKE_NPM = `#!/bin/sh
 # Answers from files in $FAKE_NPM_DIR: latest (the "latest" dist-tag; absent = never published), exists (versions that
 # exist, one per line), githead (what npm view <name> gitHead prints; absent = prints nothing), view-error (text to fail
-# every npm view with), target-error and latest-error (the same, only for npm view <name>@<version> / npm view <name> version), record-githead (publish then records the released tag's commit, as real npm does), stale-latest
+# every npm view with), githead-error (only for npm view <name> gitHead), readback-error (only for npm view <name>@<version> gitHead, the read-back after a publish), target-error and latest-error (the same, only for npm view <name>@<version> / npm view <name> version), record-githead (publish then records the released tag's commit, as real npm does), stale-latest
 # (publish does not move the latest tag). Like the real npm: a package or version that does not exist answers E404 on
 # stderr and exit 1. Records every call.
 echo "$* [cwd=$PWD]" >> "$FAKE_NPM_DIR/calls"
@@ -134,6 +162,7 @@ case "$1" in
     if [ ! -f "$FAKE_NPM_DIR/latest" ]; then echo "npm error code E404" >&2; exit 1; fi
     case "\${2#@}" in *@*) ;; *) if [ "$3" != gitHead ] && [ -f "$FAKE_NPM_DIR/latest-error" ]; then cat "$FAKE_NPM_DIR/latest-error" >&2; exit 1; fi;; esac
     case "\${2#@}" in *@*) if [ -f "$FAKE_NPM_DIR/target-error" ]; then cat "$FAKE_NPM_DIR/target-error" >&2; exit 1; fi;; esac
+    case "\${2#@}" in *@*) if [ "$3" = gitHead ] && [ -f "$FAKE_NPM_DIR/readback-error" ]; then cat "$FAKE_NPM_DIR/readback-error" >&2; exit 1; fi;; *) if [ "$3" = gitHead ] && [ -f "$FAKE_NPM_DIR/githead-error" ]; then cat "$FAKE_NPM_DIR/githead-error" >&2; exit 1; fi;; esac
     if [ "$3" = gitHead ]; then
       if [ -f "$FAKE_NPM_DIR/githead" ]; then cat "$FAKE_NPM_DIR/githead"; fi
       exit 0
@@ -162,11 +191,11 @@ exit 0
 
 // The fixture history: tag 3.0.0 (first), tag 3.0.1 (second; touches workspace-sdk/ when changed), and with `third` tag
 // 3.0.2 (touches integration-sdk/ only). The released tag is the last one.
-// opts: pkg, latest (undefined = never published), exists (versions on npm), viewError, targetError, latestError, latestError, changed (the second commit touches
+// opts: readbackError, githeadError (npm view <name> gitHead fails), release (the tag being released instead of the last one), pkg, latest (undefined = never published), exists (versions on npm), viewError, targetError, latestError, latestError, changed (the second commit touches
 // workspace-sdk/), third, gitHead ('none' | 'first' | 'second' | 'unknown' = a commit that is not in the checkout |
 // 'garbage'), recordGitHead (publish records the tag's commit), staleLatest (publish does not move latest), runs (times the
 // script runs for the same tag; the result is the last run), previousTag (false = 3.0.0 is not tagged)
-function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latestError, changed = true, third = false, gitHead = 'none', recordGitHead = false, staleLatest = false, runs = 1, previousTag = true}) {
+function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latestError, githeadError, readbackError, release, changed = true, third = false, gitHead = 'none', recordGitHead = false, staleLatest = false, runs = 1, previousTag = true}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ws-publish-'));
   const repoDir = path.join(dir, 'repo');
   const fake = path.join(dir, 'fake');
@@ -179,6 +208,8 @@ function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latest
   if (viewError) fs.writeFileSync(path.join(fake, 'view-error'), viewError + '\n');
   if (latestError) fs.writeFileSync(path.join(fake, 'latest-error'), latestError + '\n');
   if (targetError) fs.writeFileSync(path.join(fake, 'target-error'), targetError + '\n');
+  if (readbackError) fs.writeFileSync(path.join(fake, 'readback-error'), readbackError + '\n');
+  if (githeadError) fs.writeFileSync(path.join(fake, 'githead-error'), githeadError + '\n');
   if (recordGitHead) fs.writeFileSync(path.join(fake, 'record-githead'), '');
   if (staleLatest) fs.writeFileSync(path.join(fake, 'stale-latest'), '');
   fs.writeFileSync(path.join(repoDir, 'workspace-sdk/package.json'), JSON.stringify({name: PKG_NAME, version: pkg}, null, 2) + '\n');
@@ -205,6 +236,7 @@ function run({pkg = '2.0.0', latest, exists = [], viewError, targetError, latest
     git('tag', '3.0.2', commit('third', second));
     tag = '3.0.2';
   }
+  if (release) tag = release;
   const heads = {first, second, unknown: 'a'.repeat(40), garbage: '--upload-pack=x'};
   if (gitHead !== 'none') fs.writeFileSync(path.join(fake, 'githead'), heads[gitHead] + '\n');
   const callsFile = path.join(fake, 'calls');
@@ -283,6 +315,31 @@ if (fs.existsSync(script)) {
   check('T6 a release that touches nothing under workspace-sdk/ skips when the latest build has the same content', skipped(t6e));
   const t6f = run({pkg: '2.0.0', latest: '2.0.3', changed: true, gitHead: 'first'});
   check('T6 a re-run of the job for a tag whose first run was red publishes (npm still has the older build)', publishedExactly(t6f, '2.0.4'));
+
+  // an older release after a newer one: npm's latest was built from 3.0.1's commit, the job releases 3.0.0
+  const t12 = run({pkg: '2.0.0', latest: '2.0.3', changed: true, gitHead: 'second', release: '3.0.0'});
+  check('T12 an older tag after a newer release fails red and publishes nothing', t12.status !== 0 && t12.published.length === 0 && t12.versionSet.length === 0);
+  check('T12 and the message names both commits', /[0-9a-f]{40}/.test(t12.out) && (t12.out.match(/[0-9a-f]{40}/g) ?? []).length >= 2 && (new Set(t12.out.match(/[0-9a-f]{40}/g))).size === 2);
+  const t12b = run({pkg: '2.0.0', latest: '2.0.3', changed: false, gitHead: 'second', release: '3.0.0'});
+  check('T12 an older tag with the same folder content still skips', skipped(t12b));
+  const t12c = run({pkg: '2.0.0', latest: '2.0.3', changed: true, gitHead: 'second', release: '3.0.1'});
+  check('T12 re-running the tag npm was built from skips (same commit)', skipped(t12c));
+
+  // a failed gitHead lookup is not "no gitHead"
+  const t13 = run({pkg: '2.0.0', latest: '2.0.3', changed: false, githeadError: 'npm error code E503\nnpm error unavailable'});
+  check('T13 a failed gitHead lookup (not E404) fails red and publishes nothing', t13.status !== 0 && t13.published.length === 0 && t13.versionSet.length === 0);
+  check('T13 and says the gitHead could not be read', /cannot read the gitHead/.test(t13.out) && /E503/.test(t13.out));
+  const t13b = run({pkg: '2.0.0', latest: '2.0.3', githeadError: 'npm error code E404\nnpm error not found'});
+  check('T13 a gitHead lookup answering E404 counts as no gitHead: publishes', publishedExactly(t13b, '2.0.4'));
+
+  // read-back after a successful publish
+  const t14 = run({pkg: '2.0.0', latest: '2.0.3', recordGitHead: true});
+  check('T14 publish where npm records the gitHead: exit 0, no warning', publishedExactly(t14, '2.0.4') && !/::warning::/.test(t14.out));
+  check('T14 and the read-back asked npm for the new version\'s gitHead', t14.calls.some((c) => /^view @aloma\.io\/workspace-sdk@2\.0\.4 gitHead/.test(c)));
+  const t14b = run({pkg: '2.0.0', latest: '2.0.3'});
+  check('T14 publish where npm has no gitHead: exit 0 and the warning line', publishedExactly(t14b, '2.0.4') && /^::warning::workspace-sdk@2\.0\.4 has no gitHead on npm; a re-run of this job would publish another version$/m.test(t14b.stdout));
+  const t14c = run({pkg: '2.0.0', latest: '2.0.3', readbackError: 'npm error code E503\nnpm error unavailable'});
+  check('T14 a read-back that fails after the publish: exit 0 with a warning, never red', t14c.status === 0 && /::warning::workspace-sdk@2\.0\.4 /.test(t14c.out));
 
   // a second run for the same tag after a successful first run
   const t8 = run({pkg: '2.0.0', latest: '2.0.3', staleLatest: true, runs: 2});
