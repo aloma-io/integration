@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 4.0.0
 
-- The package no longer installs an 'aloma' command; that name belongs to the ALOMA CLI (@aloma.io/aloma). Use npx @aloma.io/integration-sdk or the path build/cli.mjs.
+- **BREAKING:** Node 22 or later is required.
+- **BREAKING:** The package no longer installs an 'aloma' command; that name belongs to the ALOMA CLI (@aloma.io/aloma). Use npx @aloma.io/integration-sdk or the path build/cli.mjs.
 
 ## 3.8.71
 

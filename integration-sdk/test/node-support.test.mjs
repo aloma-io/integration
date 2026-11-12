@@ -58,4 +58,19 @@ for (const [label, {pkg, readme}] of Object.entries(packages)) {
 
 check('@types/node is checked in both SDK package.json files', typesChecked === 2, `checked ${typesChecked}`);
 
+// PLAT-146: dropping Node 18/20 is a major release: integration-sdk 4, workspace-sdk 2, each with a release note.
+for (const [pkg, minMajor, notes, heading] of [
+  ['integration-sdk/package.json', 4, 'integration-sdk/CHANGELOG.md', '## 4.0.0'],
+  ['workspace-sdk/package.json', 2, 'workspace-sdk/README.md', '### 2.0.0'],
+]) {
+  const version = JSON.parse(read(pkg)).version;
+  check(`${pkg}: version ${version} is at least major ${minMajor}`, Number(String(version).split('.')[0]) >= minMajor, String(version));
+  const text = read(notes);
+  const at = text.indexOf(`\n${heading}\n`);
+  const next = text.indexOf('\n#', at + 1);
+  const section = at < 0 ? '' : text.slice(at, next < 0 ? undefined : next);
+  check(`${notes}: has a "${heading}" heading`, at >= 0, notes);
+  check(`${notes}: "${heading}" says Node 22 or later is required`, /BREAKING.*Node 22 or later is required/.test(section), notes);
+}
+
 process.exit(failed ? 1 : 0);
