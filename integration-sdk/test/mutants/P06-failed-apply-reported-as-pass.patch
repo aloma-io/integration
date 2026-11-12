@@ -1,0 +1,13 @@
+# P06 a failing apply is reported as a pass. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -46,7 +46,7 @@
+     if (!args.includes('--check')) return {checked: 0, failures: [], problem: 'refusing to run an apply step without --check'};
+     const out = outcomeOf(spawnSync(gitBin, args, {cwd: root, encoding: 'utf8', env}));
+     if (out.problem) return {checked: 0, failures: [], problem: out.problem};
+-    if (out.error) failures.push({patch, error: out.error});
++    if (false) failures.push({patch, error: out.error});
+   }
+   return {checked: patches.length, failures, problem: null};
+ }

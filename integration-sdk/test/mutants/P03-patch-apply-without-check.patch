@@ -1,0 +1,13 @@
+# P03 the apply step runs without --check and changes the tree. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -7,7 +7,7 @@
+ 
+ // Pure: the argument list of the apply step. Always a dry run: --check never writes to the tree.
+ export function applyArgs(patchFile) {
+-  return ['apply', '--check', patchFile];
++  return ['apply', patchFile];
+ }
+ 
+ // Pure: what a finished git call means. A problem stops the whole check, an error is one patch that does not apply.

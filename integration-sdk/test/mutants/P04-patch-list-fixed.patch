@@ -1,0 +1,13 @@
+# P04 the patch list is a fixed short list instead of the directory. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -37,7 +37,7 @@
+ // `gitBin` is only for tests. GIT_CEILING_DIRECTORIES keeps git from looking for a repository above root, so a root that
+ // sits inside some other checkout is treated as the plain-file tree it is.
+ export function checkPatches({patchDir, root, gitBin = 'git'}) {
+-  const patches = fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch')).sort();
++  const patches = ['W01-publish-needs-test-removed.patch'];
+   if (!patches.length) return {checked: 0, failures: [], problem: `no .patch files in ${patchDir}`};
+   const env = {...process.env, GIT_CEILING_DIRECTORIES: path.dirname(fs.realpathSync(root))};
+   const failures = [];
