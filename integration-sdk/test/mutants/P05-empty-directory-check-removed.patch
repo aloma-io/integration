@@ -1,0 +1,12 @@
+# P05 an empty patch directory is no longer a problem. Must fail: test/mutant-patches-apply.test.mjs
+diff --git a/integration-sdk/tools/patch-apply.mjs b/integration-sdk/tools/patch-apply.mjs
+--- a/integration-sdk/tools/patch-apply.mjs
++++ b/integration-sdk/tools/patch-apply.mjs
+@@ -38,7 +38,6 @@
+ // sits inside some other checkout is treated as the plain-file tree it is.
+ export function checkPatches({patchDir, root, gitBin = 'git'}) {
+   const patches = fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch')).sort();
+-  if (!patches.length) return {checked: 0, failures: [], problem: `no .patch files in ${patchDir}`};
+   const env = {...process.env, GIT_CEILING_DIRECTORIES: path.dirname(fs.realpathSync(root))};
+   const failures = [];
+   for (const patch of patches) {
