@@ -68,11 +68,11 @@ jobs:
 
       - name: Install dependencies
         working-directory: integration-sdk
-        run: yarn install --frozen-lockfile --ignore-engines
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
 
       - name: Build
         working-directory: integration-sdk
-        run: yarn build
+        run: npx yarn@1.22.22 build
 
       - name: Publish
         working-directory: integration-sdk

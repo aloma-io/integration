@@ -56,6 +56,7 @@ check('ci-passed needs every other job', ['integration_sdk', 'workspace_sdk'].ev
 for (const [file, wf] of [['ci.yml', ci], ['publish.yml', publish]]) {
   for (const [name, job] of Object.entries(wf.jobs ?? {})) {
     check(`${file}: job ${name} has timeout-minutes`, Number.isInteger(job['timeout-minutes']) && job['timeout-minutes'] > 0);
+    check(`${file}: job ${name} runs on an explicit ubuntu-NN.NN image, never ubuntu-latest`, /^ubuntu-\d\d\.\d\d$/.test(job['runs-on'] ?? ''));
   }
 }
 
