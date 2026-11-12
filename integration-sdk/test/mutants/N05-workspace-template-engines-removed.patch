@@ -1,0 +1,15 @@
+# N05 the engines field is removed from the workspace-sdk template package.json. Must fail: test/node-support.test.mjs
+diff --git a/workspace-sdk/template/workspace/package.json b/workspace-sdk/template/workspace/package.json
+index ad8af5c..2a8ee85 100755
+--- a/workspace-sdk/template/workspace/package.json
++++ b/workspace-sdk/template/workspace/package.json
+@@ -5,9 +5,6 @@
+   "author": "",
+   "license": "Apache-2.0",
+   "type": "module",
+-  "engines": {
+-    "node": ">=22"
+-  },
+   "scripts": {
+     "start": "node build/index.mjs",
+     "dev": "./node_modules/typescript/bin/tsc --watch",

@@ -1,0 +1,14 @@
+# N03 workspace-sdk/package.json engines lowered to >=20. Must fail: test/node-support.test.mjs
+diff --git a/workspace-sdk/package.json b/workspace-sdk/package.json
+index d5ff787..982b388 100755
+--- a/workspace-sdk/package.json
++++ b/workspace-sdk/package.json
+@@ -6,7 +6,7 @@
+   "license": "Apache-2.0",
+   "type": "module",
+   "engines": {
+-    "node": ">=22"
++    "node": ">=20"
+   },
+   "bin": {
+     "aloma-workspace-sdk": "./build/cli.mjs"
