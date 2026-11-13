@@ -1,0 +1,14 @@
+# H04 a missing package.json no longer stops the descriptor writer (an empty object is used). Must fail: test/cli-build-extract.test.mjs "build with a missing package.json fails (non-zero exit) and writes no .controller.json"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index d9d7704..fef8e82 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -255,7 +255,7 @@ class Extractor {
+     fs.readFileSync(source);
+     const {text, methods} = await parseTypes(source);
+ 
+-    const packageJson = JSON.parse(
++    const packageJson = JSON.parse(!fs.existsSync(TARGET_DIR + 'package.json') ? '{}' :
+       fs.readFileSync(TARGET_DIR + 'package.json', {
+         encoding: 'utf-8',
+       })

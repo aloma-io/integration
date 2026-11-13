@@ -1,0 +1,14 @@
+# H01 the import is appended at the end of a controller that has no import lines instead of the top. Must fail: test/cli-build-extract.test.mjs "add-resource in a controller without imports puts the import at the very top, then one blank line, and still adds the binding"
+diff --git a/integration-sdk/src/cli.mts b/integration-sdk/src/cli.mts
+index d9d7704..fe954f2 100644
+--- a/integration-sdk/src/cli.mts
++++ b/integration-sdk/src/cli.mts
+@@ -444,7 +444,7 @@ program
+           controllerContent = controllerContent.replace(lastImport, `${lastImport}\n${importStatement}`);
+         } else {
+           // If no imports found, add at the beginning
+-          controllerContent = `${importStatement}\n\n${controllerContent}`;
++          controllerContent = `${controllerContent}\n${importStatement}\n`;
+         }
+       }
+ 
