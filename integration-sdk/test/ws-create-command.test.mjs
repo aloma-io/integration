@@ -1,8 +1,9 @@
 // Regression: the workspace-sdk `create` command, run from source.
-// Plain node:test file (run with `node --test`, not wired into workspace-sdk's yarn test).
+// Plain node:test file. tools/run-tests.mjs runs it as a standalone script (`yarn test`), and `node --test` runs it too;
+// a failing test makes the process exit non-zero either way.
 // `create` imports only node: modules, so nothing needs faking except `yarn`:
 // a fake yarn script first on PATH appends its arguments and working folder to a log.
-import {describe, it} from 'node:test';
+import test, {describe, it} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -15,7 +16,7 @@ const templateRoot = path.join(wsRoot, 'template/workspace');
 const createUrl = pathToFileURL(path.join(wsRoot, 'src/commands/create.mts')).href;
 
 if (!process.features.typescript) {
-  console.log('SKIP ws-create-command: this Node cannot run .mts files directly (process.features.typescript is not true)');
+  test.skip('workspace-sdk create command: this Node cannot run .mts files directly (process.features.typescript is not true)');
 } else {
   const {create} = await import(createUrl);
 
