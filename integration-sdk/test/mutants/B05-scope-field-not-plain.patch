@@ -1,0 +1,13 @@
+# B05 the scope field is no longer plain. Must fail: test/dispatcher-oauth-config.test.mjs "configurableClientScope adds an optional, plain scope field whose description has the default scope"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -81,7 +81,7 @@
+ ${arg.configurableClientScope}
+ `,
+             optional: true,
+-            plain: true,
++            plain: false,
+           },
+         },
+       });
