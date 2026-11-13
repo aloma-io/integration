@@ -115,7 +115,7 @@ jobs:
           package-manager-cache: false
 
       - name: Install dependencies
-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile
 
       - name: Build
         run: npx yarn@1.22.22 build
@@ -159,7 +159,7 @@ jobs:
       # No dependency install scripts in a job that can mint a publish token; the build is plain tsc.
       - name: Install dependencies
         working-directory: workspace-sdk
-        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-engines --ignore-scripts
+        run: npx --yes yarn@1.22.22 install --frozen-lockfile --ignore-scripts
 
       - name: Build
         working-directory: workspace-sdk
