@@ -1,0 +1,14 @@
+# X02 the file-name replacement stops replacing spaces. Must fail: integration-sdk/test/ws-build-command.test.mjs "slashes and spaces in a step name become \"__\" in the file name"
+diff --git a/workspace-sdk/src/commands/build.mts b/workspace-sdk/src/commands/build.mts
+index 420b60c..3a12fa9 100644
+--- a/workspace-sdk/src/commands/build.mts
++++ b/workspace-sdk/src/commands/build.mts
+@@ -25,7 +25,7 @@ export const build = async () => {
+       haveError = true;
+     }
+ 
+-    const out = `${dir}/export/steps/${step.name.replaceAll(/[\/ ]+/gi, '__')}.step.json`;
++    const out = `${dir}/export/steps/${step.name.replaceAll(/[\/]+/gi, '__')}.step.json`;
+ 
+     fs.writeFileSync(out, JSON.stringify(step));
+   });

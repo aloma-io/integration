@@ -1,0 +1,12 @@
+# X03 the return value is inverted. Must fail: integration-sdk/test/ws-build-command.test.mjs "prints [OK] for a step without errors and ends with OK. returning false"
+diff --git a/workspace-sdk/src/commands/build.mts b/workspace-sdk/src/commands/build.mts
+index 420b60c..fee629e 100644
+--- a/workspace-sdk/src/commands/build.mts
++++ b/workspace-sdk/src/commands/build.mts
+@@ -32,5 +32,5 @@ export const build = async () => {
+ 
+   console.log(haveError ? 'ERROR.' : 'OK.');
+ 
+-  return !!haveError;
++  return !haveError;
+ };
