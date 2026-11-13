@@ -1,0 +1,13 @@
+# B02 the tokenURL-or-finishOAuth check needs both instead of one (&& becomes ||). Must fail: test/dispatcher-oauth-config.test.mjs "without platformOAuth: finishOAuth alone is accepted, and so is tokenURL alone"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -33,7 +33,7 @@
+     }
+ 
+     if (!arg.authorizationURL) throw new Error('need a authorizationURL');
+-    if (!arg.tokenURL && !arg.finishOAuth) throw new Error('need a tokenURL or finishOAuth()');
++    if (!arg.tokenURL || !arg.finishOAuth) throw new Error('need a tokenURL or finishOAuth()');
+ 
+     this._oauth = {...arg};
+ 

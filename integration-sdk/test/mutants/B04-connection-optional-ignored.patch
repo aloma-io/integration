@@ -1,0 +1,13 @@
+# B04 oauthResult is always optional, whatever connectionOptional says. Must fail: test/dispatcher-oauth-config.test.mjs "connectionOptional makes oauthResult optional; without it the field is not optional"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -44,7 +44,7 @@
+           name: 'OAuth Result',
+           placeholder: 'will be set by finishing the oauth flow',
+           type: 'managed',
+-          optional: !!arg.connectionOptional,
++          optional: true,
+         },
+       },
+     });
