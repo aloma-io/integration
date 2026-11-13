@@ -1,0 +1,14 @@
+# L03 stop() no longer throws for protocol errors. Must fail: test/harness-support-gaps.test.mjs "stop() with only protocol errors throws "protocol errors seen by the fake ALOMA: [...]""
+diff --git a/integration-sdk/src/testing/harness.mts b/integration-sdk/src/testing/harness.mts
+index 0e2e003..1a96dac 100644
+--- a/integration-sdk/src/testing/harness.mts
++++ b/integration-sdk/src/testing/harness.mts
+@@ -153,7 +153,7 @@ export class ConnectorHarness {
+ 
+     if (verify) {
+       this.vendor.verify();
+-      if (this.aloma.protocolErrors.length) {
++      if (false) {
+         throw new Error(`protocol errors seen by the fake ALOMA: ${JSON.stringify(this.aloma.protocolErrors)}`);
+       }
+     }

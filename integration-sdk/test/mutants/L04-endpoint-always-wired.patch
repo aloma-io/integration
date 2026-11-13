@@ -1,0 +1,14 @@
+# L04 the endpoint is wired even when options.endpoint.enabled is not set. Must fail: test/harness-support-gaps.test.mjs "no endpoint wiring unless options.endpoint.enabled is set"
+diff --git a/integration-sdk/src/testing/runtime-connector.mts b/integration-sdk/src/testing/runtime-connector.mts
+index 141f470..ac5f99d 100644
+--- a/integration-sdk/src/testing/runtime-connector.mts
++++ b/integration-sdk/src/testing/runtime-connector.mts
+@@ -30,7 +30,7 @@ export const connectorFromRuntimeContext = (context: RuntimeContext): Connector
+ 
+   configuration.types(data.types).resolvers(buildResolvers(methods, controller));
+ 
+-  if (data.options?.endpoint?.enabled) {
++  if (true) {
+     configuration.endpoint((arg) => (controller as any).__endpoint(arg), data.options?.endpoint?.required);
+   }
+ 
