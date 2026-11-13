@@ -1,0 +1,13 @@
+# I05 the unmocked error carries status 500. Must fail: test/vendor-mock-guard.test.mjs "unmocked: the call is recorded, rejects with status 400 and the harness flag, and verify() lists it"
+diff --git a/integration-sdk/src/testing/vendor-mock.mts b/integration-sdk/src/testing/vendor-mock.mts
+--- a/integration-sdk/src/testing/vendor-mock.mts
++++ b/integration-sdk/src/testing/vendor-mock.mts
+@@ -159,7 +159,7 @@
+ 
+     // status 400 makes the SDK Fetcher give up at once instead of retrying for seconds
+     const error: any = new Error(`UNMOCKED vendor request: ${method} ${url} (add a route with vendor.on(...))`);
+-    error.status = 400;
++    error.status = 500;
+     error.alomaHarnessUnmocked = true;
+     throw error;
+   }

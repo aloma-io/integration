@@ -1,0 +1,13 @@
+# I04 route uses are no longer limited by times. Must fail: test/vendor-mock-guard.test.mjs "matching: the first route with uses left wins and times is counted per route"
+diff --git a/integration-sdk/src/testing/vendor-mock.mts b/integration-sdk/src/testing/vendor-mock.mts
+--- a/integration-sdk/src/testing/vendor-mock.mts
++++ b/integration-sdk/src/testing/vendor-mock.mts
+@@ -131,7 +131,7 @@
+     const request: VendorRequest = {method, url, rawUrl, headers};
+     if (init.body != null) request.body = typeof init.body === 'string' ? init.body : String(init.body);
+ 
+-    const route = this.routes.find((r) => r.method === method && r.used < r.times && matches(r.matcher, url));
++    const route = this.routes.find((r) => r.method === method && matches(r.matcher, url));
+ 
+     if (route) {
+       route.used++;

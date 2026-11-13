@@ -1,0 +1,13 @@
+# I02 status 204 is no longer sent without a body. Must fail: test/vendor-mock-guard.test.mjs "response: status 204, 205 and 304 carry no body even if one is given"
+diff --git a/integration-sdk/src/testing/vendor-mock.mts b/integration-sdk/src/testing/vendor-mock.mts
+--- a/integration-sdk/src/testing/vendor-mock.mts
++++ b/integration-sdk/src/testing/vendor-mock.mts
+@@ -148,7 +148,7 @@
+       }
+ 
+       const status = spec.status ?? 200;
+-      return new Response([204, 205, 304].includes(status) ? null : body, {status, headers: responseHeaders});
++      return new Response([205, 304].includes(status) ? null : body, {status, headers: responseHeaders});
+     }
+ 
+     if (this.originalFetch && this.passthrough(new URL(url))) {

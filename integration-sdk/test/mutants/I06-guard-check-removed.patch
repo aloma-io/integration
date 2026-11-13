@@ -1,0 +1,13 @@
+# I06 the loopback check in the guard is removed (the test connects through a stub and a host that cannot resolve). Must fail: test/vendor-mock-guard.test.mjs "guard: a non-loopback host throws NETWORK BLOCKED before any socket opens and is recorded"
+diff --git a/integration-sdk/src/testing/network-guard.mts b/integration-sdk/src/testing/network-guard.mts
+--- a/integration-sdk/src/testing/network-guard.mts
++++ b/integration-sdk/src/testing/network-guard.mts
+@@ -38,7 +38,7 @@
+   (net.Socket.prototype as any).connect = function (this: net.Socket, ...args: any[]) {
+     const {host, local} = targetOf(args);
+ 
+-    if (!local && !LOOPBACK.has(host)) {
++    if (false) {
+       const message = `NETWORK BLOCKED by connector test harness: connection to ${host} is not allowed in tests`;
+       blocked.push(host);
+       throw new Error(message);
