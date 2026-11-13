@@ -1,0 +1,14 @@
+# G02 a property access is no longer resolved to its declared value (a static property default prints as its source text). Must fail: test/transform-expressions-types.test.mjs "default values: a module constant, a static property and an imported constant resolve to their values"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..6d1c57b 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -147,7 +147,7 @@ const resolveExpression = (checker: ts.TypeChecker, expression: ts.Expression |
+   if (expr.kind === ts.SyntaxKind.NullKeyword) return null;
+   if (expr.kind === ts.SyntaxKind.UndefinedKeyword) return undefined;
+ 
+-  if (ts.isIdentifier(expr) || ts.isPropertyAccessExpression(expr)) {
++  if (ts.isIdentifier(expr)) {
+     let symbol = checker.getSymbolAtLocation(expr);
+     while (symbol && (symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
+ 

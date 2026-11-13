@@ -1,0 +1,14 @@
+# G03 a name declared in node_modules is resolved like local code (its default prints nothing instead of the source text). Must fail: test/transform-expressions-types.test.mjs "default values: a name from a third-party package is printed as its source text"
+diff --git a/integration-sdk/src/transform/index.mts b/integration-sdk/src/transform/index.mts
+index 4e2b3ac..1d2442b 100644
+--- a/integration-sdk/src/transform/index.mts
++++ b/integration-sdk/src/transform/index.mts
+@@ -152,7 +152,7 @@ const resolveExpression = (checker: ts.TypeChecker, expression: ts.Expression |
+     while (symbol && (symbol.flags & ts.SymbolFlags.Alias) !== 0) symbol = checker.getAliasedSymbol(symbol);
+ 
+     const declaration = (symbol ?? (expr as any).symbol)?.declarations?.[0];
+-    if (declaration == null || isThirdParty(declaration.getSourceFile().fileName)) return text;
++    if (declaration == null) return text;
+     if (ts.isVariableDeclaration(declaration) || ts.isPropertyDeclaration(declaration)) {
+       return resolveExpression(checker, declaration.initializer);
+     }
