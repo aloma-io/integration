@@ -1,0 +1,14 @@
+# U03 the project name is no longer written into package.json. Must fail: integration-sdk/test/ws-create-command.test.mjs "sets the package.json name and writes it with two-space indentation"
+diff --git a/workspace-sdk/src/commands/create.mts b/workspace-sdk/src/commands/create.mts
+index 50a66e2..265f6c3 100644
+--- a/workspace-sdk/src/commands/create.mts
++++ b/workspace-sdk/src/commands/create.mts
+@@ -35,7 +35,7 @@ const extract = ({target, name, connectorId}) => {
+ 
+   const content = JSON.parse(fs.readFileSync(`${target}/package.json`, {encoding: 'utf-8'}));
+ 
+-  content.name = name;
++  content.name = content.name;
+ 
+   fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 2));
+   fs.writeFileSync(
