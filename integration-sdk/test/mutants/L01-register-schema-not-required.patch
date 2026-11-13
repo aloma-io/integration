@@ -1,0 +1,14 @@
+# L01 the register body check no longer requires schema. Must fail: test/harness-support-gaps.test.mjs "register body missing schema: the message lists it"
+diff --git a/integration-sdk/src/testing/fake-aloma.mts b/integration-sdk/src/testing/fake-aloma.mts
+index 1b95cd3..f8658f7 100644
+--- a/integration-sdk/src/testing/fake-aloma.mts
++++ b/integration-sdk/src/testing/fake-aloma.mts
+@@ -130,7 +130,7 @@ export class FakeAloma {
+         return send(401);
+       }
+ 
+-      const missing = ['name', 'version', 'id', 'publicKey', 'schema'].filter((key) => body[key] == null);
++      const missing = ['name', 'version', 'id', 'publicKey'].filter((key) => body[key] == null);
+       if (missing.length) this.protocolErrors.push(`register body is missing: ${missing.join(', ')}`);
+ 
+       this.id = body.id;
