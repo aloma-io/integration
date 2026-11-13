@@ -1,0 +1,14 @@
+# V03 enabled follows disabled instead of being its opposite. Must fail: integration-sdk/test/ws-step-parser.test.mjs "builds content from match and the default function, enabled is the opposite of disabled"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..860a262 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -59,7 +59,7 @@ const parseStep = ({name, disabled, default: defaultImport, match}) => {
+   const content = {
+     if: `{${stripFunction(match.toString())}}`,
+     do: stripFunction(defaultImport.toString()),
+-    enabled: !disabled,
++    enabled: !!disabled,
+     valid: false,
+   };
+ 

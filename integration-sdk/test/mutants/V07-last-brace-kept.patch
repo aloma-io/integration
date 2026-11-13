@@ -1,0 +1,14 @@
+# V07 the strip no longer removes the last closing brace. Must fail: integration-sdk/test/ws-step-parser.test.mjs "keeps a body with "}" in a string or a nested block whole, and nested functions keep their braces"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..437cda0 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -17,7 +17,7 @@ const stripFunction = (what: string) => {
+   stripped = stripped.join('{');
+ 
+   stripped = stripped.split(/\}/gi);
+-  stripped.pop();
++  // kept
+   stripped = stripped.join('}');
+ 
+   return stripped.trim();

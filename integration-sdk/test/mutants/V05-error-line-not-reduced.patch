@@ -1,0 +1,14 @@
+# V05 error line numbers are not reduced by one. Must fail: integration-sdk/test/ws-step-parser.test.mjs "reports validator errors with line numbers reduced by one and other fields kept"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..dd83378 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -41,7 +41,7 @@ const validate = ({if: ifContent, do: doContent}) => {
+ 
+   const errors = [...jshint.errors].map((error) => ({
+     ...error,
+-    line: error.line - 1,
++    line: error.line,
+   }));
+ 
+   if (!ok) {
