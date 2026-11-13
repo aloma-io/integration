@@ -1,0 +1,14 @@
+# X05 a failing yarn is swallowed. Must fail: integration-sdk/test/ws-build-command.test.mjs "a failing yarn makes build reject and writes no export folder"
+diff --git a/workspace-sdk/src/commands/build.mts b/workspace-sdk/src/commands/build.mts
+index 420b60c..6c1c50b 100644
+--- a/workspace-sdk/src/commands/build.mts
++++ b/workspace-sdk/src/commands/build.mts
+@@ -9,7 +9,7 @@ export const build = async () => {
+   console.log(`Building ...`);
+   const dir = `${process.cwd()}/`;
+ 
+-  await exec(`yarn run tsc`);
++  await exec(`yarn run tsc`).catch(() => {});
+ 
+   fs.mkdirSync(`${dir}export/steps`, {recursive: true});
+ 

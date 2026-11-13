@@ -1,0 +1,14 @@
+# X04 a step with errors is no longer written. Must fail: integration-sdk/test/ws-build-command.test.mjs "a step with errors is still written and the other steps are written and reported too"
+diff --git a/workspace-sdk/src/commands/build.mts b/workspace-sdk/src/commands/build.mts
+index 420b60c..059eb5f 100644
+--- a/workspace-sdk/src/commands/build.mts
++++ b/workspace-sdk/src/commands/build.mts
+@@ -27,7 +27,7 @@ export const build = async () => {
+ 
+     const out = `${dir}/export/steps/${step.name.replaceAll(/[\/ ]+/gi, '__')}.step.json`;
+ 
+-    fs.writeFileSync(out, JSON.stringify(step));
++    if (!step.errors) fs.writeFileSync(out, JSON.stringify(step));
+   });
+ 
+   console.log(haveError ? 'ERROR.' : 'OK.');
