@@ -1,0 +1,14 @@
+# Y01 The error threshold moves from status > 399 to > 499. Must fail: integration-sdk/test/ws-pull-command.test.mjs "status 400 fails and status 399 is accepted"
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..ef50907 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -40,7 +40,7 @@ const request = async (url: string, options: any): Promise<any> => {
+   const ret = await fetch(url, options);
+   const text = await ret.text();
+ 
+-  if (ret.status > 399) {
++  if (ret.status > 499) {
+     const e: any = new Error(`${ret.status}: ${text}`);
+     e.code = ret.status;
+ 

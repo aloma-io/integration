@@ -1,0 +1,14 @@
+# Y06 Disabled steps are written too. Must fail: integration-sdk/test/ws-pull-command.test.mjs "a disabled step is not written"
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..a19e887 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -167,7 +167,7 @@ ${step.content.do}
+ };
+ 
+ const processSteps = async (target: string, workspace: Workspace, steps: Step[]) => {
+-  steps = steps.filter((step) => step.enabled && !step.nocode_type && step.name);
++  steps = steps.filter((step) => !step.nocode_type && step.name);
+ 
+   for (let i = 0; i < steps.length; ++i) {
+     await processStep(target, workspace, steps[i]);

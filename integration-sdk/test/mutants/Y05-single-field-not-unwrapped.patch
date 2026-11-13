@@ -1,0 +1,14 @@
+# Y05 A one-field GraphQL answer is no longer unwrapped (length check 1 becomes 2). Must fail: integration-sdk/test/ws-pull-command.test.mjs "one top-level field returns that field value"
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..27b2b48 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -70,7 +70,7 @@ const graphql = async (query: string, variables: any = {}): Promise<any> => {
+     return data;
+   }
+ 
+-  if (Object.keys(data).length === 1) {
++  if (Object.keys(data).length === 2) {
+     return Object.entries(data)[0][1];
+   }
+ 
