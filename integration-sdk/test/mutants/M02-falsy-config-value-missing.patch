@@ -1,0 +1,14 @@
+# M02 a falsy config value (0, false, empty string) counts as missing. Must fail: test/controller-health-unwrap.test.mjs "default config check: 0, false and an empty string count as present"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..8b82e9c 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -232,7 +232,7 @@ export abstract class AbstractController {
+       .map(([key, field]) => {
+         if (!field) return;
+ 
+-        if (!field.optional && config[key] == null) {
++        if (!field.optional && !config[key]) {
+           return `Configuration: ${field.name || key} is required`;
+         }
+       })

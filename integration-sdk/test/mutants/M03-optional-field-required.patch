@@ -1,0 +1,14 @@
+# M03 an optional field is checked as required. Must fail: test/controller-health-unwrap.test.mjs "default config check: optional fields are never required"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..c51ae55 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -232,7 +232,7 @@ export abstract class AbstractController {
+       .map(([key, field]) => {
+         if (!field) return;
+ 
+-        if (!field.optional && config[key] == null) {
++        if (config[key] == null) {
+           return `Configuration: ${field.name || key} is required`;
+         }
+       })

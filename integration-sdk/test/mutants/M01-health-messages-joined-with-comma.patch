@@ -1,0 +1,14 @@
+# M01 the collected health messages are joined with a comma instead of new lines. Must fail: test/controller-health-unwrap.test.mjs "__healthCheck: collects every failure, in the order healthCheck, default check, config check"
+diff --git a/integration-sdk/src/controller/index.mts b/integration-sdk/src/controller/index.mts
+index 7c65bba..8877ad1 100644
+--- a/integration-sdk/src/controller/index.mts
++++ b/integration-sdk/src/controller/index.mts
+@@ -218,7 +218,7 @@ export abstract class AbstractController {
+     }
+ 
+     if (errors.length) {
+-      throw new Error(errors.join('\n'));
++      throw new Error(errors.join(','));
+     }
+   }
+ 
