@@ -1,0 +1,14 @@
+# U06 package.json is written with four-space indentation. Must fail: integration-sdk/test/ws-create-command.test.mjs "sets the package.json name and writes it with two-space indentation"
+diff --git a/workspace-sdk/src/commands/create.mts b/workspace-sdk/src/commands/create.mts
+index 50a66e2..b9954c9 100644
+--- a/workspace-sdk/src/commands/create.mts
++++ b/workspace-sdk/src/commands/create.mts
+@@ -37,7 +37,7 @@ const extract = ({target, name, connectorId}) => {
+ 
+   content.name = name;
+ 
+-  fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 2));
++  fs.writeFileSync(`${target}/package.json`, JSON.stringify(content, null, 4));
+   fs.writeFileSync(
+     `${target}/.gitignore`,
+     `.DS_Store
