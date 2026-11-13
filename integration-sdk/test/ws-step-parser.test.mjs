@@ -1,8 +1,9 @@
 // workspace-sdk step parser (parseSteps). Plain node:test; run with
-// `node --test integration-sdk/test/ws-step-parser.test.mjs` (not wired into any yarn test).
+// `node --test integration-sdk/test/ws-step-parser.test.mjs`. `yarn test` (tools/run-tests.mjs) also runs it, as a
+// standalone script by file name; a failing test makes the node process, and so the run, exit non-zero.
 // The .mts source is imported directly; 'jshint' is mapped to an in-test fake by
 // helpers/ws-step-parser-hooks.mjs. The last test uses the real jshint only if it resolves.
-import {describe, it} from 'node:test';
+import {describe, it, test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {register, createRequire} from 'node:module';
@@ -13,7 +14,7 @@ import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 
 if (!process.features.typescript) {
-  console.log('SKIP ws-step-parser: this Node cannot strip types from .mts (needs Node 22.18 or later)');
+  test.skip('ws-step-parser: this Node cannot strip types from .mts (needs Node 22.18 or later)');
 } else {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const sourceFile = path.resolve(here, '../../workspace-sdk/src/step-parser/index.mts');
@@ -167,7 +168,7 @@ if (!process.features.typescript) {
         resolved = createRequire(path.resolve(here, '../../workspace-sdk/package.json')).resolve('jshint');
       } catch {}
       if (!resolved) {
-        console.log('SKIP real jshint: jshint does not resolve from workspace-sdk');
+        t.skip('jshint not resolvable');
         return;
       }
       await inTemp({'good.mjs': simple, 'bad.mjs': step(' return true; ', ' var a = 1; var a = 2; ')}, async (root) => {
