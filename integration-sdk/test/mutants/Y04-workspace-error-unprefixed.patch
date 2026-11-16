@@ -1,0 +1,14 @@
+# Y04 The workspace lookup failure loses its id prefix. Must fail: integration-sdk/test/ws-pull-command.test.mjs "a workspace lookup failure is reported as "id: <id> <message>""
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..37833d7 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -93,7 +93,7 @@ const getWorkspace = async (id: string): Promise<Workspace> => {
+ 
+     return workspace;
+   } catch (e: any) {
+-    throw new Error(`id: ${id} ${e.message}`, e);
++    throw new Error(e.message, e);
+   }
+ };
+ 

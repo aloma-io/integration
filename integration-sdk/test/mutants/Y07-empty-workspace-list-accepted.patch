@@ -1,0 +1,14 @@
+# Y07 An empty pull.workspaces list no longer counts as missing. Must fail: integration-sdk/test/ws-pull-command.test.mjs "a config with an empty workspace list fails the same way"
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..07b21b9 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -207,7 +207,7 @@ export const pullAll = async (options: any) => {
+ 
+   const config = YAML.parse(fs.readFileSync('./.aloma.yaml', {encoding: 'utf-8'}));
+ 
+-  if (config?.pull?.workspaces?.length) {
++  if (config?.pull?.workspaces) {
+     const workspaces: string[] = config.pull.workspaces;
+     for (let i = 0; i < workspaces.length; ++i) {
+       await pull(workspaces[i], options);

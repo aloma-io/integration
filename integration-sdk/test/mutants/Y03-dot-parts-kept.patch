@@ -1,0 +1,14 @@
+# Y03 Name parts that start with a dot are no longer skipped. Must fail: integration-sdk/test/ws-pull-command.test.mjs "name parts that start with a dot are skipped"
+diff --git a/workspace-sdk/src/commands/pull.mts b/workspace-sdk/src/commands/pull.mts
+index e373f16..7845f25 100644
+--- a/workspace-sdk/src/commands/pull.mts
++++ b/workspace-sdk/src/commands/pull.mts
+@@ -136,7 +136,7 @@ const processStep = async (target: string, workspace: Workspace, step: Step) =>
+   const parts = step.name
+     .split(/\//)
+     .map((what) => what.trim())
+-    .filter((what) => !!what && !what.startsWith('.'));
++    .filter((what) => !!what);
+ 
+   const fileName = parts.pop();
+   const path = `${target}/${parts.join('/')}`;
