@@ -1,0 +1,14 @@
+# L05 an unexpected HTTP request is answered 200 instead of 404. Must fail: test/harness-support-gaps.test.mjs "an unexpected HTTP request is answered 404 and recorded"
+diff --git a/integration-sdk/src/testing/fake-aloma.mts b/integration-sdk/src/testing/fake-aloma.mts
+index 1b95cd3..cc180d7 100644
+--- a/integration-sdk/src/testing/fake-aloma.mts
++++ b/integration-sdk/src/testing/fake-aloma.mts
+@@ -147,7 +147,7 @@ export class FakeAloma {
+     if (req.method === 'POST' && req.url === '/disconnect') return send(200, {});
+ 
+     this.protocolErrors.push(`unexpected request ${req.method} ${req.url}`);
+-    send(404);
++    send(200);
+   }
+ 
+   private onSocket(ws: WebSocket) {
