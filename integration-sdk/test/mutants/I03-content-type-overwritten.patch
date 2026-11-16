@@ -1,0 +1,13 @@
+# I03 the json content-type replaces an explicit one. Must fail: test/vendor-mock-guard.test.mjs "response: json is sent as JSON with a content-type; an explicit content-type is kept"
+diff --git a/integration-sdk/src/testing/vendor-mock.mts b/integration-sdk/src/testing/vendor-mock.mts
+--- a/integration-sdk/src/testing/vendor-mock.mts
++++ b/integration-sdk/src/testing/vendor-mock.mts
+@@ -142,7 +142,7 @@
+       let body: string | null = null;
+       if (spec.json !== undefined) {
+         body = JSON.stringify(spec.json);
+-        responseHeaders['content-type'] ||= 'application/json';
++        responseHeaders['content-type'] = 'application/json';
+       } else if (spec.text !== undefined) {
+         body = spec.text;
+       }

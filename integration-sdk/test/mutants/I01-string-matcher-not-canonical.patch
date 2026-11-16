@@ -1,0 +1,13 @@
+# I01 the string matcher is compared without being canonicalised. Must fail: test/vendor-mock-guard.test.mjs "matching: a string matcher matches one or two slashes after the scheme"
+diff --git a/integration-sdk/src/testing/vendor-mock.mts b/integration-sdk/src/testing/vendor-mock.mts
+--- a/integration-sdk/src/testing/vendor-mock.mts
++++ b/integration-sdk/src/testing/vendor-mock.mts
+@@ -39,7 +39,7 @@
+ };
+ 
+ const matches = (matcher: UrlMatcher, url: string): boolean => {
+-  if (typeof matcher === 'string') return canonical(matcher) === url;
++  if (typeof matcher === 'string') return matcher === url;
+   if (matcher instanceof RegExp) return matcher.test(url);
+   return matcher(url);
+ };
