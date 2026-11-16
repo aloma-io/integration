@@ -1,0 +1,12 @@
+# B01 the platformOAuth branch also installs the OAuth settings (the dispatcher's _oauth gets set). Must fail: test/dispatcher-oauth-config.test.mjs "platformOAuth: returns the dispatcher, sets oauth, adds a managed oauthResult, installs no settings and no client or scope field"
+diff --git a/integration-sdk/src/internal/dispatcher/index.mts b/integration-sdk/src/internal/dispatcher/index.mts
+--- a/integration-sdk/src/internal/dispatcher/index.mts
++++ b/integration-sdk/src/internal/dispatcher/index.mts
+@@ -18,6 +18,7 @@
+ 
+   oauth(arg) {
+     if (arg.platformOAuth) {
++      this._oauth = {...arg};
+       this.config({
+         oauth: true,
+         fields: {
