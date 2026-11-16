@@ -1,0 +1,14 @@
+# U01 the name keeps its dots (only slashes are stripped). Must fail: integration-sdk/test/ws-create-command.test.mjs "strips every "/" and "." from the name"
+diff --git a/workspace-sdk/src/commands/create.mts b/workspace-sdk/src/commands/create.mts
+index 50a66e2..a1bddec 100644
+--- a/workspace-sdk/src/commands/create.mts
++++ b/workspace-sdk/src/commands/create.mts
+@@ -49,7 +49,7 @@ yarn-error.log`
+ };
+ 
+ export const create = async (name, options) => {
+-  name = name.replace(/[\/\.]/gi, '');
++  name = name.replace(/[\/]/gi, '');
+   if (!name) throw new Error('name is empty');
+ 
+   const target = `${process.cwd()}/${name}`;

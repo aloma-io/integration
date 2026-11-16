@@ -1,0 +1,14 @@
+# U05 the project folder is made with recursive, so an existing one is accepted. Must fail: integration-sdk/test/ws-create-command.test.mjs "fails on an existing folder and leaves its content untouched"
+diff --git a/workspace-sdk/src/commands/create.mts b/workspace-sdk/src/commands/create.mts
+index 50a66e2..8085358 100644
+--- a/workspace-sdk/src/commands/create.mts
++++ b/workspace-sdk/src/commands/create.mts
+@@ -54,7 +54,7 @@ export const create = async (name, options) => {
+ 
+   const target = `${process.cwd()}/${name}`;
+ 
+-  fs.mkdirSync(target);
++  fs.mkdirSync(target, {recursive: true});
+ 
+   console.log('Creating workspace ...');
+   extract({...options, target, name});

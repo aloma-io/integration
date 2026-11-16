@@ -1,0 +1,14 @@
+# U02 the empty-name check is removed. Must fail: integration-sdk/test/ws-create-command.test.mjs "throws "name is empty" before making any folder"
+diff --git a/workspace-sdk/src/commands/create.mts b/workspace-sdk/src/commands/create.mts
+index 50a66e2..6cdff36 100644
+--- a/workspace-sdk/src/commands/create.mts
++++ b/workspace-sdk/src/commands/create.mts
+@@ -50,7 +50,7 @@ yarn-error.log`
+ 
+ export const create = async (name, options) => {
+   name = name.replace(/[\/\.]/gi, '');
+-  if (!name) throw new Error('name is empty');
++  
+ 
+   const target = `${process.cwd()}/${name}`;
+ 
