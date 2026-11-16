@@ -1,0 +1,14 @@
+# M04 reply sends the arguments object itself instead of a copy. Must fail: test/controller-health-unwrap.test.mjs "reply: with a callback sends one packet to it, carrying a copy of the arguments"
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..ddd91b5 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -13,7 +13,7 @@ export const reply = (arg, packet, transport) => {
+     return;
+   }
+ 
+-  transport.send(transport.newPacket({c: packet.cb(), a: {...arg}}));
++  transport.send(transport.newPacket({c: packet.cb(), a: arg}));
+ };
+ 
+ export const unwrap0 = (ret, body, options) => {

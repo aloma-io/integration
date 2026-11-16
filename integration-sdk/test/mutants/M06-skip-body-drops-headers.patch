@@ -1,0 +1,14 @@
+# M06 skipResponseBody returns the status without the headers. Must fail: test/controller-health-unwrap.test.mjs "unwrap: skipResponseBody returns only status and headers"
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..380cba0 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -47,7 +47,7 @@ export const unwrap = async (ret, options) => {
+   }
+ 
+   if (options?.skipResponseBody) {
+-    return {status: ret.status, headers: ret.headers};
++    return {status: ret.status};
+   }
+ 
+   const text = await ret.text();

@@ -1,0 +1,14 @@
+# M05 the base64 option returns hex text. Must fail: test/controller-health-unwrap.test.mjs "unwrap: the base64 option returns the base64 of the bytes"
+diff --git a/integration-sdk/src/internal/util/index.mts b/integration-sdk/src/internal/util/index.mts
+index c0fe474..5a4efac 100644
+--- a/integration-sdk/src/internal/util/index.mts
++++ b/integration-sdk/src/internal/util/index.mts
+@@ -41,7 +41,7 @@ export class ResponseParseError extends Error {
+ export const unwrap = async (ret, options) => {
+   if (options?.text) return unwrap0(ret, await ret.text(), options);
+   if (options?.base64) {
+-    const base64 = Buffer.from(await ret.arrayBuffer()).toString('base64');
++    const base64 = Buffer.from(await ret.arrayBuffer()).toString('hex');
+ 
+     return unwrap0(ret, base64, options);
+   }
