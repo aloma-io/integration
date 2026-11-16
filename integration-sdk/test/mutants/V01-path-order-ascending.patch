@@ -1,0 +1,14 @@
+# V01 the result is sorted ascending instead of descending. Must fail: integration-sdk/test/ws-step-parser.test.mjs "orders the result by path, descending"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..be7723e 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -105,7 +105,7 @@ const parseSteps = async (root: string) => {
+ 
+   let transformed = await Promise.all(items);
+ 
+-  transformed = transformed.sort((a: any, b: any) => (a.source.path > b.source.path ? -1 : 1));
++  transformed = transformed.sort((a: any, b: any) => (a.source.path < b.source.path ? -1 : 1));
+ 
+   return transformed;
+ };

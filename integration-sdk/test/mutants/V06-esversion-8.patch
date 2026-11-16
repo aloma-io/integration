@@ -1,0 +1,14 @@
+# V06 the validator option esversion is 8 instead of 9. Must fail: integration-sdk/test/ws-step-parser.test.mjs "calls the validator with the options the code sets today"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..4e8cf07 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -29,7 +29,7 @@ const validate = ({if: ifContent, do: doContent}) => {
+     ${notEmpty(doContent, 'do')}
+     })()`,
+     {
+-      esversion: 9,
++      esversion: 8,
+       asi: true,
+       eqnull: true,
+       '-W032': true,

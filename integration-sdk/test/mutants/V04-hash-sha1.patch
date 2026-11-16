@@ -1,0 +1,14 @@
+# V04 the hash uses SHA-1 instead of SHA-256. Must fail: integration-sdk/test/ws-step-parser.test.mjs "hashes the SHA-256 of the returned JSON text of the content"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..834338e 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -5,7 +5,7 @@ import fs from 'node:fs';
+ const jshint = JSHINT.JSHINT;
+ 
+ const digestStepContent = (what) => {
+-  return createHash('sha256').update(what).digest('hex');
++  return createHash('sha1').update(what).digest('hex');
+ };
+ 
+ const stripFunction = (what: string) => {

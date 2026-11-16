@@ -1,0 +1,14 @@
+# V02 the step name keeps the .mjs extension. Must fail: integration-sdk/test/ws-step-parser.test.mjs "reads only .mjs files, nested too; the name drops .mjs and the path keeps it"
+diff --git a/workspace-sdk/src/step-parser/index.mts b/workspace-sdk/src/step-parser/index.mts
+index b07bc5f..aa80c94 100644
+--- a/workspace-sdk/src/step-parser/index.mts
++++ b/workspace-sdk/src/step-parser/index.mts
+@@ -97,7 +97,7 @@ const parseSteps = async (root: string) => {
+     })
+     .map(async (arg: any) => {
+       const {file, source} = await arg;
+-      return {path: file, name: file.replace(/\.mjs$/gi, ''), ...source};
++      return {path: file, name: file, ...source};
+     })
+     .map(async (source) => {
+       return {source: await source, step: parseStep(await source)};
